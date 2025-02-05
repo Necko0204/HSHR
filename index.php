@@ -12,22 +12,7 @@
 <body>
 
     <!-- Sidebar -->
-    <div class="sidebar">
-        <h4 class="text-center">HR Dashboard</h4>
-        <a href="#"><i class="fas fa-users"></i> Employees</a>
-        <a href="#"><i class="fas fa-wallet"></i> Payroll</a>
-        <a href="#"><i class="fas fa-calendar-check"></i> Leave Requests</a>
-        <a href="#"><i class="fas fa-file-alt"></i> Reports</a>
-        <a href="#"><i class="fas fa-cog"></i> Settings</a>
-        <a href="#"><i class="fas fa-sign-out-alt"></i> Logout</a>
-    </div>
-
-    <!-- Content -->
-    <div class="content">
-        <button class="sidebar-toggle" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
-        <h2>Welcome to the HR Management System</h2>
-        <p>Manage employees, payroll, leave requests, and generate reports efficiently.</p>
-    </div>
+    <?php include 'sidebar.php'; ?>
 
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
