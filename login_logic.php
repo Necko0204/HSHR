@@ -1,48 +1,39 @@
 <?php
 session_start();
-include 'db_config.php'; // Ensure this file correctly sets up the database connection
+header('Content-Type: application/json'); // Ensure JSON response
+require 'db_config.php'; // Include database connection
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $username = trim($_POST['username']);
     $password = trim($_POST['password']);
 
     if (empty($username) || empty($password)) {
-        $_SESSION['error'] = "Please fill in all fields.";
-        header("Location: index.php"); // Redirect back to login page
-        exit();
+        echo json_encode(["success" => false, "message" => "Username and password are required."]);
+        exit;
     }
 
-    // Prepare SQL statement to prevent SQL injection
-    $stmt = $conn->prepare("SELECT id, username, password, position FROM admin WHERE username = ? LIMIT 1");
+    // Use prepared statements to prevent SQL injection
+    $stmt = $conn->prepare("SELECT id, username, password FROM admin WHERE username = ?");
     $stmt->bind_param("s", $username);
     $stmt->execute();
     $result = $stmt->get_result();
 
     if ($result->num_rows === 1) {
-        $user = $result->fetch_assoc();
-        
-        // Verify password
-        if (password_verify($password, $user['password'])) {
-            $_SESSION['id'] = $user['id'];
-            $_SESSION['username'] = $user['username'];
-            $_SESSION['position'] = $user['position'];
+        $row = $result->fetch_assoc();
+        $hashedPassword = hash('sha256', $password);
 
-            // Redirect based on user role
-            if ($user['position'] === 'admin') {
-                header("Location: admin_dashboard.php");
-            } else {
-                header("Location: dashboard.php");
-            }
-            exit();
+        if ($hashedPassword === $row['password']) {
+            $_SESSION['admin_id'] = $row['id'];
+            $_SESSION['admin_username'] = $row['username'];
+            echo json_encode(["success" => true, "message" => "Login successful!"]);
         } else {
-            $_SESSION['error'] = "Invalid username or password.";
-            header("Location: index.php");
-            exit();
+            echo json_encode(["success" => false, "message" => "Invalid password."]);
         }
     } else {
-        $_SESSION['error'] = "Invalid username or password.";
-        header("Location: index.php");
-        exit();
+        echo json_encode(["success" => false, "message" => "No account found with that username."]);
     }
+
+    $stmt->close();
+    $conn->close();
 }
 ?>

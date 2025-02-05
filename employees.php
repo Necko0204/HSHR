@@ -1,43 +1,38 @@
+<?php
+session_start();
+?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HR Management</title>
+    <title>HR Management - School</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
     <link rel="stylesheet" href="style.css">
+
     <style>
-        /* General page styling */
-body {
-    font-family: 'Poppins', sans-serif;
-    background-color: #f4f7fc;
+                body {
+            font-family: 'Poppins', sans-serif;
+            background: white;
+            color: black;
+            min-height: 100vh;
+        }
+/* Wrapper for main content */
+.wrapper {
+    margin-left: 270px; /* Adjust based on your sidebar width */
+    padding: 20px;
+    max-width: calc(100% - 270px);
 }
 
-/* Sidebar styling */
-.sidebar {
-    position: fixed;
-    top: 0;
-    left: 0;
-    height: 100%;
-    width: 250px;
-    background-color: #333;
-    color: #fff;
-    padding-top: 20px;
-    padding-left: 20px;
-    box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
-}
-
-.sidebar a {
-    color: white;
-    display: block;
-    text-decoration: none;
-    padding: 10px 0;
-}
-
-.sidebar a:hover {
-    background-color: #575757;
+/* Fix alignment on smaller screens */
+@media (max-width: 768px) {
+    .wrapper {
+        margin-left: 0;
+        max-width: 100%;
+    }
 }
 
 /* Content wrapper for employee details */
@@ -133,109 +128,82 @@ h2 {
         padding: 10px;
     }
 }
-
-        /* Ensure the sidebar takes up appropriate space */
-        .sidebar {
-            width: 250px;
-            position: fixed;
-            top: 0;
-            left: 0;
-            height: 100vh;
-            background-color: #343a40;
-            padding-top: 20px;
-            color: white;
-        }
-
-        .sidebar a {
-            color: white;
-            padding: 10px 15px;
-            display: block;
-            text-decoration: none;
-        }
-
-        .sidebar a:hover {
-            background-color: #575757;
-        }
-
-        /* Container for the form and sidebar */
-        .content-wrapper {
-            margin-left: 250px; /* This will push the content beside the sidebar */
-            padding: 20px;
-        }
-
-        /* Optional: Add a little spacing to the form */
-        .form-container {
-            width: 100%;
-            max-width: 1000px;
-            margin: 0 auto;
-        }
-
-        /* Adjust the form fields to be aligned nicely */
-        .form-container .form-label {
-            font-weight: 600;
-        }
-
-        .form-container .form-control {
-            border-radius: 8px;
-        }
     </style>
-        
 </head>
 <body>
 
     <!-- Sidebar -->
     <?php include 'sidebar.php'; ?>
-
-    <!-- Bootstrap JS -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script>
-        function toggleSidebar() {
-            const sidebar = document.querySelector('.sidebar');
-            sidebar.classList.toggle('open');
-        }
-    </script>
-</body>
-</html>
-
-<body>
-
-    <!-- Sidebar -->
-    <?php include 'sidebar.php'; ?>
-
-    <!-- Main content wrapper -->
-    <div class="container mt-5">
-        <h2>Employee Masterlist</h2>
+    <!-- Main Content Wrapper -->
+    <main class="wrapper">
+            <div class="d-flex justify-content-between align-items-center">
+                <h2>Employee Masterlist</h2>
+            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addEmployeeModal">Add Employee</button>
+        </div>
 
         <!-- Employee table -->
-        <table class="table table-striped">
-            <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>Full Name</th>
-                    <th>Gender</th>
-                    <th>Action</th>
-                </tr>
-            </thead>
-            <tbody>
-                <!-- Example employee data, replace with dynamic data from your database -->
-                <tr>
-                    <td>001</td>
-                    <td>John Doe</td>
-                    <td>Male</td>
-                    <td><a href="employee_details.php" class="btn btn-info">View Details</a></td>
-                </tr>
-                <tr>
-                    <td>002</td>
-                    <td>Jane Smith</td>
-                    <td>Female</td>
-                    <td><a href="employee_details.php" class="btn btn-info">View Details</a></td>
-                </tr>
-                <!-- Add more rows as needed -->
-            </tbody>
-        </table>
-    </div>
+        <div class="card">
+            <div class="card-header">Employee List</div>
+            <div class="card-body">
+                <table class="table table-striped mt-3">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Full Name</th>
+                            <th>Gender</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>001</td>
+                            <td>John Doe</td>
+                            <td>Male</td>
+                            <td><a href="employee_details.php" class="btn btn-info">View Details</a></td>
+                        </tr>
+                        <tr>
+                            <td>002</td>
+                            <td>Jane Smith</td>
+                            <td>Female</td>
+                            <td><a href="employee_details.php" class="btn btn-info">View Details</a></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
 
-    <!-- Bootstrap JS -->
+        <!-- Add Employee Modal -->
+            <div class="modal fade" id="addEmployeeModal" tabindex="-1" aria-labelledby="addEmployeeModalLabel" aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="addEmployeeModalLabel">Add Employee</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <form>
+                                <div class="mb-3">
+                                    <label for="employeeName" class="form-label">Full Name</label>
+                                    <input type="text" class="form-control" id="employeeName" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="employeeGender" class="form-label">Gender</label>
+                                        <select class="form-control" id="employeeGender" required>
+                                            <option value="">Select Gender</option>
+                                            <option value="Male">Male</option>
+                                            <option value="Female">Female</option>
+                                        </select>
+                                    </div>
+                                    <button type="submit" class="btn btn-success">Save</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-
 </body>
+
+
+</html>

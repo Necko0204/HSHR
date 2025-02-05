@@ -1,0 +1,53 @@
+/* Override Notie Background Colors */
+.notie-container {
+    background-color: #1d3557 !important; /* Default background */
+    border-radius: 10px; /* Rounded corners */
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
+    width: auto; /* Adjust width dynamically */
+    max-width: 80%; /* Prevent excessive width */
+    padding: 15px 25px; /* More padding for visibility */
+    position: fixed;
+    top: 20%; /* Move it down so it's fully visible */
+    left: 50%;
+    transform: translate(-50%, 0); /* Center it horizontally */
+    text-align: center;
+    white-space: normal; /* Allow text wrapping */
+    word-wrap: break-word; /* Prevent text overflow */
+    z-index: 9999; /* Ensure it's on top */
+}
+
+/* Text Styling */
+.notie-container .notie-text {
+    color: #ffffff !important; /* Default text color */
+    font-size: 16px;
+    font-weight: bold;
+}
+
+/* Success (Green) */
+.notie-container[data-notie-type="1"] {
+    background-color: #28a745 !important;
+}
+
+/* Error (Red) */
+.notie-container[data-notie-type="2"] {
+    background-color: #dc3545 !important;
+}
+
+/* Warning (Yellow) */
+.notie-container[data-notie-type="3"] {
+    background-color: #f4a261 !important;
+    color: #000 !important; /* Black text for better contrast */
+}
+
+/* Custom animation (optional) */
+@keyframes slideIn {
+    from {
+        transform: translate(-50%, -20px);
+        opacity: 0;
+    }
+    to {
+        transform: translate(-50%, 0);
+        opacity: 1;
+    }
+}
+

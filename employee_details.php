@@ -380,10 +380,6 @@ h2 {
                     </table>
                 </div>
             </div>
-
-            <!-- Submit Button -->
-            <button type="submit" class="btn btn-primary">Submit</button>
-
         </form>
     </div>
 
