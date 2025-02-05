@@ -1,0 +1,8 @@
+services:
+  - type: web
+    name: hshr-app
+    env: php
+    plan: free
+    buildCommand: ""  # No build step needed
+    startCommand: "php -S 0.0.0.0:10000"
+    rootDir: "."
