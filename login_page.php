@@ -6,6 +6,8 @@
     <title>HRMS - School Login</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap" rel="stylesheet">
+    <!-- SweetAlert2 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11.5.0/dist/sweetalert2.min.css" rel="stylesheet">
     <style>
         /* Global Styles */
         body {
@@ -142,7 +144,6 @@
             z-index: 9999;
             width: 75%;
             margin-top: 20px;
-            display: none;
         }
 
         /* Custom Scrollbar */
@@ -161,9 +162,7 @@
     </style>
 </head>
 <body>
-
-    <!-- Login Form Container -->
-    <div class="login-card">
+<div class="login-card">
         <!-- School Logo -->
         <div class="logo">
             <img src="https://via.placeholder.com/80" alt="School Logo">
@@ -182,25 +181,39 @@
         </form>
     </div>
 
-    <!-- Alert Message -->
-    <div id="alertMessage" class="alert alert-success" role="alert">
-        Login successful!
-    </div>
+    <!-- SweetAlert2 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.5.0/dist/sweetalert2.all.min.js"></script>
 
     <script>
-        // Show alert for 3 seconds after form submission
-        const alertMessage = document.getElementById('alertMessage');
-        const loginForm = document.getElementById('loginForm');
-
-        loginForm.addEventListener('submit', function(event) {
-            event.preventDefault(); // Prevent actual form submission
-            alertMessage.style.display = 'block'; // Show the alert message
-
-            // Automatically hide the alert after 3 seconds
-            setTimeout(() => {
-                alertMessage.style.display = 'none';
-            }, 3000);
-        });
+        // Check if PHP session contains login status
+        <?php if (isset($_SESSION['login_status'])): ?>
+            // Handle SweetAlert based on login status
+            const loginStatus = '<?php echo $_SESSION['login_status']; ?>';
+            if (loginStatus === 'success') {
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Login successful!',
+                    text: 'Redirecting...',
+                    timer: 2000,
+                    showConfirmButton: false
+                }).then(() => {
+                    window.location.href = "index.php"; // Redirect after 2 seconds
+                });
+            } else if (loginStatus === 'invalid_password') {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Invalid password!',
+                    text: 'Please try again.'
+                });
+            } else if (loginStatus === 'no_user') {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'No account found!',
+                    text: 'Please check your username.'
+                });
+            }
+            <?php unset($_SESSION['login_status']); // Clear session message ?>
+        <?php endif; ?>
     </script>
 
 </body>

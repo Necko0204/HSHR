@@ -1,39 +1,48 @@
 <?php
 session_start();
-include 'db_config.php'; // Make sure to create and configure this file for database connection
+include 'db_config.php'; // Ensure this file correctly sets up the database connection
 
-if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    $username = $_POST['username'];
-    $password = $_POST['password'];
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $username = trim($_POST['username']);
+    $password = trim($_POST['password']);
 
-    // Create a connection
-    $conn = openConnection(); // Assuming openConnection() is defined in db_connection.php
-
-    // Prepare and bind
-    $stmt = $conn->prepare("SELECT auto_id, username, password FROM admin WHERE username = ?");
-    $stmt->bind_param("s", $username);
-    $stmt->execute();
-    $stmt->store_result();
-
-    if ($stmt->num_rows > 0) {
-        $stmt->bind_result($auto_id, $username, $hashed_password);
-        $stmt->fetch();
-
-        if (password_verify($password, $hashed_password)) {
-            $_SESSION['user_id'] = $auto_id;
-            $_SESSION['username'] = $username;
-            header("Location: dashboard.php");
-            exit();
-        } else {
-            echo "Invalid password!";
-        }
-    } else {
-        echo "No user found with that username!";
+    if (empty($username) || empty($password)) {
+        $_SESSION['error'] = "Please fill in all fields.";
+        header("Location: index.php"); // Redirect back to login page
+        exit();
     }
 
-    $stmt->close();
-    $conn->close();
-} else {
-    echo "Invalid request method.";
+    // Prepare SQL statement to prevent SQL injection
+    $stmt = $conn->prepare("SELECT id, username, password, position FROM admin WHERE username = ? LIMIT 1");
+    $stmt->bind_param("s", $username);
+    $stmt->execute();
+    $result = $stmt->get_result();
+
+    if ($result->num_rows === 1) {
+        $user = $result->fetch_assoc();
+        
+        // Verify password
+        if (password_verify($password, $user['password'])) {
+            $_SESSION['id'] = $user['id'];
+            $_SESSION['username'] = $user['username'];
+            $_SESSION['position'] = $user['position'];
+
+            // Redirect based on user role
+            if ($user['position'] === 'admin') {
+                header("Location: admin_dashboard.php");
+            } else {
+                header("Location: dashboard.php");
+            }
+            exit();
+        } else {
+            $_SESSION['error'] = "Invalid username or password.";
+            header("Location: index.php");
+            exit();
+        }
+    } else {
+        $_SESSION['error'] = "Invalid username or password.";
+        header("Location: index.php");
+        exit();
+    }
 }
 ?>
