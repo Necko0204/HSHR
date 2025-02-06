@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 <?php
 session_name('admin_session');
 session_start();
@@ -6,6 +7,31 @@ session_start();
 if (!isset($_SESSION['admin_id'])) {
     header("Location: index.php");
     exit();
+=======
+
+<?php
+require 'db_config.php'; // Ensure this file contains your MySQLi connection ($conn)
+
+if (isset($_GET['id'])) {
+    $id = $_GET['id'];
+
+    // Prepare the query to prevent SQL injection
+    $stmt = $conn->prepare("SELECT * FROM employees WHERE id = ?");
+    $stmt->bind_param("s", $id); // Assuming 'id' is a string, if it's an integer use "i"
+    $stmt->execute();
+    $result = $stmt->get_result();
+
+    if ($result->num_rows > 0) {
+        $row = $result->fetch_assoc();
+    } else {
+        $row = null;
+    }
+
+    $stmt->close();
+    $conn->close();
+} else {
+    $row = null;
+>>>>>>> b4d7848b06ab22af04ad819b6adc005b916dbc9b
 }
 ?>
 
@@ -148,6 +174,7 @@ if (!isset($_SESSION['admin_id'])) {
     <?php include 'sidebar.php'; ?>
     <?php include 'nav_header.php'; ?>
 
+<<<<<<< HEAD
     <!-- Main content wrapper -->
     <main class="wrapper">
         <h2>Employee Details</h2>
@@ -345,5 +372,173 @@ if (!isset($_SESSION['admin_id'])) {
         </main>
         <!-- Bootstrap JS -->
         <script src="background.js"></script>
+=======
+<!-- Main content wrapper -->
+<div class="container mt-5">
+    <h2>Employee Details</h2>
+    
+    <!-- Personal Information -->
+    <div class="card mb-3">
+        <div class="card-header">Personal Information</div>
+        <div class="card-body">
+            <table class="table">
+                <tr>
+                    <td><label for="id">ID</label></td>
+                    <td><span id="id"><?= $row['id'] ?? ''?></td>
+                </tr>
+                <tr>
+                    <td><label for="lastname">Last Name</label></td>
+                    <td><span id="lastname"><?= $row['lastname'] ?? 'N/A' ?></span></td>
+                </tr>
+                <tr>
+                    <td><label for="firstname">First Name</label></td>
+                    <td><span id="firstname"><?= $row['firstname'] ?? 'N/A' ?></span></td>
+                </tr>
+                <tr>
+        <td><label for="middlename">Middle Name</label></td>
+        <td><span id="middlename"><?= $row['middlename'] ?? 'N/A' ?></span></td>
+    </tr>
+    <tr>
+        <td><label for="suffix">Suffix</label></td>
+        <td><span id="suffix"><?= $row['suffix'] ?? 'N/A' ?></span></td>
+    </tr>
+    <tr>
+        <td><label for="gender">Gender</label></td>
+        <td><span id="gender"><?= $row['gender'] ?? 'N/A' ?></span></td>
+    </tr>
+    <tr>
+        <td><label for="homeaddress">Home Address</label></td>
+        <td><span id="homeaddress"><?= $row['homeaddress'] ?? 'N/A' ?></span></td>
+    </tr>
+    <tr>
+        <td><label for="maritalstatus">Marital Status</label></td>
+        <td><span id="maritalstatus"><?= $row['maritalstatus'] ?? 'N/A' ?></span></td>
+    </tr>
+    <tr>
+        <td><label for="nameofspouse">Name of Spouse</label></td>
+        <td><span id="nameofspouse"><?= $row['nameofspouse'] ?? 'N/A' ?></span></td>
+    </tr>
+    <tr>
+        <td><label for="no_of_children">Number of Children</label></td>
+        <td><span id="no_of_children"><?= $row['no_of_children'] ?? 'N/A' ?></span></td>
+    </tr>
+    <tr>
+        <td><label for="height">Height(cm)</label></td>
+        <td><span id="height"><?= $row['height(cm)'] ?? 'N/A' ?></span></td>
+    </tr>
+    <tr>
+        <td><label for="weight">Weight(kg)</label></td>
+        <td><span id="weight"><?= $row['weight(kg)'] ?? 'N/A' ?></span></td>
+    </tr>
+    <tr>
+        <td><label for="eyecolor">Eye Color</label></td>
+        <td><span id="eyecolor"><?= $row['eyecolor'] ?? 'N/A' ?></span></td>
+    </tr>
+    <tr>
+        <td><label for="haircolor">Hair Color</label></td>
+        <td><span id="haircolor"><?= $row['haircolor'] ?? 'N/A' ?></span></td>
+    </tr>
+    <tr>
+        <td><label for="distinguishingfeatures">Distinguishing Features</label></td>
+        <td><span id="distinguishingfeatures"><?= $row['distinguishingfeatures'] ?? 'N/A' ?></span></td>
+    </tr>
+    <tr>
+        <td><label for="sss_gsis">SSS/GSIS No</label></td>
+        <td><span id="sss_gsis"><?= $row['sss_gsis'] ?? 'N/A' ?></span></td>
+    </tr>
+    <tr>
+        <td><label for="dateofbirth">Date of Birth</label></td>
+        <td><span id="dateofbirth"><?= $row['dateofbirth'] ?? 'N/A' ?></span></td>
+    </tr>
+    <tr>
+        <td><label for="placeofbirth">Place of Birth</label></td>
+        <td><span id="placeofbirth"><?= $row['placeofbirth'] ?? 'N/A' ?></span></td>
+    </tr>
+    <tr>
+        <td><label for="citizenship">Citizenship</label></td>
+        <td><span id="citizenship"><?= $row['citizenship'] ?? 'N/A' ?></span></td>
+    </tr>
+    <tr>
+        <td><label for="provinceoforigin">Province of Origin</label></td>
+        <td><span id="provinceoforigin"><?= $row['provinceoforigin'] ?? 'N/A' ?></span></td>
+    </tr>
+    <tr>
+        <td><label for="religion">Religion</label></td>
+        <td><span id="religion"><?= $row['religion'] ?? 'N/A' ?></span></td>
+    </tr>
+    <tr>
+        <td><label for="bloodtype">Blood Type</label></td>
+        <td><span id="bloodtype"><?= $row['bloodtype'] ?? 'N/A' ?></span></td>
+    </tr>
+    <tr>
+        <td><label for="homephone">Home Phone</label></td>
+        <td><span id="homephone"><?= $row['homephone'] ?? 'N/A' ?></span></td>
+    </tr>
+    <tr>
+        <td><label for="businessphone">Business Phone</label></td>
+        <td><span id="businessphone"><?= $row['businessphone'] ?? 'N/A' ?></span></td>
+    </tr>
+    <tr>
+        <td><label for="mobilephone">Mobile Phone</label></td>
+        <td><span id="mobilephone"><?= $row['mobilephone'] ?? 'N/A' ?></span></td>
+    </tr>
+    <tr>
+        <td><label for="email1">Email 1</label></td>
+        <td><span id="email1"><?= $row['email1'] ?? 'N/A' ?></span></td>
+    </tr>
+    <tr>
+        <td><label for="email2">Email 2</label></td>
+        <td><span id="email2"><?= $row['email2'] ?? 'N/A' ?></span></td>
+    </tr>
+    <tr>
+        <td><label for="faxno">Fax No</label></td>
+        <td><span id="faxno"><?= $row['faxno'] ?? 'N/A' ?></span></td>
+    </tr>
+    <tr>
+        <td><label for="workoccupation">Work Occupation</label></td>
+        <td><span id="workoccupation"><?= $row['workoccupation'] ?? 'N/A' ?></span></td>
+    </tr>
+    <tr>
+    <td><label for="passportno">Passport No</label></td>
+    <td><span id="passportno"><?= $row['passportno'] ?? 'N/A' ?></span></td>
+</tr>
+<tr>
+    <td><label for="expirydate">Expiry Date</label></td>
+    <td><span id="expirydate"><?= $row['expirydate'] ?? 'N/A' ?></span></td>
+</tr>
+<tr>
+    <td><label for="typeofvisa">Type of Visa</label></td>
+    <td><span id="typeofvisa"><?= $row['typeofvisa'] ?? 'N/A' ?></span></td>
+</tr>
+<tr>
+    <td><label for="tinno">TIN No</label></td>
+    <td><span id="tinno"><?= $row['tinno'] ?? 'N/A' ?></span></td>
+</tr>
+<tr>
+    <td><label for="datejoined">Date Joined</label></td>
+    <td><span id="datejoined"><?= $row['datejoined'] ?? 'N/A' ?></span></td>
+</tr>
+<tr>
+    <td><label for="fbvibername">FB/Viber Name</label></td>
+    <td><span id="fbvibername"><?= $row['fbvibername'] ?? 'N/A' ?></span></td>
+</tr>
+<tr>
+    <td><label for="instagram">Instagram</label></td>
+    <td><span id="instagram"><?= $row['instagram'] ?? 'N/A' ?></span></td>
+</tr>
+<tr>
+    <td><label for="kidsnames">Kids Names</label></td>
+    <td><span id="kidsnames"><?= $row['kidsnames'] ?? 'N/A' ?></span></td>
+</tr>
+
+            </table>
+        </div>
+    </div>
+</div>
+
+
+
+    <!-- Bootstrap JS -->
+>>>>>>> b4d7848b06ab22af04ad819b6adc005b916dbc9b
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
