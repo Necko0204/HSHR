@@ -1,13 +1,8 @@
 <?php
 session_name('admin_session');
 session_start();
-
-// Debug: Check if session is properly set
-if (!isset($_SESSION['admin_id'])) {
-    header("Location: index.php");
-    exit();
-}
 ?>
+
 
 <!DOCTYPE html>
 <html lang="en">

@@ -1,6 +1,14 @@
 <?php
+session_name('admin_session');
 session_start();
+
 include 'db_config.php';
+
+// Debug: Check if session is properly set
+if (!isset($_SESSION['admin_id'])) {
+    header("Location: index.php");
+    exit();
+}
 ?>
 
 <!DOCTYPE html>
@@ -13,6 +21,7 @@ include 'db_config.php';
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
     <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="background.css">
 
     <style>
         body {
@@ -20,60 +29,136 @@ include 'db_config.php';
             background: white;
             color: black;
             min-height: 100vh;
+            margin: 0; /* Reset margin to ensure no unwanted space */
         }
 
+        /* Wrapper for main content */
         .wrapper {
-            margin-left: 270px; /* Adjust based on sidebar width */
+            margin-left: 270px; /* Sidebar width */
             padding: 20px;
-            max-width: calc(100% - 270px);
+            max-width: calc(100% - 270px); /* Adjust width to subtract sidebar width */
+            transition: all 0.3s ease; /* Smooth transition */
         }
 
-        @media (max-width: 768px) {
-            .wrapper {
-                margin-left: 0;
-                max-width: 100%;
+            /* Adjust wrapper when sidebar is hidden on small screens */
+            @media (max-width: 768px) {
+                .wrapper {
+                    margin-left: 0;
+                    max-width: 100%;
+                    padding: 15px; /* Adjust padding for smaller screens */
+                }
             }
-        }
 
-        /* Table adjustments */
-        .table-responsive {
-            overflow-x: auto;
-        }
+            /* Content section styling */
+            .content {
+                margin-top: 20px; /* Ensure spacing between navbar and content */
+            }
 
-        /* Status badge styling */
-        .badge-active { background-color: green; color: white; padding: 5px; border-radius: 5px; }
-        .badge-inactive { background-color: red; color: white; padding: 5px; border-radius: 5px; }
+            h2 {
+                font-size: 2rem;
+                margin-bottom: 20px;
+                color: #333;
+            }
 
-        /* Button styles */
-        .btn-primary {
-            background-color: #6c63ff;
-            border-color: #6c63ff;
-            padding: 10px 20px;
-            border-radius: 8px;
-        }
+            /* Table and card styling */
+            .card {
+                border: 1px solid #ddd;
+                border-radius: 10px;
+                margin-bottom: 20px;
+                padding: 20px;
+                box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+                background-color: #fff;
+            }
 
-        .btn-primary:hover {
-            background-color: #5748d0;
-            border-color: #5748d0;
-        }
-        .hidden-id {
-            display: none;
-        }
-    </style>
-</head>
+            .card-header {
+                font-weight: bold;
+                font-size: 1.2rem;
+                background-color: #f8f9fa;
+                padding: 10px;
+                border-bottom: 1px solid #ddd;
+            }
+
+            .card-body {
+                padding: 20px 0;
+            }
+
+            .card-body .form-label {
+                font-weight: 500;
+                color: #333;
+            }
+
+            /* Form styling */
+            form {
+                background-color: white;
+                padding: 30px;
+                border-radius: 10px;
+                box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            }
+
+            .form-control {
+                border-radius: 8px;
+                border: 1px solid #ddd;
+                padding: 10px;
+                margin-bottom: 15px;
+            }
+
+            .form-control:focus {
+                border-color: #6c63ff;
+                box-shadow: 0 0 5px rgba(108, 99, 255, 0.2);
+            }
+
+            /* Button styling */
+            .btn-primary {
+                background-color: #6c63ff;
+                border-color: #6c63ff;
+                padding: 10px 20px;
+                border-radius: 8px;
+            }
+
+            .btn-primary:hover {
+                background-color: #5748d0;
+                border-color: #5748d0;
+            }
+
+            .mb-3 {
+                margin-bottom: 20px;
+            }
+
+            /* Adjust card elements */
+            .card-body {
+                padding: 15px;
+            }
+
+            /* Additional layout adjustments for smaller screens */
+            @media (max-width: 768px) {
+                .card {
+                    padding: 15px;
+                }
+                .btn-primary {
+                    padding: 8px 16px;
+                }
+                .form-control {
+                    padding: 8px;
+                }
+            }
+            
+            </style>
+        </head>
 <body>
-
-    <!-- Sidebar -->
+    <!-- Sidebar & Navbar-->
     <?php include 'sidebar.php'; ?>
+    <?php include 'nav_header.php'; ?>
 
-    <!-- Main Content -->
-    <main class="wrapper">
-        <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap">
-            <h2 class="mb-0">Employee Masterlist</h2>
-            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addEmployeeModal">
-                Add Employee
-            </button>
-        </div>
+<!-- Main Content Wrapper -->
+<main class="wrapper">
+<section class="content">
+    <div class="d-flex justify-content-start align-items-center">
+        <h2 class="fw-bold text-dark mb-0">Employee Masterlist</h2>
+        <button class="btn btn-primary ms-auto" data-bs-toggle="modal" data-bs-target="#addEmployeeModal">
+            Add Employee
+        </button>
+    </div>
+</section>
 
         <!-- Employee Table -->
         <div class="card">
@@ -149,9 +234,10 @@ include 'db_config.php';
             </div>
         </div>
     </main>
-
-    <!-- Bootstrap JS -->
+        <!-- Bootstrap JS -->
+         <script src="background.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-
 </body>
+
+
 </html>

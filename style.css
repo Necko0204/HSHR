@@ -1,7 +1,6 @@
-
 .sidebar {
     width: 270px;
-    background: linear-gradient(135deg, #ff0000, #d32f2f);
+    background: linear-gradient(135deg, #000000, #434343);
     color: white;
     position: fixed;
     height: 100%;
@@ -21,13 +20,13 @@
     background: rgba(255, 255, 255, 0.1);
 }
 .sidebar a:hover {
-    background: #ffebee;
-    color: #b71c1c;
+    background: #e0e0e0;
+    color: #000000;
     transform: translateX(10px);
 }
 .sidebar a.active {
-    background: #b71c1c;
-    color: white;
+    background: #ffffff;
+    color: rgb(0, 0, 0);
     font-weight: bold;
 }
 .sidebar a i {
@@ -41,7 +40,7 @@
 }
 .content h2 {
     font-size: 32px;
-    color: #b71c1c;
+    color: #000000;
     margin-bottom: 20px;
 }
 .content p {
@@ -50,13 +49,13 @@
 }
 .sidebar-toggle {
     position: absolute;
-    top: 20px;
+    top: 20px;  
     left: 270px;
     display: none;
     font-size: 30px;
     background-color: transparent;
     border: none;
-    color: #b71c1c;
+    color: #000000;
     transition: all 0.3s ease;
 }
 @media (max-width: 768px) {

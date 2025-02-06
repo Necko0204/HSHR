@@ -1,4 +1,5 @@
 <?php
+session_name('admin_session');
 session_start();
 header('Content-Type: application/json'); // Ensure JSON response
 require 'db_config.php'; // Include database connection
@@ -23,9 +24,14 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $hashedPassword = hash('sha256', $password);
 
         if ($hashedPassword === $row['password']) {
+            // Set session variables
             $_SESSION['admin_id'] = $row['id'];
             $_SESSION['admin_username'] = $row['username'];
-            echo json_encode(["success" => true, "message" => "Login successful!"]);
+
+            // Ensure session is saved
+            session_write_close();
+
+            echo json_encode(["success" => true, "message" => "Login successful!", "session" => $_SESSION]);
         } else {
             echo json_encode(["success" => false, "message" => "Invalid password."]);
         }

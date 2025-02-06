@@ -9,6 +9,7 @@ if (!isset($_SESSION['admin_id'])) {
 }
 ?>
 
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -57,7 +58,6 @@ if (!isset($_SESSION['admin_id'])) {
 }
     </style>
 <body>
-
     <!-- Sidebar & Navbar-->
     <?php include 'sidebar.php'; ?>
     <?php include 'nav_header.php'; ?>
@@ -65,8 +65,8 @@ if (!isset($_SESSION['admin_id'])) {
     <main class="wrapper">
         
     </main>
-    <!-- Bootstrap JS -->
     <script src="background.js"></script>
+    <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
