@@ -17,7 +17,8 @@ if (!isset($_SESSION['admin_id'])) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Leave Requests</title>
+    <link rel="icon" type="image/png" href="images/asdasdasd123123123123123.jpg">
+    <title>Holy Spirit Human Resource</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
@@ -31,6 +32,7 @@ if (!isset($_SESSION['admin_id'])) {
             color: black;
             min-height: 100vh;
             margin: 0; /* Reset margin to ensure no unwanted space */
+            overflow: hidden; /* Hide scroll wheel */
         }
         /* Wrapper for main content */
         .wrapper {

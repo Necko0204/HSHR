@@ -8,7 +8,7 @@ session_start();
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HRMS - School Login</title>
+    <title>Holy Spirit Human Resource</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&family=Poppins:wght@400;500&display=swap" rel="stylesheet">
     <!-- Toastr CSS -->
@@ -21,7 +21,7 @@ body {
     height: 100vh;
     display: flex;
     align-items: center;
-    background: black;
+    background: linear-gradient(to right, rgb(66, 21, 21), rgb(255, 0, 0));
     background-size: cover;
     background-position: center;
 }
@@ -46,7 +46,7 @@ body::after {
 .login-card {
     background: white;
     backdrop-filter: blur(20px);
-    border-radius: 2px 0 0 20px; /* Rounded corners on the left side */
+    border-radius: 2px 0 0 2px; /* Rounded corners on the left side */
     padding: 40px;
     box-shadow: 0 15px 40px rgba(0, 0, 0, 0.3);
     width: 30%; /* Takes up 30% of the screen width */
@@ -163,7 +163,7 @@ body::after {
     <div class="box-container"></div>
         <div class="login-card">
             <div class="logo">
-                <img src="https://via.placeholder.com/80" alt="School Logo">
+                <img src="images/asdasdasd123123123123123.jpg" alt="School Logo">
             </div>
             <h1 style="font-family: 'Poppins', sans-serif;">HRMS Login</h1>
             <form id="loginForm">
