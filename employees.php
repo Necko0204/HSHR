@@ -32,7 +32,6 @@ if (!isset($_SESSION['admin_id'])) {
             color: black;
             min-height: 100vh;
             margin: 0; /* Reset margin to ensure no unwanted space */
-            overflow: hidden; /* Hide scroll wheel */
         }
 
         /* Wrapper for main content */
@@ -307,25 +306,6 @@ if (!isset($_SESSION['admin_id'])) {
                                         <label for="age" class="form-label">Age</label>
                                         <input type="text" class="form-control" id="age" name="age" readonly>
                                     </div>
-                                        <script>
-                                            function calculateAge() {
-                                                var dob = document.getElementById('dateofbirth').value;
-                                                if (dob) {
-                                                    var birthDate = new Date(dob);
-                                                    var today = new Date();
-                                                    var age = today.getFullYear() - birthDate.getFullYear();
-                                                    var m = today.getMonth() - birthDate.getMonth();
-
-                                                    // Adjust if birthday hasn't occurred yet this year
-                                                    if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
-                                                        age--;
-                                                    }
-
-                                                    // Display the age
-                                                    document.getElementById('age').value = age;
-                                                }
-                                            }
-                                        </script>       
                                     <div class="mb-3">
                                         <label for="placeofbirth" class="form-label">Place of Birth</label>
                                         <input type="text" class="form-control" id="placeofbirth" name="placeofbirth" value="<?= $row['placeofbirth'] ?? '' ?>">
@@ -643,6 +623,25 @@ if (!isset($_SESSION['admin_id'])) {
                                             row.remove();  // Remove the row from the table
                                         }
     </script>
+     <script>
+                                            function calculateAge() {
+                                                var dob = document.getElementById('dateofbirth').value;
+                                                if (dob) {
+                                                    var birthDate = new Date(dob);
+                                                    var today = new Date();
+                                                    var age = today.getFullYear() - birthDate.getFullYear();
+                                                    var m = today.getMonth() - birthDate.getMonth();
+
+                                                    // Adjust if birthday hasn't occurred yet this year
+                                                    if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+                                                        age--;
+                                                    }
+
+                                                    // Display the age
+                                                    document.getElementById('age').value = age;
+                                                }
+                                            }
+                                        </script>       
     <script>
                                         document.getElementById('add-row').addEventListener('click', function () {
                                             let tableBody = document.querySelector("#organizations-table tbody");

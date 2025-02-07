@@ -31,7 +31,6 @@ if (!isset($_SESSION['admin_id'])) {
             background: white;
             color: black;
             min-height: 100vh;
-            overflow: hidden; /* Hide scroll wheel */
         }
 /* Wrapper for main content */
 .wrapper {

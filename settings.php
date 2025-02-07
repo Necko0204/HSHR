@@ -32,7 +32,6 @@ if (!isset($_SESSION['admin_id'])) {
             color: black;
             min-height: 100vh;
             margin: 0; /* Reset margin to ensure no unwanted space */
-            overflow: hidden; /* Hide scroll wheel */
         }
         /* Wrapper for main content */
         .wrapper {
