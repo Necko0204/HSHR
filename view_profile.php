@@ -31,12 +31,12 @@ if (!isset($_SESSION['admin_id'])) {
 
         .wrapper {
             margin-left: 270px;
-            padding: 20px;
+            padding: 30px;
             max-width: calc(100% - 270px);
         }
 
         .profile-card {
-            width: 120%; /* Extend beyond its container */
+            width: 100%; /* Extend beyond its container */
             margin-left: -10%; /* Center it properly */
             background: rgba(255, 255, 255, 0.2); /* Semi-transparent white */
             backdrop-filter: blur(10px); /* Optional: Adds a blur effect for a glassy look */
@@ -49,34 +49,32 @@ if (!isset($_SESSION['admin_id'])) {
             position: relative;
             overflow: hidden;
         }
-
         .profile-card::before {
-            
             content: '';
             position: absolute;
-            top: 20%;
+            top: 0;
             left: 50%;
-            width: 150%;
+            width: 180%;
             height: 150%;
-            background-color: rgba(0, 0, 0, 0.1);
-            clip-path: polygon(10% 20%, 20% 5%, 30% 25%, 50% 0, 70% 25%, 80% 5%, 90% 20%, 100% 0, 100% 100%, 0 100%, 0 0);
-            animation: hammerclawAnimation 2s infinite ease-in-out;
-            transform: translateX(-50%) rotate(-45deg);
-            pointer-events: none; /* Ensure it doesn't interfere with clicks */
+            background: linear-gradient(120deg, rgba(0, 123, 255, 0.1), rgba(255, 51, 102, 0.1));
+            clip-path: ellipse(40% 60% at 50% 50%);
+            animation: floatingWaves 6s infinite ease-in-out;
+            transform: translateX(-50%);
+            pointer-events: none;
         }
 
-        @keyframes hammerclawAnimation {
+        @keyframes floatingWaves {
             0% {
-                transform: translateX(-50%) rotate(-45deg);
-                opacity: 0.1;
+                transform: translateX(-50%) translateY(-10px);
+                opacity: 0.2;
             }
             50% {
-                transform: translateX(-50%) rotate(0deg);
+                transform: translateX(-50%) translateY(10px);
                 opacity: 0.3;
             }
             100% {
-                transform: translateX(-50%) rotate(45deg);
-                opacity: 0.1;
+                transform: translateX(-50%) translateY(-10px);
+                opacity: 0.2;
             }
         }
 
@@ -156,28 +154,23 @@ if (!isset($_SESSION['admin_id'])) {
         .hidden {
             display: none;
         }
-
         :root {
-            --primary-color: #4a90e2;  /* Blue */
-            --accent-color: #e94e77;   /* Pink */
-            --light-bg: #f7f9fc;
+            --primary-color: #007bff;  /* Professional Blue */
+            --secondary-color: #6c757d; /* Neutral Gray */
+            --light-bg: #f8f9fa;
             --card-bg: #ffffff;
-            --border-color: #e0e0e0;
+            --border-color: #ccc;
             --text-color: #333;
             --transition-speed: 0.3s;
-            --border-radius: 15px;
-            --hover-scale: 1.05;
+            --border-radius: 10px;
         }
 
         /* Profile Card Wrapper */
         #updateProfileCard {
-            display: grid;
-            grid-template-columns: 300px auto;
-            gap: 2rem;
-            max-width: 1000px;
+            max-width: 800px;
             margin: 4rem auto;
             padding: 2.5rem;
-            background: rgba(255, 255, 255, 0.2); /* Semi-transparent white */
+            background: rgba(255, 255, 255, 0.2); /* Transparent background */
             backdrop-filter: blur(10px);
             border-radius: 20px;
             box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
@@ -185,7 +178,6 @@ if (!isset($_SESSION['admin_id'])) {
             color: black; /* Ensures text is black */
             transition: transform 0.4s ease-in-out;
         }
-
 
         /* Profile Picture Section */
         .profile-picture-container {
@@ -196,18 +188,12 @@ if (!isset($_SESSION['admin_id'])) {
         }
 
         .profile-picture {
-            width: 180px;
-            height: 180px;
+            width: 150px;
+            height: 150px;
             border-radius: 50%;
             overflow: hidden;
             position: relative;
-            border: 5px solid rgba(255, 255, 255, 0.2);
-            box-shadow: 0px 0px 20px rgba(0, 153, 255, 0.6);
-            transition: transform 0.4s ease-in-out;
-        }
-
-        .profile-picture:hover {
-            transform: scale(1.1) rotate(5deg);
+            border: 3px solid var(--border-color);
         }
 
         .profile-picture img {
@@ -219,7 +205,7 @@ if (!isset($_SESSION['admin_id'])) {
         /* Form Section */
         .form-container {
             display: grid;
-            grid-template-columns: repeat(2, 1fr);
+            grid-template-columns: 1fr 1fr;
             gap: 1.5rem;
         }
 
@@ -231,30 +217,29 @@ if (!isset($_SESSION['admin_id'])) {
         .form-label {
             font-size: 1rem;
             font-weight: bold;
-            color: #00d4ff;
+            color: #555; /* Neutral Gray */
             margin-bottom: 0.5rem;
         }
 
         .form-control {
             width: 100%;
             padding: 0.8rem;
-            border: 2px solid rgba(255, 255, 255, 0.2);
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            background: #fff;
+            border-radius: 6px;
             font-size: 1rem;
-            color: #ffffff;
+            color: var(--text-color);
             transition: border 0.3s ease;
         }
 
         .form-control:focus {
-            border-color: #00d4ff;
-            box-shadow: 0 0 10px rgba(0, 212, 255, 0.5);
+            border-color: var(--primary-color);
+            box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
             outline: none;
         }
 
         /* Buttons */
         .btn-container {
-            grid-column: span 2;
             display: flex;
             justify-content: space-between;
             margin-top: 2rem;
@@ -262,52 +247,35 @@ if (!isset($_SESSION['admin_id'])) {
 
         .btn {
             padding: 0.8rem 1.8rem;
-            border-radius: 50px;
+            border-radius: 6px;
             font-size: 1rem;
             cursor: pointer;
             transition: transform 0.3s ease, background-color 0.3s ease;
             text-transform: uppercase;
             font-weight: bold;
+            border: none;
         }
 
         .btn-success {
-            background-color: #00d4ff;
+            background-color: var(--primary-color);
             color: #fff;
-            border: none;
         }
 
         .btn-success:hover {
-            background-color: #008cff;
-            transform: scale(1.1);
+            background-color: #0056b3;
         }
 
         .btn-secondary {
-            background-color: #ff4d6d;
+            background-color: var(--secondary-color);
             color: #fff;
-            border: none;
         }
 
         .btn-secondary:hover {
-            background-color: #d91e40;
-            transform: scale(1.1);
+            background-color: #545b62;
         }
 
         /* Mobile Adjustments */
         @media (max-width: 768px) {
-            #updateProfileCard {
-                grid-template-columns: 1fr;
-                text-align: center;
-                padding: 2rem;
-            }
-
-            .profile-card {
-                width: 100%;
-            }
-
-            .profile-picture-container {
-                margin-bottom: 1rem;
-            }
-
             .form-container {
                 grid-template-columns: 1fr;
             }
@@ -316,7 +284,45 @@ if (!isset($_SESSION['admin_id'])) {
                 flex-direction: column;
                 gap: 1rem;
             }
+        }   
+        .profile-details-container {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
         }
+
+        .profile-detail {
+            background: #f8f9fa;
+            padding: 12px 15px;
+            border-radius: 8px;
+            font-size: 16px;
+            text-align: left;
+        }
+
+        .profile-detail strong {
+            font-size: 12px;
+            color: #555;
+            text-transform: uppercase;
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .profile-detail span,
+        .profile-detail p {
+            font-size: 18px;
+            font-weight: 500;
+            color: #333;
+        }
+
+        .full-width {
+            grid-column: span 2;
+        }
+
+        .update-profile-btn:hover {
+            background: linear-gradient(135deg, #0056b3, #003d80);
+            transform: scale(1.05);
+        }
+
     </style>
 </head>
 <body>
@@ -325,112 +331,146 @@ if (!isset($_SESSION['admin_id'])) {
 <?php include 'nav_header.php'; ?>
 
 <main class="wrapper">
-    <div class="profile-card text-center p-4 shadow-lg rounded" style="width: 100%; max-width: 600px; margin: 100px auto;">
+<div class="profile-card text-center p-4 shadow-lg rounded" id="profileCard">
+    <div class="profile-header">
         <div class="profile-image-container">
             <img src="<?php echo !empty($userData['profile_picture']) ? $userData['profile_picture'] : 'uploads/profile_pictures/default.jpg'; ?>" 
-            alt="Profile Picture" 
-            class="rounded-circle">
+                 alt="Profile Picture" 
+                 class="profile-picture">
         </div>
-        <h2><?php echo htmlspecialchars($userData['name']); ?></h2>
-        <p class="mb-1"><strong>Position:</strong> <?php echo htmlspecialchars($userData['position']); ?></p>
-        <p class="mb-1"><strong>Age:</strong> <?php echo htmlspecialchars($userData['age']); ?></p>
-        <p class="mb-3"><strong>Bio:</strong> <?php echo htmlspecialchars($userData['bio']); ?></p>
-        <button class="btn btn-primary mt-3" id="editProfileBtn">Update Profile</button>
+        <h3><?php echo htmlspecialchars($userData['name']); ?> Profile</h3>
     </div>
 
-<div id="updateProfileCard" class="hidden fade-in">
-    <h3>Edit Profile</h3>
-    <form action="update_profile.php" method="POST" enctype="multipart/form-data">
-        <input type="hidden" name="id" value="<?php echo $userData['id']; ?>">
-
-        <!-- Profile Picture Section -->
-        <div class="profile-picture-container">
-            <div class="profile-picture">
-                <img id="profilePreview" src="<?php echo !empty($userData['profile_picture']) ? $userData['profile_picture'] : 'uploads/profile_pictures/default.jpg'; ?>" alt="Profile Picture">
-                <input type="file" id="profilePicInput" name="profile_picture" accept="image/*" style="display: none;">
-            </div>
-            <label class="form-label">Profile Picture</label>
+    <div class="profile-details-container">
+        <div class="profile-detail">
+            <strong>Position</strong>
+            <span><?php echo htmlspecialchars($userData['position']); ?></span>
         </div>
-
-
-        <!-- Form Fields Section -->
-        <div class="form-container">
-            <div class="form-group">
-                <label class="form-label">Full Name</label>
-                <input type="text" class="form-control" name="name" value="<?php echo htmlspecialchars($userData['name']); ?>" required>
-            </div>
-
-            <div class="form-group">
-                <label class="form-label">Email</label>
-                <input type="email" class="form-control" name="email" value="<?php echo htmlspecialchars($userData['email']); ?>" required>
-            </div>
-
-            <div class="form-group">
-                <label class="form-label">Position</label>
-                <input type="text" class="form-control" name="position" value="<?php echo htmlspecialchars($userData['position']); ?>" required readonly>
-            </div>
-
-            <div class="form-group">
-                <label class="form-label">Username</label>
-                <input type="text" class="form-control" name="username" value="<?php echo htmlspecialchars($userData['username']); ?>" required>
-            </div>
-
-            <div class="form-group">
-                <label class="form-label">Age</label>
-                <input type="number" class="form-control" name="age" value="<?php echo htmlspecialchars($userData['age']); ?>" required>
-            </div>
-
-            <div class="form-group">
-                <label class="form-label">Bio</label>
-                <textarea class="form-control" name="bio" required><?php echo htmlspecialchars($userData['bio']); ?></textarea>
-            </div>
-
-            <!-- Buttons Section -->
-            <div class="btn-container">
-                <button type="submit" class="btn btn-success">Save Changes</button>
-                <button type="button" class="btn btn-secondary" id="cancelEdit">Cancel</button>
-            </div>
+        <div class="profile-detail">
+            <strong>Username</strong>
+            <span><?php echo htmlspecialchars($userData['username']); ?></span>
         </div>
-    </form>
+        <div class="profile-detail">
+            <strong>Age</strong>
+            <span><?php echo htmlspecialchars($userData['age']); ?></span>
+        </div>
+        <div class="profile-detail">
+            <strong>Email</strong>
+            <span><?php echo htmlspecialchars($userData['email']); ?></span>
+        </div>
+        <div class="profile-detail">
+            <strong>Phone</strong>
+            <span><?php echo htmlspecialchars($userData['phone'] ?? 'N/A'); ?></span>
+        </div>
+        <div class="profile-detail">
+            <strong>Address</strong>
+            <span><?php echo htmlspecialchars($userData['address'] ?? 'N/A'); ?></span>
+        </div>
+        <div class="profile-detail full-width">
+            <strong>Bio</strong>
+            <p><?php echo htmlspecialchars($userData['bio']); ?></p>
+        </div>
+        <div class="profile-detail full-width">
+            <strong>Experience</strong>
+            <p><?php echo htmlspecialchars($userData['experience'] ?? 'Not provided'); ?></p>
+        </div>
+    </div>
+
+    <button class="btn update-profile-btn" id="editProfileBtn">Update Profile</button>
 </div>
 
-</main>
+        <div id="updateProfileCard" class="hidden fade-in">
+            <h3>Edit Profile</h3>
+            <form action="update_profile.php" method="POST" enctype="multipart/form-data">
+                <input type="hidden" name="id" value="<?php echo $userData['id']; ?>">
+
+                <!-- Profile Picture Section -->
+                <div class="profile-picture-container">
+                    <div class="profile-picture">
+                        <img id="profilePreview" src="<?php echo !empty($userData['profile_picture']) ? $userData['profile_picture'] : 'uploads/profile_pictures/default.jpg'; ?>" alt="Profile Picture">
+                        <input type="file" id="profilePicInput" name="profile_picture" accept="image/*" style="display: none;">
+                    </div>
+                    <label class="form-label">Profile Picture</label>
+                </div>
+
+                <!-- Form Fields Section -->
+                <div class="form-container" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+                    <div class="form-group">
+                        <label class="form-label">Full Name</label>
+                        <input type="text" class="form-control" name="name" value="<?php echo htmlspecialchars($userData['name']); ?>" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Email</label>
+                        <input type="email" class="form-control" name="email" value="<?php echo htmlspecialchars($userData['email']); ?>" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Position</label>
+                        <input type="text" class="form-control" name="position" value="<?php echo htmlspecialchars($userData['position']); ?>" required readonly>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Username</label>
+                        <input type="text" class="form-control" name="username" value="<?php echo htmlspecialchars($userData['username']); ?>" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Age</label>
+                        <input type="number" class="form-control" name="age" value="<?php echo htmlspecialchars($userData['age']); ?>" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Bio</label>
+                        <textarea class="form-control" name="bio" required><?php echo htmlspecialchars($userData['bio']); ?></textarea>
+                    </div>
+                </div>
+
+                <!-- Buttons Section -->
+                <div class="btn-container">
+                    <button type="submit" class="btn btn-success">Save Changes</button>
+                    <button type="button" class="btn btn-secondary" id="cancelEdit">Cancel</button>
+                </div>
+            </form>
+        </div>
+
+
+    </main>
 <script src="background.js"></script>
 <script>
-document.addEventListener("DOMContentLoaded", function () {
-    const editProfileBtn = document.getElementById("editProfileBtn");
-    const updateProfileCard = document.getElementById("updateProfileCard");
-    const cancelEdit = document.getElementById("cancelEdit");
+ document.addEventListener("DOMContentLoaded", function () {
+            const profileCard = document.getElementById("profileCard");
+            const updateProfileCard = document.getElementById("updateProfileCard");
+            const editProfileBtn = document.getElementById("editProfileBtn");
+            const cancelEdit = document.getElementById("cancelEdit");
 
-    if (editProfileBtn) {
-        editProfileBtn.addEventListener("click", function () {
-            updateProfileCard.classList.remove("hidden");
-            updateProfileCard.classList.add("show");
+            editProfileBtn.addEventListener("click", function () {
+                profileCard.classList.add("hidden");
+                updateProfileCard.classList.remove("hidden");
+                updateProfileCard.classList.add("show");
+            });
+
+            cancelEdit.addEventListener("click", function () {
+                updateProfileCard.classList.add("hidden");
+                updateProfileCard.classList.remove("show");
+                profileCard.classList.remove("hidden");
+            });
         });
-    }
 
-    if (cancelEdit) {
-        cancelEdit.addEventListener("click", function () {
-            updateProfileCard.classList.add("hidden");
-            updateProfileCard.classList.remove("show");
+        document.getElementById("profilePreview").addEventListener("click", function() {
+            document.getElementById("profilePicInput").click();
         });
-    }
-});
 
-document.getElementById("profilePreview").addEventListener("click", function() {
-    document.getElementById("profilePicInput").click();
-});
-
-document.getElementById("profilePicInput").addEventListener("change", function(event) {
-    const file = event.target.files[0];
-    if (file) {
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            document.getElementById("profilePreview").src = e.target.result;
-        };
-        reader.readAsDataURL(file);
-    }
-});
+        document.getElementById("profilePicInput").addEventListener("change", function(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    document.getElementById("profilePreview").src = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            }
+        });
 </script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
