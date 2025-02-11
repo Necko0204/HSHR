@@ -29,16 +29,17 @@
 
     <!-- Profile Dropdown -->
     <div class="nav-item dropdown">
-      <a href="#" class="nav-link dropdown-toggle d-flex align-items-center" id="profileDropdown" data-bs-toggle="dropdown">
-        <img src="<?php echo !empty($userData['profile_picture']) ? $userData['profile_picture'] : 'uploads/profile_pictures/default.jpg'; ?>" 
-        alt="Profile Picture" 
-        class="rounded-circle profile-pic">
+    <a href="#" class="nav-link dropdown-toggle d-flex align-items-center" id="profileDropdown" data-bs-toggle="dropdown">
+        <img src="<?php echo !empty($userData['profile_picture']) ? $userData['profile_picture'] : '/HSHR/images/1659115450120.jpg'; ?>" 
+            alt="Profile Picture" 
+            class="rounded-circle profile-pic">
         <div class="pulsing-icon2">
-          <div class="pulsing-ring2"></div>
+            <div class="pulsing-ring2"></div>
         </div>
-      </a>
+    </a>
+
       <ul class="dropdown-menu custom-dropdown" aria-labelledby="profileDropdown">
-        <li><a class="dropdown-item" href="view_profile.php">View Profile</a></li>
+        <li><a class="dropdown-item" href="staff_viewprofile.php">View Profile</a></li>
         <li><a class="dropdown-item" href="staff_logout.php">Logout</a></li>
       </ul>
     </div>

@@ -14,12 +14,16 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     if (!empty($username) && !empty($password)) {
         $stmt = $conn->prepare("SELECT employee_id, password FROM staff_accounts WHERE username = ?");
         if (!$stmt) {
-            die("❌ Prepare failed: " . $conn->error);
+            $_SESSION['error'] = "Database error: " . $conn->error;
+            header("Location: index.php");
+            exit();
         }
 
         $stmt->bind_param("s", $username);
         if (!$stmt->execute()) {
-            die("❌ Execute failed: " . $stmt->error);
+            $_SESSION['error'] = "Database error: " . $stmt->error;
+            header("Location: index.php");
+            exit();
         }
 
         $stmt->store_result();
@@ -37,16 +41,18 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 header("Location: dashboard.php");
                 exit();
             } else {
-                die("❌ Incorrect username or password.");
+                $_SESSION['error'] = "❌ Incorrect username or password.";
             }
         } else {
-            die("❌ Invalid username or password.");
+            $_SESSION['error'] = "❌ Invalid username or password.";
         }
         $stmt->close();
     } else {
-        die("❌ Please fill in all fields.");
+        $_SESSION['error'] = "❌ Please fill in all fields.";
     }
 
     $conn->close();
+    header("Location: index.php"); // Redirect back to login
+    exit();
 }
 ?>
