@@ -27,9 +27,9 @@ if ($result->num_rows > 0) {
         // Update the attendance record with time_out and total_hours
         $query = "UPDATE attendance SET time_out='$time_out', total_hours='$worked_hours' WHERE employee_id='$employee_id' AND date='$date'";
         if ($conn->query($query)) {
-            echo "Clock-out successful at $time_out. Total worked hours: $worked_hours";
+            echo "✅ Clock-out successful!";
         } else {
-            echo "Error: " . $conn->error;
+            echo "❌ Error: " . $conn->error;
         }
     } else {
         echo "You have already clocked out today.";

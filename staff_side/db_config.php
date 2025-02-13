@@ -1,4 +1,5 @@
 <?php
+date_default_timezone_set('Asia/Manila'); // Adjust to your local timezone
 $servername = "localhost";
 $username = "root";
 $password = "";

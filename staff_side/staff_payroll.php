@@ -12,7 +12,6 @@ if (!isset($_SESSION['employee_id'])) {
 }
 
 $employee_id = $_SESSION['employee_id'];
-$conn = new mysqli('localhost', 'root', '', 'humanresource');
 
 // Get latest hourly rate
 $query = "SELECT hourly_rate FROM salary_rates WHERE employee_id = ? ORDER BY effective_date DESC LIMIT 1";
@@ -21,16 +20,18 @@ $stmt->bind_param("i", $employee_id);
 $stmt->execute();
 $result = $stmt->get_result();
 $row = $result->fetch_assoc();
-$hourly_rate = $row['hourly_rate'] ?? 50; // Default rate ₱50 if no record
+$hourly_rate = $row['hourly_rate'] ?? 50; // Default ₱50 if no record
 
-// Get total hours worked per month
+// Get total work hours per month in HH:MM:SS
 $query = "
-    SELECT DATE_FORMAT(date, '%M %Y') AS month, 
-           SUM(total_hours) AS total_hours 
+    SELECT 
+        DATE_FORMAT(date, '%M %Y') AS month, 
+        SEC_TO_TIME(SUM(TIME_TO_SEC(TIMEDIFF(time_out, time_in)))) AS total_hours
     FROM attendance 
     WHERE employee_id = ? 
     GROUP BY DATE_FORMAT(date, '%Y-%m') 
-    ORDER BY date DESC";
+    ORDER BY MIN(date) DESC";
+
 $stmt = $conn->prepare($query);
 $stmt->bind_param("i", $employee_id);
 $stmt->execute();
@@ -39,8 +40,12 @@ $result = $stmt->get_result();
 $payroll_data = [];
 while ($row = $result->fetch_assoc()) {
     $month = $row['month'];
-    $total_hours = $row['total_hours'] ?? 0;
-    $computed_salary = $total_hours * $hourly_rate;
+    $total_hours = $row['total_hours'] ?? '00:00:00';
+
+    // Convert HH:MM:SS to total hours in decimal for salary computation
+    list($hh, $mm, $ss) = explode(":", $total_hours);
+    $decimal_hours = $hh + ($mm / 60) + ($ss / 3600);
+    $computed_salary = $decimal_hours * $hourly_rate;
 
     $payroll_data[] = [
         'month' => $month,
@@ -49,6 +54,8 @@ while ($row = $result->fetch_assoc()) {
     ];
 }
 ?>
+
+
 
 <!DOCTYPE html>
 <html lang="en">

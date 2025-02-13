@@ -15,25 +15,27 @@ if (!isset($_SESSION['employee_id'])) {
 
 // Fetch staff data
 $staffData = getStaffData($_SESSION['employee_id']);
-
 if (!$staffData) {
-    die("❌ Staff data not found.");
+    die("\u274C Staff data not found.");
 }
 
-$employee_name = $staffData['firstname'] . ' ' . $staffData['lastname']; // Store employee name
+$employee_name = $staffData['firstname'] . ' ' . $staffData['lastname'];
+$employee_id = $_SESSION['employee_id'];
 
-$employee_id = $_SESSION['employee_id']; // Assuming employee_id is stored in session
-$query = "SELECT leave_id, leave_type_id, leave_start_date, leave_end_date, total_days, status, request_date 
-          FROM leave_requests 
-          WHERE employee_id = ?";
+// Fetch leave requests for the logged-in employee
+$query = "SELECT lr.leave_id, lt.leave_name, lr.leave_start_date, lr.leave_end_date, lr.total_days, lr.status, lr.request_date 
+          FROM leave_requests lr
+          JOIN leave_types lt ON lr.leave_type_id = lt.leave_type_id
+          WHERE lr.employee_id = ?";
 $stmt = $conn->prepare($query);
 $stmt->bind_param("i", $employee_id);
 $stmt->execute();
 $result = $stmt->get_result();
 
+// Fetch leave types for the dropdown
+$leaveTypeQuery = "SELECT leave_type_id, leave_name, max_days FROM leave_types ORDER BY leave_type_id";
+$leaveTypeResult = $conn->query($leaveTypeQuery);
 ?>
-
-
 
 <!DOCTYPE html>
 <html lang="en">
@@ -87,56 +89,59 @@ $result = $stmt->get_result();
     </div>
 
     <div class="container content-wrapper">
-        <h2 class="mb-4 text-center" style="color: rgb(139, 41, 41);">Leave Requests</h2>
-
-        <!-- Leave Request Form -->
-        <div class="card2 card-custom mb-4">
-            <h4 class="text-center">Submit a Leave Request</h4>
-            <form action="submit_leave.php" method="POST">
-                <div class="mb-3">
-                    <label class="form-label">Leave Type:</label>
-                    <select class="form-control" name="leave_type_id" id="leaveType" required>
-                        <option value="" selected disabled>Select Type of Leave</option>
-                        <option value="1">Sick Leave</option>
-                        <option value="2">Vacation Leave</option>
-                        <option value="3">Emergency Leave</option>
-                    </select>
-                </div>
-
-                <div class="mb-3">
-                    <label class="form-label">Select Leave Dates:</label>
-                    <input type="text" id="leave_dates" class="form-control" name="leave_dates" 
-                        placeholder="Select your leave dates" title="Choose your leave period" required>
-                </div>
-
-                <div class="mb-3">
-                    <label class="form-label">Total Days:</label>
-                    <input type="number" class="form-control" id="total_days" name="total_days" readonly 
-                        placeholder="Total leave days will be calculated" title="Automatically calculated based on selected dates">
-                </div>
-
-                <button type="submit" class="btn btn-primary w-100">Submit Leave Request</button>
-            </form>
+    <h2 class="mb-4 text-center" style="color: rgb(139, 41, 41);">Leave Requests</h2>
+    
+    <div class="row justify-content-center">
+        <div class="col-md-4" style="flex: 0.8; max-width: 35%;">
+            <div class="card2 card-custom mb-4" style="padding: 40px; min-height: 500px; width: 100%;">
+                <h4 class="text-center" style="color: black;">Submit a Leave Request</h4>
+                <form action="submit_leave.php" method="POST">
+                    <div class="mb-3">
+                        <label class="form-label">Leave Type:</label>
+                        <select class="form-control" name="leave_type_id" id="leaveType" required>
+                    <option value="" selected disabled>Select Type of Leave</option>
+                    <?php while ($row = $leaveTypeResult->fetch_assoc()) { ?>
+                        <option value="<?= $row['leave_type_id']; ?>" data-max="<?= $row['max_days']; ?>">
+                            <?= htmlspecialchars($row['leave_name']) ?> (Max: <?= $row['max_days'] ?> days)
+                        </option>
+                    <?php } ?>
+                </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Select Leave Dates:</label>
+                        <input type="text" id="leave_dates" class="form-control" name="leave_dates" placeholder="Select your leave dates" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Total Days:</label>
+                        <input type="number" class="form-control" id="total_days" name="total_days" placeholder="Total leave days" readonly>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary w-100">Submit Leave Request</button>
+                </form>
+            </div>
         </div>
 
-        <!-- Leave Requests Table -->
-        <div class="card2 card-custom">
-            <h4 class="text-center">Your Leave Requests</h4>
-            <div class="table-responsive table-container">
-                <table class="table table-striped">
-                    <thead class="table-dark">
-                        <tr>
-                            <th>Start Date</th>
-                            <th>End Date</th>
-                            <th>Total Days</th>
-                            <th>Status</th>
-                            <th>Request Date</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php if ($result->num_rows > 0) { ?>
+        <div class="col-md-8" style="flex: 1.2; max-width: 80%;">
+            <div class="card2 card-custom" style="padding: 40px; min-height: 500px; width: 100%;">
+                <h4 class="text-center" style="color: black;">Your Leave Requests</h4>
+                <div class="table-responsive table-container">
+                    <table class="table table-striped">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>Leave Type</th>
+                                <th>Start Date</th>
+                                <th>End Date</th>
+                                <th>Total Days</th>
+                                <th>Status</th>
+                                <th>Request Date</th>
+                            </tr>
+                        </thead>
+                        <tbody>
                             <?php while ($row = $result->fetch_assoc()) { ?>
                                 <tr>
+                                    <td><?= htmlspecialchars($row['leave_name']); ?></td>
                                     <td><?= $row['leave_start_date']; ?></td>
                                     <td><?= $row['leave_end_date']; ?></td>
                                     <td><?= $row['total_days']; ?></td>
@@ -144,52 +149,61 @@ $result = $stmt->get_result();
                                     <td><?= $row['request_date']; ?></td>
                                 </tr>
                             <?php } ?>
-                        <?php } else { ?>
-                            <tr>
-                                <td colspan="7" class="text-center">No leave requests found.</td>
-                            </tr>
-                        <?php } ?>
-                    </tbody>
-                </table>
+                            <?php if ($result->num_rows == 0) { ?>
+                                <tr>
+                                    <td colspan="6" class="text-center">No leave requests found.</td>
+                                </tr>
+                            <?php } ?>
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </div>
+</div>
 
-    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
-    <script>
-        document.addEventListener("DOMContentLoaded", function() {
-            const leaveType = document.getElementById("leaveType");
-            const leaveDates = document.getElementById("leave_dates");
-            const totalDaysInput = document.getElementById("total_days");
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    const leaveType = document.getElementById("leaveType");
+    const leaveDates = document.getElementById("leave_dates");
+    const totalDaysInput = document.getElementById("total_days");
 
-            // Remove default option once user selects a valid leave type
-            leaveType.addEventListener("change", function() {
-                if (leaveType.value) {
-                    leaveType.querySelector("option[value='']").remove();
-                }
-            });
+    let fp = flatpickr(leaveDates, {
+        mode: "range",
+        dateFormat: "Y-m-d",
+        minDate: "today",
+        onClose: function(selectedDates) {
+            if (selectedDates.length === 2) {
+                let maxDays = parseInt(leaveType.selectedOptions[0].dataset.max);
+                let daysDiff = Math.ceil((selectedDates[1] - selectedDates[0]) / (1000 * 60 * 60 * 24)) + 1;
 
-            // Flatpickr for selecting date range
-            flatpickr("#leave_dates", {
-                mode: "range",
-                dateFormat: "Y-m-d",
-                minDate: "today",
-                onClose: function(selectedDates) {
-                    if (selectedDates.length === 2) {
-                        const startDate = selectedDates[0];
-                        const endDate = selectedDates[1];
-
-                        // Calculate total days (including start & end date)
-                        const timeDiff = endDate.getTime() - startDate.getTime();
-                        const daysDiff = Math.ceil(timeDiff / (1000 * 60 * 60 * 24)) + 1;
-
-                        totalDaysInput.value = daysDiff;
-                    } else {
+                if (daysDiff > maxDays) {
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Exceeded Maximum Days',
+                        text: `You can only select up to ${maxDays} days.`,
+                        confirmButtonColor: '#d33',
+                        confirmButtonText: 'OK'
+                    }).then(() => {
+                        // Clear the field & reset total days
+                        leaveDates.value = "";
                         totalDaysInput.value = "";
-                    }
+                        fp.clear();
+                    });
+                } else {
+                    totalDaysInput.value = daysDiff;
                 }
-            });
-        });
-    </script>
+            } else {
+                totalDaysInput.value = "";
+            }
+        }
+    });
+});
+</script>
+
 </body>
 </html>
