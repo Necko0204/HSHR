@@ -1,9 +1,14 @@
 <?php
 // Function to get user data from the database
 function getUserData($admin_id) {
-    // Database connection
-    $conn = new mysqli('localhost', 'root', '', 'humanresource');
-
+    $servername = "sql12.freesqldatabase.com";
+    $username = "sql12762545";
+    $password = "KBawSiFK9P";
+    $dbname = "sql12762545";
+    
+    // Create connection
+    $conn = new mysqli($servername, $username, $password, $dbname);
+    
     // Check connection
     if ($conn->connect_error) {
         die("Connection failed: " . $conn->connect_error);
@@ -35,9 +40,14 @@ function getUserData($admin_id) {
 
 // Function to get all employees from the database
 function getEmployees() {
-    // Database connection
-    $conn = new mysqli('localhost', 'root', '', 'humanresource');
-
+    $servername = "sql12.freesqldatabase.com";
+    $username = "sql12762545";
+    $password = "KBawSiFK9P";
+    $dbname = "sql12762545";
+    
+    // Create connection
+    $conn = new mysqli($servername, $username, $password, $dbname);
+    
     // Check connection
     if ($conn->connect_error) {
         die("Connection failed: " . $conn->connect_error);
@@ -58,6 +68,46 @@ function getEmployees() {
     $conn->close();
 
     return $employees;
+}
+
+// Function to get employee details by ID
+function getEmployeeDetails($id) {
+    $servername = "sql12.freesqldatabase.com";
+    $username = "sql12762545";
+    $password = "KBawSiFK9P";
+    $dbname = "sql12762545";
+    
+    // Create connection
+    $conn = new mysqli($servername, $username, $password, $dbname);
+    
+    // Check connection
+    if ($conn->connect_error) {
+        die("Connection failed: " . $conn->connect_error);
+    }
+
+    if (!$id) {
+        return null;
+    }
+
+    // Prepare the query to prevent SQL injection
+    $stmt = $conn->prepare("
+        SELECT employees.*, ed_2ndhalf.* 
+        FROM employees
+        LEFT JOIN ed_2ndhalf ON employees.id = ed_2ndhalf.employee_id 
+        WHERE employees.id = ?
+    ");
+    
+    $stmt->bind_param("s", $id); // Assuming 'id' is a string, if it's an integer use "i"
+    $stmt->execute();
+    $result = $stmt->get_result();
+
+    $row = ($result->num_rows > 0) ? $result->fetch_assoc() : null;
+
+    // Close connections
+    $stmt->close();
+    $conn->close();
+
+    return $row;
 }
 
 // Fetch user data
