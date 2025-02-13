@@ -21,7 +21,21 @@ if (!$staffData) {
 }
 
 // Fetch attendance records for the logged-in employee
-$query = "SELECT date, time_in, time_out, total_hours FROM attendance WHERE employee_id = ? ORDER BY date DESC";
+$query = "
+   SELECT 
+    date,
+    MIN(time_in) AS time_in, 
+    MAX(time_out) AS time_out, 
+    SEC_TO_TIME(SUM(TIME_TO_SEC(TIMEDIFF(time_out, time_in)))) AS total_hours,
+    MIN(break_in) AS break_in,
+    MAX(break_out) AS break_out,
+    IFNULL(SUM(break_duration), 0) AS break_duration
+FROM attendance 
+WHERE employee_id = ? 
+GROUP BY date 
+ORDER BY date DESC
+";
+
 $stmt = $conn->prepare($query);
 $stmt->bind_param("i", $_SESSION['employee_id']);
 $stmt->execute();
@@ -101,13 +115,19 @@ $result = $stmt->get_result();
             Welcome, <?php echo htmlspecialchars($staffData['username']); ?>
         </h2>
 
-        <!-- Buttons for Clock In and Clock Out -->
+        <!-- Buttons for Clock In, Clock Out, Break In, Break Out -->
         <div class="mb-4 d-flex gap-3">
             <button class="btn btn-success btn-lg" onclick="clockIn()">
                 <i class="fa fa-sign-in-alt"></i> Clock In
             </button>
             <button class="btn btn-danger btn-lg" onclick="clockOut()">
                 <i class="fa fa-sign-out-alt"></i> Clock Out
+            </button>
+            <button class="btn btn-success btn-lg" onclick="breakIn()">
+                <i class="fa fa-coffee"></i> Break In
+            </button>
+            <button class="btn btn-danger btn-lg" onclick="breakOut()">
+                <i class="fa fa-clock"></i> Break Out
             </button>
         </div>
 
@@ -123,45 +143,121 @@ $result = $stmt->get_result();
                                 <th>Time In</th>
                                 <th>Time Out</th>
                                 <th>Total Hours</th>
+                                <th>Break In</th>
+                                <th>Break Out</th>
+                                <th>Break duration</th>
                             </tr>
                         </thead>
                         <tbody>
-                            <?php if ($result->num_rows > 0) { ?>
-                                <?php while ($row = $result->fetch_assoc()) { ?>
-                                    <tr>
-                                        <td><?php echo $row['date']; ?></td>
-                                        <td><?php echo $row['time_in']; ?></td>
-                                        <td><?php echo $row['time_out'] ?? 'N/A'; ?></td>
-                                        <td><?php echo $row['total_hours'] ?? 'N/A'; ?></td>
-                                    </tr>
-                                <?php } ?>
-                            <?php } else { ?>
-                                <tr>
-                                    <td colspan="4" class="text-center">No attendance records found.</td>
-                                </tr>
-                            <?php } ?>
-                        </tbody>
+            <?php if ($result->num_rows > 0) { ?>
+                <?php while ($row = $result->fetch_assoc()) { ?>
+                    <tr>
+                        <td><?php echo $row['date']; ?></td>
+                        <td><?php echo $row['time_in']; ?></td>
+                        <td><?php echo $row['time_out'] ?? 'N/A'; ?></td>
+                        <td><?php echo $row['total_hours'] ?? 'N/A'; ?></td>
+                        <td><?php echo $row['break_in'] ?? 'N/A'; ?></td>
+                        <td><?php echo $row['break_out'] ?? 'N/A'; ?></td>
+                        <td>
+                            <?php
+                                // Check if break_duration exists and convert to HH:MM:SS format
+                                if (isset($row['break_duration']) && is_numeric($row['break_duration'])) {
+                                    // Convert break duration from seconds to HH:MM:SS
+                                    $break_duration_seconds = $row['break_duration'];
+                                    $hours = floor($break_duration_seconds / 3600);
+                                    $minutes = floor(($break_duration_seconds % 3600) / 60);
+                                    $seconds = $break_duration_seconds % 60;
+
+                                    // Format the result
+                                    echo sprintf("%02d:%02d:%02d", $hours, $minutes, $seconds);
+                                } else {
+                                    echo 'N/A';
+                                }
+                            ?>
+                        </td>
+                    </tr>
+                <?php } ?>
+            <?php } else { ?>
+                <tr>
+                    <td colspan="7" class="text-center">No attendance records found.</td>
+                </tr>
+            <?php } ?>
+        </tbody>
+
                     </table>
                 </div>
             </div>
         </div>
     </div>
 
-    <script>
-        function clockIn() {
-            fetch('clock_in.php')
-                .then(response => response.text())
-                .then(data => alert(data))
-                .catch(error => console.error(error));
-        }
+   <script>
+    function showNotification(responseText) {
+        Swal.fire({
+            title: "Notification",
+            text: responseText,
+            icon: responseText.includes("✅") ? "success" : "warning"
+        }).then(() => {
+            if (responseText.includes("✅")) {
+                updateAttendanceTable();
+            }
+        });
+    }
 
-        function clockOut() {
-            fetch('clock_out.php')
-                .then(response => response.text())
-                .then(data => alert(data))
-                .catch(error => console.error(error));
-        }
-    </script>
+    function updateAttendanceTable() {
+        fetch('fetch_attendance.php')
+            .then(response => response.json())
+            .then(data => {
+                const tbody = document.querySelector('table tbody');
+                tbody.innerHTML = ''; // Clear existing rows
+
+                data.forEach(row => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td>${row.date}</td>
+                        <td>${row.time_in || 'N/A'}</td>
+                        <td>${row.time_out || 'N/A'}</td>
+                        <td>${row.total_hours || 'N/A'}</td>
+                        <td>${row.break_in || 'N/A'}</td>
+                        <td>${row.break_out || 'N/A'}</td>
+                        <td>${formatBreakDuration(row.break_duration_seconds)}</td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            });
+    }
+
+    function formatBreakDuration(seconds) {
+        const hours = Math.floor(seconds / 3600);
+        const minutes = Math.floor((seconds % 3600) / 60);
+        const secs = seconds % 60;
+        return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+    }
+
+    function clockIn() { 
+        fetch('clock_in.php')
+            .then(response => response.text())
+            .then(data => showNotification(data));
+    }
+
+    function clockOut() { 
+        fetch('clock_out.php')
+            .then(response => response.text())
+            .then(data => showNotification(data));
+    }
+
+    function breakIn() { 
+        fetch('break_in.php')
+            .then(response => response.text())
+            .then(data => showNotification(data));
+    }
+
+    function breakOut() { 
+        fetch('break_out.php')
+            .then(response => response.text())
+            .then(data => showNotification(data));
+    }
+</script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.9/main.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
