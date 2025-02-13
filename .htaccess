@@ -1,0 +1,10 @@
+# Use mod_rewrite for URL routing
+RewriteEngine On
+
+# If the requested file or directory doesn't exist, rewrite to index.php
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^(.*)$ /index.php [L]
+
+# Set default index file to index.php
+DirectoryIndex index.php
