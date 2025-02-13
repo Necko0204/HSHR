@@ -1,8 +1,8 @@
 <?php
-$servername = "sql301.infinityfree.com";
-$username = "if0_38306620";
-$password = "8eu4xCWPEtqGRY";
-$dbname = "if0_38306620_humanresource";
+$servername = "sql12.freesqldatabase.com";
+$username = "sql12762545";
+$password = "KBawSiFK9P";
+$dbname = "sql12762545";
 
 // Create connection
 $conn = new mysqli($servername, $username, $password, $dbname);
