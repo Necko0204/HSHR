@@ -464,18 +464,13 @@ if (isset($_GET['id'])) {
                 </table>
             </div>
 
-                <div style="text-align: center;">
-                    <div class="btn-container">
-                        <a href="edit_employee.php?id=<?= $id ?>" class="btn btn-warning">Edit</a>
-                        <a href="delete_employee.php?id=<?= $id ?>" class="btn btn-danger" onclick="return confirm('Are you sure you want to delete this employee?');">Delete</a>
-                        <a href="employees.php" class="btn btn-secondary">Close</a>
+                    <div style="text-align: center;">
+                        <div class="btn-container">
+                            <a href="edit_employee.php?id=<?= $id ?>" class="btn btn-warning" style="margin-right: 10px;">Edit</a>
+                            <a href="delete_employee.php?id=<?= $id ?>" class="btn btn-danger" onclick="return confirm('Are you sure you want to delete this employee?');" style="margin-right: 10px;">Delete</a>
+                            <a href="employees.php" class="btn btn-secondary">Close</a>
+                        </div>
                     </div>
-                </div>
-
-
-
-
-
         </div>
     </div>
     </main>
