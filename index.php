@@ -8,10 +8,14 @@ session_start();
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" href="images/asdasdasd123123123123123.jpg">
     <title>Holy Spirit Human Resource</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&family=Poppins:wght@400;500&display=swap" rel="stylesheet">
-    <!-- Toastr CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="stylesheet" href="background.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
     <style>
 /* Fullscreen Layout */
@@ -21,9 +25,10 @@ body {
     height: 100vh;
     display: flex;
     align-items: center;
-    background: linear-gradient(to right, rgb(66, 21, 21), rgb(255, 0, 0));
+    background: linear-gradient(135deg, rgb(139, 0, 0), black);
     background-size: cover;
     background-position: center;
+    overflow: hidden; /* Prevents scrolling on mobile */
 }
 
 /* Parallax Background Effect */
@@ -41,7 +46,6 @@ body::after {
     filter: blur(15px);
     animation: backgroundMovement 10s infinite linear;
 }
-
 /* Login card positioned to the right and fits the whole screen height */
 .login-card {
     background: white;
@@ -156,7 +160,6 @@ body::after {
     0%, 100% { transform: scale(1); opacity: 0.8; }
     50% { transform: scale(1.4); opacity: 0.3; }
 }
-
 </style>
 
 <body>

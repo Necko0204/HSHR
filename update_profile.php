@@ -46,6 +46,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $username = $_POST['username'];
     $age = $_POST['age'];  // Age
     $bio = $_POST['bio'];  // Bio
+    $phone = $_POST['phone']; // Phone
+    $experiences = $_POST['experiences']; // Experiences
+    $address = $_POST['address']; // Address
 
     // Fetch current profile picture
     $sql = "SELECT profile_picture FROM admin WHERE id = ?";
@@ -60,7 +63,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     if (isset($_FILES['profile_picture']) && $_FILES['profile_picture']['error'] == 0) {
         $uploadResult = handleProfilePictureUpload($_FILES['profile_picture']);
         if (isset($uploadResult['error'])) {
-            echo $uploadResult['error'];
+            echo json_encode(['status' => 'error', 'message' => $uploadResult['error']]);
             exit;
         }
         $profile_picture = $uploadResult['success']; // New uploaded file
@@ -68,22 +71,20 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $profile_picture = $currentProfilePicture; // Keep existing profile picture
     }
 
-    // Update user data in the database
-    $sql = "UPDATE admin SET name=?, email=?, position=?, username=?, profile_picture=?, age=?, bio=? WHERE id=?";
+    // Update user data in the database, including the new fields
+    $sql = "UPDATE admin SET name=?, email=?, position=?, username=?, profile_picture=?, age=?, bio=?, phone=?, experiences=?, address=? WHERE id=?";
     $stmt = $conn->prepare($sql);
     if ($stmt === false) {
-        echo "Error preparing the query: " . $conn->error;
+        echo json_encode(['status' => 'error', 'message' => 'Error preparing the query: ' . $conn->error]);
         exit;
     }
 
-    $stmt->bind_param("sssssssi", $name, $email, $position, $username, $profile_picture, $age, $bio, $id);
-
+    $stmt->bind_param("ssssssssssi", $name, $email, $position, $username, $profile_picture, $age, $bio, $phone, $experiences, $address, $id);
     if ($stmt->execute()) {
-        echo "Profile updated successfully.";
+        echo json_encode(['status' => 'success', 'message' => 'Profile updated successfully.']);
     } else {
-        echo "Error updating profile: " . $conn->error;
+        echo json_encode(['status' => 'error', 'message' => 'Error updating profile: ' . $stmt->error]);
     }
-
     $stmt->close();
     $conn->close();
 }
