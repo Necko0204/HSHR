@@ -12,7 +12,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $password = trim($_POST['password']);
 
     if (!empty($username) && !empty($password)) {
-        $stmt = $conn->prepare("SELECT employee_id, password FROM staff_accounts WHERE username = ?");
+        $stmt = $conn->prepare("SELECT employee_id, password, role FROM staff_accounts WHERE username = ?");
         if (!$stmt) {
             $_SESSION['error'] = "Database error: " . $conn->error;
             header("Location: index.php");
@@ -28,7 +28,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
         $stmt->store_result();
         if ($stmt->num_rows > 0) {
-            $stmt->bind_result($employee_id, $stored_hashed_password);
+            $stmt->bind_result($employee_id, $stored_hashed_password, $role);
             $stmt->fetch();
 
             // Hash entered password with SHA-256
@@ -38,6 +38,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 session_regenerate_id(true);
                 $_SESSION['employee_id'] = $employee_id;
                 $_SESSION['username'] = $username;
+                $_SESSION['role'] = $role; // Add role to session
                 header("Location: dashboard.php");
                 exit();
             } else {

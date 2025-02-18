@@ -332,45 +332,22 @@ if (!isset($_SESSION['employee_id'])) {
 
 <?php include 'staff_navbar.php'; ?>
 
-<?php
-
-// Assuming $staff_id is retrieved from session or request
-$staff_id = $_SESSION['staff_id'] ?? $_GET['id'] ?? 0;
-
-// Fetch staff data
-$data = getStaffData($staff_id);
-
-if ($data) {
-    $firstname = htmlspecialchars($data['firstname']);
-    $lastname = htmlspecialchars($data['lastname']);
-
-    $username = htmlspecialchars($data['username']);
-
-    $profile_picture = htmlspecialchars($data['profile_picture'] ?? 'default.jpg');
-} else {
-    echo "Staff data not found.";
-    exit;
-}
-?>
-
 <main class="wrapper">
     <div class="profile-card text-center p-4 shadow-lg rounded" id="profileCard">
         <div class="profile-header">
             <div class="profile-image-container">
-                <img src="<?php echo $profile_picture; ?>" 
+                <img src="<?php echo isset($staffData['profile_picture']) ? $staffData['profile_picture'] : '/HSHR/images/default-profile.jpg'; ?>" 
                      alt="Profile Picture" 
                      class="profile-picture">
             </div>
-            <h3><?php echo "$firstname $lastname"; ?> Profile</h3>
+            <h3><?php echo isset($staffData['firstname']) ? $staffData['firstname'] . ' ' . $staffData['lastname'] : 'Unknown'; ?> </h3>
         </div>
 
         <div class="profile-details-container">
-
             <div class="profile-detail">
                 <strong>Username</strong>
-                <span><?php echo $username; ?></span>
+                <span><?php echo isset($staffData['username']) ? $staffData['username'] : 'N/A'; ?></span>
             </div>
-           
         </div>
 
         <button class="btn update-profile-btn" id="editProfileBtn">Update Profile</button>
@@ -379,12 +356,12 @@ if ($data) {
     <div id="updateProfileCard" class="hidden fade-in">
         <h3>Edit Profile</h3>
         <form action="update_profile.php" method="POST" enctype="multipart/form-data">
-            <input type="hidden" name="id" value="<?php echo $staff_id; ?>">
+            <input type="hidden" name="id" value="<?php echo $_SESSION['employee_id']; ?>">
 
             <!-- Profile Picture -->
             <div class="profile-picture-container">
                 <div class="profile-picture">
-                    <img id="profilePreview" src="<?php echo $profile_picture; ?>" alt="Profile Picture">
+                    <img id="profilePreview" src="<?php echo isset($staffData['profile_picture']) ? $staffData['profile_picture'] : '/HSHR/images/default-profile.jpg'; ?>" alt="Profile Picture">
                     <input type="file" id="profilePicInput" name="profile_picture" accept="image/*" style="display: none;">
                 </div>
                 <label class="form-label">Profile Picture</label>
@@ -394,27 +371,27 @@ if ($data) {
             <div class="form-container" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
                 <div class="form-group">
                     <label class="form-label">First Name</label>
-                    <input type="text" class="form-control" name="firstname" value="<?php echo $firstname; ?>" required>
+                    <input type="text" class="form-control" name="firstname" value="<?php echo isset($staffData['first_name']) ? $staffData['first_name'] : ''; ?>" required>
                 </div>
 
                 <div class="form-group">
                     <label class="form-label">Last Name</label>
-                    <input type="text" class="form-control" name="lastname" value="<?php echo $lastname; ?>" required>
+                    <input type="text" class="form-control" name="lastname" value="<?php echo isset($staffData['last_name']) ? $staffData['last_name'] : ''; ?>" required>
                 </div>
 
                 <div class="form-group">
                     <label class="form-label">Email</label>
-                    <input type="email" class="form-control" name="email" value="<?php echo $email; ?>" required>
+                    <input type="email" class="form-control" name="email" value="<?php echo isset($staffData['email']) ? $staffData['email'] : ''; ?>" required>
                 </div>
 
                 <div class="form-group">
                     <label class="form-label">Position</label>
-                    <input type="text" class="form-control" name="position" value="<?php echo $position; ?>" required readonly>
+                    <input type="text" class="form-control" name="position" value="<?php echo isset($staffData['position']) ? $staffData['position'] : 'Unknown'; ?>" required readonly>
                 </div>
 
                 <div class="form-group">
                     <label class="form-label">Username</label>
-                    <input type="text" class="form-control" name="username" value="<?php echo $username; ?>" required>
+                    <input type="text" class="form-control" name="username" value="<?php echo isset($staffData['username']) ? $staffData['username'] : ''; ?>" required>
                 </div>
             </div>
 

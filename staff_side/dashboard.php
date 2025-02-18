@@ -5,12 +5,22 @@ session_start();
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
+include 'staff_helper.php';
 include 'db_config.php';
 
-if (!isset($_SESSION['employee_id'])) {
+if (!isset($_SESSION['employee_id']) || $_SESSION['role'] !== 'staff') {
     header("Location: index.php");
     exit();
 }
+
+// Assign the correct session values
+$sender_id = isset($_SESSION['employee_id']) ? $_SESSION['employee_id'] : "";
+$sender_role = isset($_SESSION['role']) ? $_SESSION['role'] : "";
+
+// Debugging: Check if values are now correctly assigned
+error_log("Sender ID: " . $sender_id);
+error_log("Sender Role: " . $sender_role);
+
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -20,24 +30,23 @@ if (!isset($_SESSION['employee_id'])) {
     <link rel="icon" type="image/png" href="../images/asdasdasd123123123123123.jpg">
     <title>Staff Dashboard</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
     <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.9/main.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
     <link rel="stylesheet" href="background.css">
 </head>
 <body>
+    <div class="floating-container"></div> <!-- Floating squares container -->
 
-    <!-- Navigation Bar (Unchanged) -->
     <div class="main-container">
         <?php include 'staff_navbar.php'; ?>
     </div>
 
-    <!-- Profile Picture -->
     <div class="profile-container">
         <img src="../images/asdasdasd123123123123123.jpg" alt="Profile Picture">
     </div>
 
-    <!-- Dashboard (Widgets Centered) -->
     <main class="dashboard-container">
         <div class="card-container">
             <div class="card" onclick="location.href='staff_payroll.php'">
@@ -59,6 +68,7 @@ if (!isset($_SESSION['employee_id'])) {
         </div>
     </main>
 
+    <script src="background.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.9/main.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
