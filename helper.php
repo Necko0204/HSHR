@@ -1,14 +1,9 @@
 <?php
 // Function to get user data from the database
 function getUserData($admin_id) {
-    $servername = "sql12.freesqldatabase.com";
-    $username = "sql12762545";
-    $password = "KBawSiFK9P";
-    $dbname = "sql12762545";
-    
-    // Create connection
-    $conn = new mysqli($servername, $username, $password, $dbname);
-    
+    // Database connection
+    $conn = new mysqli('localhost', 'root', '', 'humanresource');
+
     // Check connection
     if ($conn->connect_error) {
         die("Connection failed: " . $conn->connect_error);
@@ -40,14 +35,9 @@ function getUserData($admin_id) {
 
 // Function to get all employees from the database
 function getEmployees() {
-    $servername = "sql12.freesqldatabase.com";
-    $username = "sql12762545";
-    $password = "KBawSiFK9P";
-    $dbname = "sql12762545";
-    
-    // Create connection
-    $conn = new mysqli($servername, $username, $password, $dbname);
-    
+    // Database connection
+    $conn = new mysqli('localhost', 'root', '', 'humanresource');
+
     // Check connection
     if ($conn->connect_error) {
         die("Connection failed: " . $conn->connect_error);
@@ -72,14 +62,9 @@ function getEmployees() {
 
 // Function to get employee details by ID
 function getEmployeeDetails($id) {
-    $servername = "sql12.freesqldatabase.com";
-    $username = "sql12762545";
-    $password = "KBawSiFK9P";
-    $dbname = "sql12762545";
-    
-    // Create connection
-    $conn = new mysqli($servername, $username, $password, $dbname);
-    
+    // Database connection
+    $conn = new mysqli('localhost', 'root', '', 'humanresource');
+
     // Check connection
     if ($conn->connect_error) {
         die("Connection failed: " . $conn->connect_error);

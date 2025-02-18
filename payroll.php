@@ -25,158 +25,41 @@ if (!isset($_SESSION['admin_id'])) {
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="background.css">
 </head>
-<style>
-        body {
-            font-family: 'Poppins', sans-serif;
-            background: white;
-            color: black;
-            min-height: 100vh;
-            margin: 0; /* Reset margin to ensure no unwanted space */
-        }
-
-        /* Wrapper for main content */
-        .wrapper {
-            margin-left: 270px; /* Sidebar width */
-            padding: 20px;
-            max-width: calc(100% - 270px); /* Adjust width to subtract sidebar width */
-            transition: all 0.3s ease; /* Smooth transition */
-        }
-
-            /* Adjust wrapper when sidebar is hidden on small screens */
-            @media (max-width: 768px) {
-                .wrapper {
-                    margin-left: 0;
-                    max-width: 100%;
-                    padding: 15px; /* Adjust padding for smaller screens */
-                }
-            }
-
-            /* Content section styling */
-            .content {
-                margin-top: 20px; /* Ensure spacing between navbar and content */
-            }
-
-            h2 {
-                font-size: 2rem;
-                margin-bottom: 20px;
-                color: #333;
-            }
-
-            /* Table and card styling */
-            .card {
-                border: 1px solid #ddd;
-                border-radius: 10px;
-                margin-bottom: 20px;
-                padding: 20px;
-                box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
-                background-color: #fff;
-            }
-
-            .card-header {
-                font-weight: bold;
-                font-size: 1.2rem;
-                background-color: #f8f9fa;
-                padding: 10px;
-                border-bottom: 1px solid #ddd;
-            }
-
-            .card-body {
-                padding: 20px 0;
-            }
-
-            .card-body .form-label {
-                font-weight: 500;
-                color: #333;
-            }
-
-            /* Form styling */
-            form {
-                background-color: white;
-                padding: 30px;
-                border-radius: 10px;
-                box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-            }
-
-            .form-control {
-                border-radius: 8px;
-                border: 1px solid #ddd;
-                padding: 10px;
-                margin-bottom: 15px;
-            }
-
-            .form-control:focus {
-                border-color: #6c63ff;
-                box-shadow: 0 0 5px rgba(108, 99, 255, 0.2);
-            }
-
-            /* Button styling */
-            .btn-primary {
-                background-color: #6c63ff;
-                border-color: #6c63ff;
-                padding: 10px 20px;
-                border-radius: 8px;
-            }
-
-            .btn-primary:hover {
-                background-color: #5748d0;
-                border-color: #5748d0;
-            }
-
-            .mb-3 {
-                margin-bottom: 20px;
-            }
-
-            /* Adjust card elements */
-            .card-body {
-                padding: 15px;
-            }
-
-            /* Additional layout adjustments for smaller screens */
-            @media (max-width: 768px) {
-                .card {
-                    padding: 15px;
-                }
-                .btn-primary {
-                    padding: 8px 16px;
-                }
-                .form-control {
-                    padding: 8px;
-                }
-            }
-            .hidden-id {
-            display: none;
-            }
-            </style>
     <body>
-        <!-- Sidebar & Navbar-->
-        <?php include 'sidebar.php'; ?>
+<!-- Sidebar & Navbar in a separate container -->
+<div class="main-container">
+    <?php include 'sidebar.php'; ?>
+    </div>
+    <div class="content-container">
         <?php include 'nav_header.php'; ?>
+        </div>
 
    <!-- Main Content Wrapper -->
 <main class="wrapper">
-    <section class="content" data-aos="fade-left">
         <div class="d-flex justify-content-start align-items-center">
-            <h2 class="fw-bold text-dark mb-0">Employee Payroll</h2>
+            <h2 class="fw-bold mb-0">Employee Payroll</h2>
             <button class="btn btn-primary ms-auto" data-bs-toggle="modal" data-bs-target="#CalculatePayrollModal">
                 Calculate Payroll
             </button>
         </div>
-    </section>
 
     <!-- Employee Table -->
-    <div class="card" data-aos="fade-left" data-aos-delay="200">
-        <div class="card-header">Employee List</div>
-        <div class="card-body table-responsive">
+<div class="card shadow-lg border-0 rounded-3">
+            <div class="card-header bg-gradient-primary text-black">
+                <h4 class="mb-0">Employee List</h4>
+            </div>
+        <div class="card-body table-responsive p-0">
             <?php
             $sql = "SELECT id, lastname, firstname, gender, email1, status FROM employees";
             $result = $conn->query($sql);
             ?>
 
-            <table class="table table-bordered table-striped">
-                <thead class="table-dark">
+        <table class="table table-borderless table-hover align-middle">
+        <thead class="table-light">
                     <tr>
                         <th class="hidden-id">ID</th>
                         <th>Last Name</th>

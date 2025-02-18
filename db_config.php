@@ -1,8 +1,8 @@
 <?php
-$servername = "sql12.freesqldatabase.com";
-$username = "sql12762545";
-$password = "KBawSiFK9P";
-$dbname = "sql12762545";
+$servername = "localhost";
+$username = "root";
+$password = "";
+$dbname = "humanresource";
 
 // Create connection
 $conn = new mysqli($servername, $username, $password, $dbname);

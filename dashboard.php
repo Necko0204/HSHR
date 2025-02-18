@@ -5,192 +5,52 @@ session_start();
 include 'db_config.php';
 include 'helper.php';
 
-// Debug: Check if session is properly set
+$sender_id = $_SESSION['admin_id'];
+$sender_role = $_SESSION['position'];
+
+
 if (!isset($_SESSION['admin_id'])) {
     header("Location: index.php");
     exit();
 }
-?>
 
+$query = "SELECT COUNT(id) AS total_staff FROM employees";
+$result = mysqli_query($conn, $query);
+$row = mysqli_fetch_assoc($result);
+$total_staff = $row['total_staff'];
+
+$query = "SELECT COUNT(employee_id) AS active_teachers FROM staff_accounts WHERE status = 'active'";
+$result = mysqli_query($conn, $query);
+$row = mysqli_fetch_assoc($result);
+$active_teachers = $row['active_teachers'];
+?>
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="icon" type="image/png" href="images/asdasdasd123123123123123.jpg">
-    <title>Holy Spirit Human Resource</title>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
-    <link rel="stylesheet" href="style.css">
-    <link rel="stylesheet" href="background.css">
-    <!-- AOS CSS (Animate on Scroll) -->
-    <link href="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.css" rel="stylesheet">
-    
-    <style>
-        body {
-            font-family: 'Poppins', sans-serif;
-            background: white;
-            color: black;
-            min-height: 100vh;
-        }
-        .wrapper {
-            padding: 30px;
-        }
-        .card {
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 20px;
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            padding: 20px;
-            text-align: center;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-        }
-        .card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
-        }
-        .shadow-lg {
-            box-shadow: 0px 10px 30px rgba(0, 0, 0, 0.1) !important;
-        }
-        canvas {
-            max-width: 100%;
-            height: auto;
-        }
-        .stars {
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            overflow: hidden;
-            pointer-events: none;
-            top: 0;
-            left: 0;
-        }
-        .star {
-            position: absolute;
-            width: 10px;
-            height: 10px;
-            background: black;
-            border-radius: 50%;
-            opacity: 0.8;
-            animation: fall linear infinite;
-        }
-        @keyframes fall {
-            from { transform: translateY(-100px); opacity: 1; }
-            to { transform: translateY(300px); opacity: 0; }
-        }
-        .profile-container {
-        position: relative;
-        display: inline-block;
-        width: 200px;
-        height: 200px;
-        border-radius: 50%;
-        }
-
-        .profile-image {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            border-radius: 50%;
-            display: block;
-        }
-
-        .status-indicator {
-            position: absolute;
-            bottom: 10px; /* Adjusted to be inside */
-            right: 10px; /* Adjusted to be inside */
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            width: 24px;
-            height: 24px;
-            border-radius: 50%;
-        }
-
-        .pulsing-icon {
-            width: 12px;
-            height: 12px;
-            background-color: green;
-            border-radius: 50%;
-            position: relative; /* Changed to relative */
-            z-index: 2; /* Keeps it above the ring */
-            top: -0.5px; /* Moves the icon up */
-            left: -0.5px; /* Moves the icon to the left */
-        }
-
-        .pulsing-ring {
-            position: absolute;
-            width: 22px;
-            height: 22px;
-            border-radius: 50%;
-            border: 2px solid rgba(0, 128, 0, 0.5);
-            animation: pulse-ring 1.5s infinite;
-        }
-
-        @keyframes pulse-ring {
-            0% { transform: scale(1); opacity: 1; }
-            50% { transform: scale(1.5); opacity: 0.5; }
-            100% { transform: scale(2); opacity: 0; }
-        }
-
-
-        .time-container {
-            font-size: 16px;
-            color: black;
-            font-weight: bold;
-            text-align: center;
-        }
-        /* Base Card Styling */
-        .custom-card {
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 20px;
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            padding: 20px;
-            text-align: center;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-        }
-
-        /* Hover Effect */
-        .custom-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
-        }
-        .gradient-card {
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 20px;
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            padding: 20px;
-            text-align: center;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-        }
-
-    .chart-container {
-        position: relative;
-        height: 250px; /* Fix chart height */
-        width: 100%;
-    }
-
-    </style>
-</head>
-<body>
-
-
-   <!-- Sidebar & Navbar-->
-    <?php include 'sidebar.php'; ?>
-    <?php include 'nav_header.php'; ?>
-
-    <!-- Main Content Wrapper -->
-    <main class="wrapper">
-        <section class="content" data-aos="fade-left">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link rel="icon" type="image/png" href="images/asdasdasd123123123123123.jpg">
+        <title>Holy Spirit Human Resource</title>
+        <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.css">
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
+        <link rel="stylesheet" href="style.css">
+        <link rel="stylesheet" href="background.css">
+    </head>
+        <body>
+        <!-- Sidebar & Navbar in a separate container -->
+        <div class="main-container">
+            <?php include 'sidebar.php'; ?>
+        </div>
+        <div class="content-container">
+            <?php include 'nav_header.php'; ?>
+            </div>
+            <main class="wrapper">
                 <!-- Card with Falling Stars, Photo, Pulsing Icon, and Time -->
                 <div class="card shadow-lg mb-4 d-flex flex-column align-items-center text-center"
                     style="margin: 20px auto; max-width: 5000px; padding: 30px; border-radius: 15px; position: relative;">
-                    
                     <div class="stars"></div>
 
                     <div class="profile-container">
@@ -203,26 +63,22 @@ if (!isset($_SESSION['admin_id'])) {
                         </div>
                     </div>
 
+                        <div class="card-body mt-3">
+                            <h5 class="card-title">
+                                Hello, <span id="greeting"></span> <?php echo isset($userData['name']) ? $userData['name'] : 'Guest'; ?>!
+                            </h5>
 
-                    <div class="card-body mt-3">
-                        <h5 class="card-title">
-                            Hello, <span id="greeting"></span> <?php echo isset($userData['name']) ? $userData['name'] : 'Guest'; ?>!
-                        </h5>
-
-                        <h6><?php echo isset($userData['position']) ? $userData['position'] : 'Guest'; ?></h6>
-                        <p class="time-container" id="ph-time"></p>
+                            <h6><?php echo isset($userData['position']) ? $userData['position'] : 'Guest'; ?></h6>
+                            <p class="time-container" id="ph-time"></p>
+                        </div>
                     </div>
-                </div>
-        </section>
-
-
-        <section class="content" data-aos="fade-right">
+            </section>
             <div class="row">
                 <div class="col-md-3 mb-4">
                     <div class="custom-card">
                         <div class="card-body">
                             <h5 class="card-title">Total Staff</h5>
-                            <h3>120</h3>
+                            <h3><?php echo $total_staff; ?></h3>  <!-- Dynamic total staff count -->
                         </div>
                     </div>
                 </div>
@@ -230,7 +86,7 @@ if (!isset($_SESSION['admin_id'])) {
                     <div class="custom-card">
                         <div class="card-body">
                             <h5 class="card-title">Active Teachers</h5>
-                            <h3>80</h3>
+                            <h3><?php echo $active_teachers; ?></h3>  <!-- Dynamic active teachers count -->
                         </div>
                     </div>
                 </div>
@@ -251,9 +107,6 @@ if (!isset($_SESSION['admin_id'])) {
                     </div>
                 </div>
             </div>
-        </section>
-
-        <section class="content" data-aos="fade-up">
             <div class="row">
                 <div class="col-md-6 mb-4">
                     <div class="custom-card gradient-card">
@@ -276,9 +129,8 @@ if (!isset($_SESSION['admin_id'])) {
                     </div>
                 </div>
             </div>
-        </section>
-    </main>
-
+            </main>
+            </div>
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.js"></script>

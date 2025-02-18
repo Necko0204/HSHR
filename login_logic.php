@@ -14,7 +14,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     }
 
     // Use prepared statements to prevent SQL injection
-    $stmt = $conn->prepare("SELECT id, username, password FROM admin WHERE username = ?");
+    $stmt = $conn->prepare("SELECT id, username, position, password FROM admin WHERE username = ?");
     $stmt->bind_param("s", $username);
     $stmt->execute();
     $result = $stmt->get_result();
@@ -27,6 +27,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             // Set session variables
             $_SESSION['admin_id'] = $row['id'];
             $_SESSION['admin_username'] = $row['username'];
+            $_SESSION['position'] = $row['position'];
 
             // Ensure session is saved
             session_write_close();
