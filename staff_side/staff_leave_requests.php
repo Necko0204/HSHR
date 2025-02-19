@@ -2,37 +2,39 @@
 session_name('staff_session');
 session_start();
 
+ini_set('display_errors', '1');
+ini_set('display_startup_errors', '1');
 error_reporting(E_ALL);
-ini_set('display_errors', 1);
+
 include 'db_config.php';
 include 'staff_helper.php';
 
-// Ensure the session is active
-if (!isset($_SESSION['employee_id'])) {
-    header("Location: index.php");
+if (!isset($_SESSION['employee_id']) || $_SESSION['role'] !== 'staff') {
+    header("Location:index.php");
     exit();
 }
+
 
 // Fetch staff data
 $staffData = getStaffData($_SESSION['employee_id']);
 if (!$staffData) {
-    die("\u274C Staff data not found.");
+    die("❌ Staff data not found.");
 }
 
 $employee_name = $staffData['firstname'] . ' ' . $staffData['lastname'];
 $employee_id = $_SESSION['employee_id'];
 
-// Fetch leave requests for the logged-in employee
-$query = "SELECT lr.leave_id, lt.leave_name, lr.leave_start_date, lr.leave_end_date, lr.total_days, lr.status, lr.request_date 
+// Fetch leave requests
+$query = "SELECT lr.*, lt.leave_name 
           FROM leave_requests lr
-          JOIN leave_types lt ON lr.leave_type_id = lt.leave_type_id
+          LEFT JOIN leave_types lt ON lr.leave_type_id = lt.leave_type_id
           WHERE lr.employee_id = ?";
 $stmt = $conn->prepare($query);
-$stmt->bind_param("i", $employee_id);
+$stmt->bind_param("s", $employee_id);
 $stmt->execute();
 $result = $stmt->get_result();
 
-// Fetch leave types for the dropdown
+// Fetch leave types for dropdown
 $leaveTypeQuery = "SELECT leave_type_id, leave_name, max_days FROM leave_types ORDER BY leave_type_id";
 $leaveTypeResult = $conn->query($leaveTypeQuery);
 ?>
@@ -48,12 +50,22 @@ $leaveTypeResult = $conn->query($leaveTypeQuery);
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
     <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.9/main.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="background.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <link rel="stylesheet" href="background.css">
     <style>
         body {
             font-family: 'Poppins', sans-serif;
-            background-color: #f8f9fa;
+            background-color:rgb(78, 46, 46) !important;
+        }
+        .floating-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: -1;
+            overflow: hidden;
+            background: linear-gradient(120deg, rgba(0, 0, 0, 0.8), rgba(167, 1, 1, 0.7)); /* Professional subtle background */
         }
         .content-wrapper {
             display: flex;
@@ -75,6 +87,12 @@ $leaveTypeResult = $conn->query($leaveTypeQuery);
     </style>
 </head>
 <body>
+<div class="main-container">
+        <?php include 'staff_navbar.php'; ?>
+    </div>
+
+
+<div class="floating-container"></div> <!-- Floating squares container -->
 
      <!-- Back to Dashboard Button -->
      <div style="position: absolute; top: 20px; left: 20px; z-index: 1000;">
@@ -82,12 +100,6 @@ $leaveTypeResult = $conn->query($leaveTypeQuery);
             <i class="fa fa-arrow-left"></i> Back to Dashboard
         </a>
     </div>
-    
-    <!-- Navigation Bar -->
-    <div class="main-container">
-        <?php include 'staff_navbar.php'; ?>
-    </div>
-
     <div class="container content-wrapper">
     <h2 class="mb-4 text-center" style="color: rgb(139, 41, 41);">Leave Requests</h2>
     
@@ -127,46 +139,54 @@ $leaveTypeResult = $conn->query($leaveTypeQuery);
             <div class="card2 card-custom" style="padding: 40px; min-height: 500px; width: 100%;">
                 <h4 class="text-center" style="color: black;">Your Leave Requests</h4>
                 <div class="table-responsive table-container">
-                    <table class="table table-striped">
-                        <thead class="table-dark">
-                            <tr>
-                                <th>Leave Type</th>
-                                <th>Start Date</th>
-                                <th>End Date</th>
-                                <th>Total Days</th>
-                                <th>Status</th>
-                                <th>Request Date</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <?php while ($row = $result->fetch_assoc()) { ?>
-                                <tr>
-                                    <td><?= htmlspecialchars($row['leave_name']); ?></td>
-                                    <td><?= $row['leave_start_date']; ?></td>
-                                    <td><?= $row['leave_end_date']; ?></td>
-                                    <td><?= $row['total_days']; ?></td>
-                                    <td><?= $row['status']; ?></td>
-                                    <td><?= $row['request_date']; ?></td>
-                                </tr>
-                            <?php } ?>
-                            <?php if ($result->num_rows == 0) { ?>
-                                <tr>
-                                    <td colspan="6" class="text-center">No leave requests found.</td>
-                                </tr>
-                            <?php } ?>
-                        </tbody>
-                    </table>
+    <table class="table table-striped">
+    <thead class="table-dark">
+        <tr>
+            <th>Leave Type</th>
+            <th>Start Date</th>
+            <th>End Date</th>
+            <th>Total Days</th>
+            <th>Status</th>
+            <th>Request Date</th>
+        </tr>
+    </thead>
+    <tbody>
+        <?php 
+        if ($result->num_rows > 0) {
+            while ($row = $result->fetch_assoc()) { ?>
+                <tr>
+                    <td><?= htmlspecialchars($row['leave_name']); ?></td>
+                    <td><?= $row['leave_start_date']; ?></td>
+                    <td><?= $row['leave_end_date']; ?></td>
+                    <td><?= $row['total_days']; ?></td>
+                    <td><?= $row['status']; ?></td>
+                    <td><?= $row['request_date']; ?></td>
+                </tr>
+            <?php }
+        } else { ?>
+            <tr>
+                <td colspan="6" class="text-center">No leave requests found.</td>
+            </tr>
+        <?php } ?>
+    </tbody>
+</table>
+
                 </div>
             </div>
         </div>
     </div>
 </div>
+<!-- jQuery (Optional, if you need it) -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+<!-- Bootstrap JavaScript -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
 
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script src="background.js"></script>
 <script>
+    
 document.addEventListener("DOMContentLoaded", function() {
     const leaveType = document.getElementById("leaveType");
     const leaveDates = document.getElementById("leave_dates");
@@ -203,6 +223,7 @@ document.addEventListener("DOMContentLoaded", function() {
         }
     });
 });
+
 </script>
 
 </body>

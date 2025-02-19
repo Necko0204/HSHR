@@ -9,7 +9,7 @@ include 'staff_helper.php';
 include 'db_config.php';
 
 if (!isset($_SESSION['employee_id']) || $_SESSION['role'] !== 'staff') {
-    header("Location: index.php");
+    header("Location:index.php");
     exit();
 }
 
@@ -35,6 +35,19 @@ error_log("Sender Role: " . $sender_role);
     <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.9/main.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
     <link rel="stylesheet" href="background.css">
+
+    <style>
+        .image-placeholder {
+            width: 100px; /* Set to your image's width */
+            height: 100px; /* Set to your image's height */
+            background-color: #f0f0f0; /* Placeholder color */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            color: #aaa;
+        }
+    </style>
 </head>
 <body>
     <div class="floating-container"></div> <!-- Floating squares container -->

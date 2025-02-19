@@ -35,14 +35,26 @@
 <!-- Profile Dropdown -->
     <div class="nav-item dropdown">
         <a href="#" class="nav-link dropdown-toggle d-flex align-items-center" id="profileDropdown" data-bs-toggle="dropdown">
-            <img src="<?php echo isset($staffData) && !empty($staffData['profile_picture']) 
-                ? '../' . htmlspecialchars($staffData['profile_picture']) 
-                : '/HSHR/images/default.jpg'; ?>" 
-                alt="Profile Picture" 
-                class="rounded-circle profile-pic">
-            <div class="pulsing-icon2">
-                <div class="pulsing-ring2"></div>
-            </div>
+                <!-- Loading Spinner -->
+        <div id="loading-spinner" style="width: 50px; height: 50px; display: block;">⏳</div>
+
+        <!-- Profile Picture -->
+        <?php
+        $profilePic = isset($staffData) && !empty($staffData['profile_picture']) 
+            ? '../' . htmlspecialchars($staffData['profile_picture']) 
+            : '/HSHR/images/default.jpg';
+        ?>
+        <img id="profile-pic" 
+             src="<?php echo $profilePic; ?>?v=<?php echo time(); ?>" 
+             alt="Profile Picture" 
+             class="rounded-circle profile-pic me-2" 
+             width="50" height="50" 
+             style="display: none;" 
+             onload="this.style.display='block'; document.getElementById('loading-spinner').style.display='none';">
+
+        <div class="pulsing-icon2">
+            <div class="pulsing-ring2"></div>
+        </div>
         </a>
         <ul class="dropdown-menu custom-dropdown" aria-labelledby="profileDropdown">
             <li><a class="dropdown-item" href="staff_viewprofile.php">View Profile</a></li>
@@ -68,6 +80,7 @@
           <h6 class="text-center mb-3">Users</h6>
           <ul class="list-unstyled" id="userList">
             <?php
+            
               // Fetch users from the database
               include 'db_config.php';
 
@@ -147,25 +160,23 @@
 document.addEventListener("DOMContentLoaded", function () {
     let currentReceiverId = null;
     let currentReceiverRole = null;
+    let chatActive = false;
+    
     const messageDropdown = document.getElementById("messageDropdown");
     const messageList = document.getElementById("messageList");
     const chatBox = document.getElementById("chatBox");
     const messageInput = document.getElementById("messageInput");
     const sendMessageBtn = document.getElementById("sendMessage");
     const messageModalElement = document.getElementById("messageModal");
-
-    // Initialize Bootstrap modal
+    
     const messageModal = new bootstrap.Modal(messageModalElement);
-
-    // Get sender details from PHP safely
+    
     let senderId = "<?php echo isset($sender_id) ? $sender_id : ''; ?>";
     let senderRole = "<?php echo isset($sender_role) ? $sender_role : ''; ?>";
-
-    // Log to check if senderId and senderRole are set correctly
+    
     console.log("Sender ID:", senderId);
     console.log("Sender Role:", senderRole);
-
-    // Function to load recent messages
+    
     function loadRecentMessages() {
         fetch("fetch_recent_messages.php")
             .then(response => response.text())
@@ -176,56 +187,48 @@ document.addEventListener("DOMContentLoaded", function () {
                             <i class="fas fa-plus"></i>
                         </button>
                     </li>`;
-                attachEventListeners(); // Rebind click events
+                attachEventListeners();
             })
             .catch(error => console.error("Error loading messages:", error));
     }
-
-    // Attach event listeners dynamically
+    
     function attachEventListeners() {
-        document.querySelectorAll(".user-item, .message-item").forEach(item => {
-            item.addEventListener("click", function () {
-                currentReceiverId = item.getAttribute("data-id");
-                currentReceiverRole = item.getAttribute("data-role");
-                messageModal.show();
-                loadMessages(currentReceiverId, currentReceiverRole);
-            });
+        document.addEventListener("click", function (event) {
+            const user = event.target.closest(".user-item, .message-item");
+            if (!user) return;
+            
+            currentReceiverId = user.getAttribute("data-id");
+            currentReceiverRole = user.getAttribute("data-role");
+            
+            chatActive = true;
+            messageModal.show();
+            loadMessages(currentReceiverId, currentReceiverRole);
         });
-
-        // Open the modal when clicking the button to compose a new message
-        const plusButton = document.getElementById("openMessageModal");
-        if (plusButton) {
-            plusButton.addEventListener("click", () => messageModal.show());
-        }
     }
-
-    // Load messages for a specific user
+    
     function loadMessages(userId, userRole) {
-    fetch(`fetch_messages.php?receiver_id=${userId}&receiver_role=${userRole}`)
-        .then(response => response.text())
-        .then(data => {
-            chatBox.innerHTML = data;
-
-            // Auto-scroll to the bottom after loading messages
-            setTimeout(() => {
-                chatBox.scrollTop = chatBox.scrollHeight;
-            }, 100);
-        })
-        .catch(error => console.error("Error loading chat messages:", error));
-}
-
-    // Send message via AJAX
+        fetch(`fetch_messages.php?receiver_id=${userId}&receiver_role=${userRole}`)
+            .then(response => response.text())
+            .then(data => {
+                chatBox.innerHTML = data;
+                setTimeout(() => {
+                    chatBox.scrollTop = chatBox.scrollHeight;
+                }, 100);
+            })
+            .catch(error => console.error("Error loading chat messages:", error));
+    }
+    
     sendMessageBtn.addEventListener("click", function () {
         const message = messageInput.value.trim();
         if (!message || !currentReceiverId) return;
-
+        
         const formData = new FormData();
         formData.append("sender_id", senderId);
         formData.append("sender_role", senderRole);
         formData.append("receiver_id", currentReceiverId);
         formData.append("receiver_role", currentReceiverRole);
         formData.append("message", message);
-
+        
         fetch("send_message.php", { method: "POST", body: formData })
             .then(response => response.text())
             .then(() => {
@@ -234,85 +237,20 @@ document.addEventListener("DOMContentLoaded", function () {
             })
             .catch(error => console.log("Error sending message:", error));
     });
-
-    // Auto-refresh chat messages every second
+    
+    messageModalElement.addEventListener("shown.bs.modal", () => chatActive = true);
+    messageModalElement.addEventListener("hidden.bs.modal", () => chatActive = false);
+    
     setInterval(() => {
-        if (currentReceiverId) {
+        if (chatActive && currentReceiverId) {
             loadMessages(currentReceiverId, currentReceiverRole);
         }
-    }, 1000);
-
-    // Handle file upload
-    document.getElementById("insertFileButton").addEventListener("click", function () {
-        const fileInput = document.createElement("input");
-        fileInput.type = "file";
-        fileInput.accept = "*/*";  
-        fileInput.click();
-
-        fileInput.addEventListener("change", function () {
-            const file = fileInput.files[0];
-            if (file) {
-                console.log("File selected:", file.name);
-            }
-        });
-    });
-
-    // Handle camera access
-    document.getElementById("cameraButton").addEventListener("click", function () {
-        if (navigator.mediaDevices?.getUserMedia) {
-            navigator.mediaDevices.getUserMedia({ video: true })
-                .then(stream => {
-                    const videoElement = document.createElement("video");
-                    videoElement.srcObject = stream;
-                    videoElement.play();
-                    document.body.appendChild(videoElement);
-                    console.log("Camera is ready to use!");
-                })
-                .catch(error => console.error("Camera error:", error));
-        }
-    });
-
-    // Handle voice message recording
-    document.getElementById("voiceMessageButton").addEventListener("click", function () {
-        if (navigator.mediaDevices?.getUserMedia) {
-            navigator.mediaDevices.getUserMedia({ audio: true })
-                .then(stream => {
-                    const mediaRecorder = new MediaRecorder(stream);
-                    const audioChunks = [];
-
-                    mediaRecorder.ondataavailable = event => audioChunks.push(event.data);
-                    mediaRecorder.onstop = () => {
-                        const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
-                        const audioURL = URL.createObjectURL(audioBlob);
-                        new Audio(audioURL).play();
-                        console.log("Voice message recorded and played.");
-                    };
-
-                    mediaRecorder.start();
-                    setTimeout(() => mediaRecorder.stop(), 5000);
-                })
-                .catch(error => console.error("Microphone error:", error));
-        }
-    });
-
-    // Load messages when dropdown is clicked
+    }, 3000);
+    
     messageDropdown.addEventListener("click", loadRecentMessages);
-
-    // Initial load of recent messages
     loadRecentMessages();
-
-    // Event listener for dynamically loaded user list
-    document.getElementById("userList").addEventListener("click", function (event) {
-        const user = event.target.closest(".user-item");
-        if (!user) return;
-
-        currentReceiverId = user.getAttribute("data-id");
-        currentReceiverRole = user.getAttribute("data-role");
-
-        messageModal.show();
-        loadMessages(currentReceiverId, currentReceiverRole);
-    });
 });
+
 </script>
 
 <style>
@@ -519,6 +457,7 @@ p.dark-mode, span.dark-mode, a.dark-mode {
     top: 0;
     box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
     padding: 15px 20px;
+    
     
 }
 

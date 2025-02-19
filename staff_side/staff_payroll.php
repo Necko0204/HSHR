@@ -65,14 +65,35 @@ while ($row = $result->fetch_assoc()) {
     <title>Payroll Summary</title>
     <link rel="stylesheet" href="background.css">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color:rgb(78, 46, 46) !important;
+        }
+        .floating-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: -1;
+            overflow: hidden;
+            background: linear-gradient(120deg, rgba(0, 0, 0, 0.8), rgba(167, 1, 1, 0.7)); /* Professional subtle background */
+        }
+    </style>    
 </head>
 <body>
 
- <!-- Back to Dashboard Button -->
- <div style="position: absolute; top: 20px; left: 20px; z-index: 1000;">
-        <a href="dashboard.php" class="btn btn-secondary">
-            <i class="fa fa-arrow-left"></i> Back to Dashboard
-        </a>
+
+
+    <div class="floating-container"></div> <!-- Floating squares container -->
+
+    <!-- Back to Dashboard Button -->
+    <div style="position: absolute; top: 20px; left: 20px; z-index: 1000;">
+            <a href="dashboard.php" class="btn btn-secondary">
+                <i class="fa fa-arrow-left"></i> Back to Dashboard
+            </a>
     </div>
     
     <!-- Navigation Bar -->
