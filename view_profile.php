@@ -1,8 +1,9 @@
 <?php
 session_name('admin_session');
 session_start();
-
+include 'includes/breadcrumb.php';
 include 'helper.php';
+include 'db_config.php';
 
 if (!isset($_SESSION['admin_id'])) {
     header("Location: index.php");
@@ -25,15 +26,62 @@ if (!isset($_SESSION['admin_id'])) {
     <link rel="stylesheet" href="background.css">
 </head>
 <body>
-<!-- Sidebar & Navbar in a separate container -->
-<div class="main-container">
-    <?php include 'sidebar.php'; ?>
-</div>
-    <div class="content-container">
-        <?php include 'nav_header.php'; ?>
-</div>
-<main class="wrapper">
-    <div class="profile-card text-center p-4 shadow-lg rounded" id="profileCard">
+    <!-- Sidebar & Navbar in a separate container -->
+    <div class="main-container">
+        <?php include 'sidebar.php'; ?>
+    </div>
+        <div class="content-container">
+            <?php include 'nav_header.php'; ?>
+    </div>
+    <main class="wrapper">
+                <?php
+                echo generateBreadcrumb();
+                ?>
+            <div class="profile-card text-center p-4 shadow-lg rounded border border-secondary" id="profileCard">
+                    <div class="stars">
+                        <div class="star">⭐</div>
+                        <div class="star">⭐</div>
+                        <div class="star">⭐</div>
+                        <div class="star">⭐</div>
+                        <div class="star">⭐</div>
+                        <div class="star">⭐</div>
+                        <div class="star">⭐</div>
+                        <div class="star">⭐</div>
+                        <div class="star">⭐</div>
+                        <div class="star">⭐</div>
+                        <div class="star">⭐</div>
+                        <div class="star">⭐</div>
+                        <div class="star">⭐</div>
+                        <div class="star">⭐</div>
+                        <div class="star">⭐</div>
+                    </div>
+
+                    <div class="sun-container">
+                        <div class="sun theme-icon" id="sun-icon">☀️</div>
+                    </div>
+
+                    <div class="moon-container">
+                        <div class="moon theme-icon" id="moon-icon">🌙</div>
+                    </div>
+
+                    <div class="cloud-container">
+                        <div class="cloud">☁️</div>
+                        <div class="cloud">☁️</div>
+                        <div class="cloud">☁️</div>
+                    </div>
+
+                    
+                    <div class="flowers">
+                        <div class="flower"></div>
+                        <div class="flower"></div>
+                        <div class="flower"></div>
+                        <div class="flower"></div>
+                        <div class="flower"></div>
+                        <div class="flower"></div>
+                        <div class="flower"></div>
+                        <div class="flower"></div>
+                        <div class="flower"></div>
+                    </div> 
         <div class="profile-header">
             <div class="profile-image-container2">
                 <img src="<?php echo !empty($userData['profile_picture']) ? $userData['profile_picture'] : 'uploads/profile_pictures/default.jpg'; ?>" 
@@ -42,8 +90,15 @@ if (!isset($_SESSION['admin_id'])) {
             </div>
             <h3 style="margin: 20px 0;"><?php echo htmlspecialchars($userData['name']); ?> </h3>
         </div>
-
             <div class="profile-details-container">
+                <div class="profile-detail full-width">
+                    <strong style="display: block; text-align: center;">Bio</strong>
+                    <p style="text-align: justify;"><?php echo htmlspecialchars($userData['bio']); ?></p>
+                </div>
+                <div class="profile-detail full-width">
+                    <strong>Experience</strong>
+                    <p><?php echo htmlspecialchars($userData['experiences'] ?? 'Not provided'); ?></p>
+                </div>
                 <div class="profile-detail">
                     <strong>Position</strong>
                     <span><?php echo htmlspecialchars($userData['position']); ?></span>
@@ -68,21 +123,71 @@ if (!isset($_SESSION['admin_id'])) {
                     <strong>Address</strong>
                     <span><?php echo htmlspecialchars($userData['address'] ?? 'N/A'); ?></span>
                 </div>
-                <div class="profile-detail full-width">
-                    <strong>Bio</strong>
-                    <p><?php echo htmlspecialchars($userData['bio']); ?></p>
-                </div>
-                <div class="profile-detail full-width">
-                    <strong>Experience</strong>
-                    <p><?php echo htmlspecialchars($userData['experiences'] ?? 'Not provided'); ?></p>
-                </div>
             </div>
-            <button class="btn2 update-profile-btn" id="editProfileBtn">Update Profile</button>
+            <button class="btn2" id="editProfileBtn">Update Profile</button>
         </div>
-</main>
+
     <div id="updateProfileCard" class="hidden">
-        <h3>Edit Profile</h3>
-        <form action="update_profile.php" method="POST" enctype="multipart/form-data">
+        <form action="logics/update_profile.php" method="POST" enctype="multipart/form-data">
+                <div class="sun-container">
+                        <div class="sun theme-icon" id="sun-icon">☀️</div>
+                    </div>
+
+                    <div class="moon-container">
+                        <div class="moon theme-icon" id="moon-icon">🌙</div>
+                    </div>
+
+                       <div class="stars">
+                        <div class="star">⭐</div>
+                        <div class="star">⭐</div>
+                        <div class="star">⭐</div>
+                        <div class="star">⭐</div>
+                        <div class="star">⭐</div>
+                        <div class="star">⭐</div>
+                        <div class="star">⭐</div>
+                        <div class="star">⭐</div>
+                        <div class="star">⭐</div>
+                        <div class="star">⭐</div>
+                        <div class="star">⭐</div>
+                        <div class="star">⭐</div>
+                        <div class="star">⭐</div>
+                        <div class="star">⭐</div>
+                        <div class="star">⭐</div>
+                    </div>
+                       <div class="flowers">
+                        <div class="flower"></div>
+                        <div class="flower"></div>
+                        <div class="flower"></div>
+                        <div class="flower"></div>
+                        <div class="flower"></div>
+                        <div class="flower"></div>
+                        <div class="flower"></div>
+                        <div class="flower"></div>
+                        <div class="flower"></div>
+                    </div> 
+
+                    <div class="cloud-container">
+                        <div class="cloud">☁️</div>
+                        <div class="cloud">☁️</div>
+                        <div class="cloud">☁️</div>
+                        <div class="cloud">☁️</div>
+                        <div class="cloud">☁️</div>
+                        <div class="cloud">☁️</div>
+                        <div class="cloud">☁️</div>
+                    </div>
+             
+                    <!-- <div class="basketballs">
+                        <div class="basketball"></div>
+                        <div class="basketball"></div>
+                        <div class="basketball"></div>
+                        <div class="basketball"></div>
+                        <div class="basketball"></div>
+                        <div class="basketball"></div>
+                        <div class="basketball"></div>
+                        <div class="basketball"></div>
+                        <div class="basketball"></div>
+                    </div> -->
+        <h3>EDIT PROFILE</h3>
             <input type="hidden" name="id" value="<?php echo $userData['id']; ?>">
 
             <!-- Profile Picture Section -->
@@ -149,6 +254,8 @@ if (!isset($_SESSION['admin_id'])) {
             </div>
         </form>
     </div>
+
+    </main>
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
 <script src="background.js"></script>
@@ -238,6 +345,7 @@ if (!isset($_SESSION['admin_id'])) {
             });
         });
     });
+    
 </script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>

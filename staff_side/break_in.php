@@ -14,7 +14,7 @@ $break_in = date("H:i:s");
 // Ensure employee is clocked in but hasn't taken a break yet
 $query = "SELECT time_in, time_out, break_in FROM attendance WHERE employee_id = ? AND date = ?";
 $stmt = $conn->prepare($query);
-$stmt->bind_param("is", $employee_id, $date);
+$stmt->bind_param("ss", $employee_id, $date);
 $stmt->execute();
 $stmt->bind_result($time_in, $time_out, $existing_break_in);
 $stmt->fetch();
@@ -31,7 +31,7 @@ if (!$time_in) {
 // Update the existing row with break-in time
 $query = "UPDATE attendance SET break_in = ? WHERE employee_id = ? AND date = ?";
 $stmt = $conn->prepare($query);
-$stmt->bind_param("sis", $break_in, $employee_id, $date);
+$stmt->bind_param("sss", $break_in, $employee_id, $date);
 
 if ($stmt->execute()) {
     echo "✅ Break-in successful!";

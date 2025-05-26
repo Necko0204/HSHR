@@ -1,0 +1,1177 @@
+/* Fullscreen Animation Container */
+.animation-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100vh;
+    overflow: hidden;
+    pointer-events: none;
+    z-index: -2;
+}
+
+/* Base Styles */
+body {
+    background: linear-gradient(to top, #da0909, #ffffff);
+    background-size: cover;
+    background-attachment: fixed;
+    margin: 0;
+    padding: 0;
+    overflow-x: hidden; /* allow vertical scrolling */
+    font-family: 'Poppins', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* Background animation (optional) */
+@keyframes backgroundAnimation {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
+/* Floating Box Animation */
+.box {
+    position: absolute;
+    background-color: rgba(255, 255, 255, 0.5);
+    border-radius: 5px;
+    z-index: -1;
+    animation: moveBox linear infinite;
+    opacity: 0.5;
+}
+@keyframes moveBox {
+    0%   { top: 100vh; opacity: 0; }
+    10%, 90% { opacity: 0.5; }
+    100% { top: -10vh; opacity: 0; }
+}
+/* Box sizes & durations */
+.box:nth-child(1)  { width:20px; height:20px; left:5%;  animation-duration:12s; }
+.box:nth-child(2)  { width:30px; height:30px; left:15%; animation-duration:14s; }
+.box:nth-child(3)  { width:25px; height:25px; left:25%; animation-duration:11s; }
+.box:nth-child(4)  { width:15px; height:15px; left:35%; animation-duration:13s; }
+.box:nth-child(5)  { width:40px; height:40px; left:45%; animation-duration:15s; }
+.box:nth-child(6)  { width:10px; height:10px; left:55%; animation-duration:10s; }
+.box:nth-child(7)  { width:35px; height:35px; left:65%; animation-duration:16s; }
+.box:nth-child(8)  { width:15px; height:15px; left:75%; animation-duration:13s; }
+.box:nth-child(9)  { width:50px; height:50px; left:85%; animation-duration:17s; }
+.box:nth-child(10) { width:25px; height:25px; left:95%; animation-duration:12s; }
+
+/* Image Placeholder */
+.image-placeholder {
+    width: 100px;
+    height: 100px;
+    background-color: #f0f0f0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    color: #aaa;
+}
+
+/* Profile & Content Wrappers */
+.content-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-top: 30px;
+    padding: 0 10px;
+}
+.profile-container2 {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    overflow: hidden;
+    margin-bottom: 15px;
+    border: 3px solid #007bff;
+}
+.profile-container2 img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* Main Content Card */
+.card-custom2 {
+    width: 100%;
+    max-width: 100%;
+    margin: 0;
+    padding: 20px;
+    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+    border-radius: 10px;
+    background-color: #fff;
+}
+
+/* Table Styling */
+.table-container {
+    max-height: 400px;
+    overflow-y: auto;
+    width: 100%;
+}
+.table th,
+.table td {
+    text-align: center;
+    padding: 8px;
+}
+.table th {
+    background-color: #343a40;
+    color: #fff;
+}
+
+/* Button Sizing */
+.btn-lg {
+    font-size: 16px;
+    padding: 10px 25px;
+}
+
+/* Action Buttons Wrapper */
+.action-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+.action-buttons .btn {
+    flex: 1 1 auto;
+    min-width: 140px;
+}
+
+/* Back Button */
+.back-btn {
+    position: absolute;
+    top: 7px;
+    left: 20px;
+    z-index: 1000;
+}
+
+/* Responsive Tweaks */
+@media (max-width: 768px) {
+    .card-custom2 {
+        width: 95%;
+        margin: 0 auto;
+        padding: 1rem;
+    }
+}
+@media (max-width: 576px) {
+    body {
+        font-size: 0.9rem;
+    }
+    .card-custom2 {
+        width: 90%;
+        margin: 0.5rem auto;
+        padding: 0.75rem;
+    }
+    .table th,
+    .table td {
+        font-size: 12px;
+        padding: 0.3rem;
+    }
+    .action-buttons .btn {
+        font-size: 14px;
+        padding: 0.5rem 1rem;
+    }
+    .back-btn {
+        position: static;
+        margin: 1rem auto;
+        display: block;
+    }
+    .box {
+        animation-duration: 8s;
+    }
+}
+
+
+
+/* LEAVE REQUEST CSS  */
+.content-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-top: 30px;
+}
+.card-custom {
+    width: 50%;
+    padding: 20px;
+    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+    border-radius: 10px;
+    background-color: white;
+}
+.table-container {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+/*────────────────────────────────────────────────────────
+  GLOBAL: No horizontal scroll ever
+────────────────────────────────────────────────────────*/
+html, body {
+    overflow-x: hidden !important;
+  }
+  
+  /*────────────────────────────────────────────────────────
+    MOBILE / SMALL-SCREEN (≤767.98px)
+  ────────────────────────────────────────────────────────*/
+  @media (max-width: 767.98px) {
+    /* shrink base font */
+    html { font-size: 13px; }
+  
+    body {
+      overflow-y: auto !important;
+      margin: 0;
+      padding: 0;
+    }
+  
+    /* wrapper tighter */
+    .content-wrapper {
+      margin: 8px auto;
+      padding: 0 6px;
+      width: 100%;
+      box-sizing: border-box;
+    }
+  
+    /* cards full‑width, minimal padding */
+    .card-custom {
+      width: 100% !important;
+      max-width: none !important;
+      padding: 8px !important;
+      margin-bottom: 12px;
+    }
+  
+    /* headings smaller */
+    .content-wrapper h2 {
+      font-size: 1.1rem;
+    }
+    .card-custom h4 {
+      font-size: 1rem;
+    }
+  
+    /* tables will wrap and never overflow */
+    .table-responsive {
+      overflow-x: hidden !important;
+    }
+    .table-responsive table {
+      table-layout: fixed;
+      width: 100% !important;
+      font-size: 0.85rem;
+    }
+    .table-responsive th,
+    .table-responsive td {
+      white-space: normal;
+      word-wrap: break-word;
+    }
+  
+    /* back button & other controls */
+    .btn-secondary {
+      font-size: 0.75rem;
+      padding: 4px 6px;
+    }
+  
+    /* hide animations on phone */
+    .animation-container {
+      display: none !important;
+    }
+  }
+  
+/* END OF LEAVE REQUEST CSS */
+
+/* VIEW PROFILE CSS */
+:root {
+    --primary-color: #007bff;
+    --secondary-color: #6c757d;
+    --light-bg: #f8f9fa;
+    --card-bg: #f8f8f8;
+    --border-color: #ccc;
+    --text-color: #333;
+    --transition-speed: 0.3s;
+    --border-radius: 10px;
+}
+#profileCard {
+    position: relative;
+    overflow: hidden; /* Para hindi lumampas ang designs */
+}
+
+#profileCard::before,
+#profileCard::after {
+    content: "";
+    position: absolute;
+    width: 80px;
+    height: 80px;
+    background: rgba(0, 123, 255, 0.2);
+    border-radius: 50%;
+    animation: floatAnimation 6s infinite linear alternate;
+}
+
+#profileCard::before {
+    top: -20px;
+    left: -20px;
+}
+
+#profileCard::after {
+    bottom: -20px;
+    right: -20px;
+}
+
+/* Floating circles */
+.floating-circle {
+    position: absolute;
+    width: 30px;
+    height: 30px;
+    background: rgba(255, 193, 7, 0.3);
+    border-radius: 50%;
+    animation: floatAnimation 5s infinite ease-in-out alternate;
+}
+
+.floating-circle:nth-child(1) {
+    top: 10%;
+    left: 15%;
+    width: 50px;
+    height: 50px;
+    animation-duration: 4s;
+}
+
+.floating-circle:nth-child(2) {
+    bottom: 20%;
+    right: 10%;
+    animation-duration: 6s;
+}
+
+.floating-circle:nth-child(3) {
+    top: 50%;
+    left: 50%;
+    width: 40px;
+    height: 40px;
+    animation-duration: 3s;
+}
+
+/* Animation */
+@keyframes floatAnimation {
+    0% {
+        transform: translateY(0px);
+    }
+    100% {
+        transform: translateY(20px);
+    }
+}
+
+
+
+/* Profile Card */
+.profile-card, .profile-edit-card  {
+    max-width: 800px;
+    margin: 50px auto;
+    padding: 2.5rem;
+    background: rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(10px);
+    border-radius: 20px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+    text-align: center;
+    transition: transform 0.4s ease-in-out;
+}
+
+.profile-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 50%;
+    width: 180%;
+    height: 150%;
+    background: linear-gradient(120deg, rgba(0, 123, 255, 0.1), rgba(255, 51, 102, 0.1));
+    clip-path: ellipse(40% 60% at 50% 50%);
+    animation: floatingWaves 6s infinite ease-in-out;
+    transform: translateX(-50%);
+    pointer-events: none;
+}
+
+@keyframes floatingWaves {
+    0%, 100% { transform: translateX(-50%) translateY(-10px); opacity: 0.2; }
+    50% { transform: translateX(-50%) translateY(10px); opacity: 0.3; }
+}
+
+/* Profile Image */
+.profile-image-container, .profile-picture {
+    width: 150px;
+    height: 150px;
+    margin: 0 auto;
+    border-radius: 50%;
+    overflow: hidden;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+.profile-card img, .profile-picture2 img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* Profile Image */
+.profile-picture-container, .profile-picture2 {
+    width: 150px;
+    height: 150px;
+    margin: 0 auto;
+    border-radius: 50%;
+    overflow: hidden;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    border: 3px solid var(--border-color);
+}
+
+
+/* Typography */
+.profile-card h2 {
+    color: var(--text-color);
+    font-weight: 700;
+    margin-top: 15px;
+    font-size: 28px;
+    letter-spacing: 1px;
+}
+
+.profile-card p {
+    font-size: 16px;
+    margin: 10px 0;
+}
+
+
+.profile-detail {
+    background: var(--light-bg);
+    padding: 12px 15px;
+    border-radius: 8px;
+    font-size: 16px;
+    text-align: left;
+}
+
+.profile-detail strong {
+    font-size: 12px;
+    color: #555;
+    display: block;
+    margin-bottom: 5px;
+}
+
+.profile-detail span, .profile-detail p {
+    font-size: 18px;
+    font-weight: 500;
+    color: var(--text-color);
+}
+
+/* Form */
+.form-container {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.form-label {
+    font-size: 1rem;
+    font-weight: bold;
+    color: #555;
+    margin-bottom: 0.5rem;
+}
+
+.form-control {
+    width: 100%;
+    padding: 0.8rem;
+    border: 1px solid var(--border-color);
+    background: #fff;
+    border-radius: var(--border-radius);
+    font-size: 1rem;
+    transition: border var(--transition-speed);
+}
+
+.form-control:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
+    outline: none;
+}
+
+/* Buttons */
+.btn2, .btn-success, .btn-secondary {
+    padding: 12px 25px;
+    border-radius: 30px;
+    font-size: 16px;
+    cursor: pointer;
+    font-weight: bold;
+    border: none;
+    transition: transform var(--transition-speed), background-color var(--transition-speed);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+}
+
+.btn2 {
+    background: #ff3366;
+    color: white;
+}
+
+.btn2:hover {
+    background: #ff66a1;
+    transform: scale(1.05);
+    box-shadow: 0 8px 15px rgba(0, 0, 0, 0.2);
+}
+
+.btn-success {
+    background-color: var(--primary-color);
+    color: #fff;
+}
+
+.btn-success:hover {
+    background-color: #0056b3;
+}
+
+.btn-secondary {
+    background-color: var(--secondary-color);
+    color: #fff;
+}
+
+.btn-secondary:hover {
+    background-color: #545b62;
+}
+
+.btn:active {
+    transform: scale(0.98);
+}
+
+/* Animations */
+.fade-in {
+    opacity: 0;
+    transform: translateY(-10px);
+    transition: opacity var(--transition-speed), transform var(--transition-speed);
+}
+
+.fade-in.show {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.hidden {
+    display: none;
+}
+
+/* Mobile Adjustments */
+@media (max-width: 768px) {
+    .wrapper {
+        margin-left: 0;
+        max-width: 100%;
+    }
+
+    .form-container {
+        grid-template-columns: 1fr;
+    }
+
+    .btn-container {
+        flex-direction: column;
+        gap: 1rem;
+    }
+}
+
+/* END OF VIEW PROFILE CSS */
+
+/* Profile Section */
+.profile-container {
+    text-align: center;
+    margin-top: 30px;
+}
+
+.profile-container img {
+    width: 200px;
+    height: 200px;
+    border-radius: 50%;
+    border: 4px solid white;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.profile-container img:hover {
+    transform: scale(1.1);
+    box-shadow: 0 0 20px rgba(255, 255, 255, 0.5);
+}
+
+/* Dashboard Container (Centered) */
+.dashboard-container {
+    margin-bottom: 0;
+    height: 40vh;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Mobile Adjustments */
+@media (max-width: 768px) {
+    .dashboard-container {
+        height: auto; /* Adjust height for smaller screens */
+        padding: 10px; /* Reduce padding */
+    }
+}
+
+/* Cards - Widgets */
+.card-container {
+    display: flex;
+    justify-content: space-between; /* Adjusts spacing between cards */
+    align-items: center;
+    flex-wrap: nowrap; /* Prevents wrapping to keep all cards in one row */
+    gap: 20px; /* Removes gap between cards */
+    max-width: 100%; /* Ensures the container takes full width */
+}
+
+.card1 {
+    cursor: pointer;
+    font-size: 1.3rem;
+    padding: 2rem !important;
+    border: 2px solid rgb(0, 0, 0); /* Made border thicker */
+    border-radius: 12px;
+    backdrop-filter: blur(10px);
+    background-color: rgba(255, 255, 255, 0.43);
+    text-align: center;
+    width: 220px; /* Ensures all cards have the same width */
+    height: 200px; /* Ensures all cards have the same height */
+    color: black; /* Ensures text remains readable */
+}
+
+.card1:hover {
+    transform: scale(1.1);
+    box-shadow: 0 0 20px rgba(71, 56, 56, 0.3); /* Added shadow on hover */
+}
+
+/* Media Queries */
+@media (max-width: 768px) {
+    .card-container {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .profile-container img {
+        width: 100px;
+        height: 100px;
+    }
+
+    .card1 {
+        width: 80%;
+        margin-bottom: 15px;
+    }
+}
+
+@media (max-width: 576px) {
+    .card1 {
+        width: 90%;
+    }
+}
+
+/* CHAT BOX MESSAGES SECTION */
+.chat-box {
+    position: relative;
+    overflow: hidden;
+    background: linear-gradient(135deg, #ffc2c2 25%, transparent 25%) -50px 0,
+                linear-gradient(225deg, #ffc2c2 25%, transparent 25%) -50px 0,
+                linear-gradient(315deg, #ffc2c2 25%, transparent 25%),
+                linear-gradient(45deg, #ffc2c2 25%, transparent 25%);
+    background-size: 100px 100px;
+    background-color: #000000;
+    animation: moveGradient 5s linear infinite;
+  }
+  
+  @keyframes moveGradient {
+    0% {
+      background-position: 0 0, 0 0, 0 0, 0 0;
+    }
+    100% {
+      background-position: 100px 100px, 100px 100px, 100px 100px, 100px 100px;
+    }
+  }
+    
+    .user-item:hover {
+        background-color: #f1f3f5;
+        border-radius: 10px;
+        transition: background 0.3s ease, transform 0.3s ease;
+        transform: translateY(-5px);
+    }
+  
+    button {
+        transition: all 0.3s ease;
+        border-radius: 30px;
+        background-color: #e9ecef;
+        padding: 8px 20px;
+    }
+  
+    button:hover {
+        transform: scale(1.05);
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        background-color: #d3d3d3;
+    }
+  
+    .input-buttons button {
+        padding: 10px;
+        border-radius: 50%;
+        background-color: #f8f9fa;
+        border: none;
+        cursor: pointer;
+        transition: background 0.3s ease, transform 0.2s ease;
+    }
+  
+    .input-buttons button:hover {
+        background-color: #e2e6ea;
+        transform: scale(1.1);
+    }
+  
+    .message {
+        display: flex;
+        align-items: center;
+        margin-bottom: 12px;
+        width: 100%;
+        opacity: 0;
+        animation: fadeIn 0.3s ease forwards;
+    }
+  
+    @keyframes fadeIn {
+        0% { opacity: 0; }
+        100% { opacity: 1; }
+    }
+  
+    .message.sent { justify-content: flex-end; }
+    .message.received { justify-content: flex-start; }
+  
+    .message .profile-picture {
+        border-radius: 50%;
+        margin: 0 10px;
+    }
+  
+    .message .text {
+        max-width: 75%;
+        background-color: #f8f9fa;
+        padding: 12px;
+        border-radius: 12px;
+        font-size: 14px;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    }
+  
+    .message.sent .text {
+        background-color: rgb(201, 41, 36);
+        color: white;
+    }
+  
+    .message.received .text {
+        background-color: #000000;
+        color: black;
+    }
+  
+    .chat-box::-webkit-scrollbar { display: none; }
+  
+    #messageInput {
+        border-radius: 30px;
+        padding: 10px 15px;
+    }
+  
+    #sendMessage {
+        border-radius: 30px;
+        padding: 8px 20px;
+        font-weight: 600;
+    }
+
+    .modal-content {
+        border-radius: 16px;
+        box-shadow: 0px 12px 40px rgba(0, 0, 0, 0.2);
+        border: none;
+        background: #fdfdfd;
+        transition: all 0.3s ease-in-out;
+        overflow: hidden;
+        position: relative;
+    }
+
+
+    .modal-header {
+        background:#ffffff;
+        color: rgb(0, 0, 0);
+        font-size: 1.5rem;
+        font-weight: bold;
+        text-shadow: 0px 2px 5px rgba(0, 0, 0, 0.3);
+        padding: 20px 24px;
+        border-bottom: none;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .modal-footer {
+        background: #f8f9fa;
+        border-top: 1px solid rgba(0, 0, 0, 0.1);
+        padding: 16px 24px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .modal-body {
+        padding: 32px;
+        color: #000000;
+        font-size: 1.1rem;
+        line-height: 1.6;
+        font-weight: 500;
+
+    }
+#messageInput {
+    border-radius: 30px;
+    padding: 10px 15px;
+}
+
+#sendMessage {
+    border-radius: 30px;
+    padding: 8px 20px;
+    font-weight: 600;
+}
+
+.main-container {
+    display: flex;
+    transition: all 0.3s ease;
+}
+
+/* Navbar */
+.navbar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    background-color:rgb(218, 255, 255);
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+    z-index: 200;
+    padding: 15px 20px;
+    height: auto;
+    transition: all 0.3s ease;
+}
+
+/* Profile Picture */
+.profile-pic {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: 2px solid #ddd;
+    object-fit: cover;
+}
+
+/* Custom Dropdown Styling */
+.custom-dropdown {
+    min-width: 200px;
+    max-width: 90vw;
+    background: linear-gradient(135deg, #ffffff, #f9f9f9);
+    border-radius: 10px;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+    overflow: hidden;
+    margin-top: 10px;
+    animation: fadeInScale 0.3s ease forwards;
+    right: 0;
+    left: auto !important;
+}
+.dropdown-menu {
+    right: 0 !important;
+    left: auto !important;
+    transform: translateX(0) !important;
+}
+.custom-dropdown .dropdown-item {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Dropdown Animation */
+@keyframes fadeInScale {
+    0% { opacity: 0; transform: scale(0.95); }
+    100% { opacity: 1; transform: scale(1); }
+}
+
+/* Pulsing Notification */
+.pulsing-icon2 {
+    width: 12px;
+    height: 12px;
+    background-color: rgb(0, 208, 255);
+    border-radius: 50%;
+    position: relative;
+    z-index: 2;
+    top: 13px;
+    left: -15px;
+}
+.pulsing-ring2 {
+    position: absolute;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    border: 2px solid  rgb(0, 208, 255);
+    animation: pulse-ring 1.5s infinite;
+    top: -35%;
+    right: -45%;
+    transform: translate(-50%, -50%);
+}
+@keyframes pulse-ring {
+    0% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.5); opacity: 0.5; }
+    100% { transform: scale(2); opacity: 0; }
+}
+
+.background-editor {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: rgba(255, 255, 255, 0.9);
+    padding: 10px;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    z-index: 1000;
+}
+
+
+
+  /* Enhanced Chat Modal Styles */
+  #chatBox {
+    scroll-behavior: smooth;
+    padding: 10px;
+}
+
+.user-item:hover {
+    background-color: #dee2e6;
+    border-radius: 10px;
+    transition: background 0.3s ease;
+}
+
+button {
+    transition: all 0.3s ease;
+}
+
+button:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+}
+
+.input-buttons button {
+    padding: 8px;
+    border-radius: 50%;
+    background-color: #f8f9fa;
+    border: none;
+    cursor: pointer;
+    transition: background 0.3s ease;
+}
+
+.input-buttons button:hover {
+    background-color: #e2e6ea;
+}
+
+.input-buttons i {
+    font-size: 20px;
+    color:rgb(255, 39, 39);
+}
+
+.message {
+    display: flex;
+    align-items: center;
+    margin-bottom: 12px;
+    width: 100%;
+}
+
+.message.sent {
+    justify-content: flex-end;
+}
+
+.message.received {
+    justify-content: flex-start;
+}
+
+.message .profile-picture {
+    border-radius: 50%;
+    margin: 0 10px;
+}
+
+.message .text {
+    max-width: 75%;
+    background-color: #f8f9fa;
+    padding: 12px;
+    border-radius: 12px;
+    font-size: 14px;
+}
+
+.message.sent .text {
+    background-color:rgb(201, 41, 36);
+    color: white;
+}
+
+.message.received .text {
+    background-color: #e9ecef;
+    color: black;
+}
+
+.chat-box {
+    overflow-y: auto;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+
+.chat-box::-webkit-scrollbar {
+    display: none;
+}
+
+
+
+.modal-footer {
+    border-top: none;
+    background: #f8f9fa;
+}
+
+#messageInput {
+    border-radius: 30px;
+    padding: 10px 15px;
+}
+
+#sendMessage {
+    border-radius: 30px;
+    padding: 8px 20px;
+    font-weight: 600;
+}
+  #darkModeToggle:hover {
+    opacity: 0.7; /* Slight transparency on hover */
+    cursor: pointer; /* Changes cursor to indicate clickability */
+}
+
+/* Dark Mode Styles */
+body.dark-mode {
+    background-color: #121212;
+    color: #ffffff;
+}
+
+/* Navbar Dark Mode */
+.navbar.dark-mode {
+    background-color: #333333;
+    color: #ffffff;
+    box-shadow: 0px 4px 10px rgba(255, 255, 255, 0.1);
+}
+
+/* Table Body Dark Mode */
+.table.dark-mode tbody {
+    background-color: #1e1e1e;
+    color: #ffffff;
+}
+
+/* Table Rows Dark Mode */
+.table.dark-mode tr {
+    border-color: #444444;
+}
+
+/* Table Header and Cells Dark Mode */
+.table.dark-mode th, .table.dark-mode td {
+    background-color: #222222;
+    color: #e0e0e0;
+    border-color: #444444;
+}
+
+/* Hover Effect for Table Rows */
+.table.dark-mode tbody tr:hover {
+    background-color: #333333;
+}
+
+/* Improve Readability for Lighter Text */
+.table.dark-mode td {
+    color: #dddddd;
+}
+
+
+/* Card Dark Mode */
+.card.dark-mode, .modal-content.dark-mode {
+    background-color: #222222;
+    color: #ffffff;
+    border: 1px solid #444444;
+}
+
+/* Card & Modal Header/Footer Dark Mode */
+.card-header.dark-mode, .modal-header.dark-mode, .modal-footer.dark-mode {
+    background-color: #333333;
+    color: #ffffff;
+    border-bottom: 1px solid #444444;
+}
+
+/* Typography */
+h1.dark-mode, h2.dark-mode, h3.dark-mode, h4.dark-mode, h5.dark-mode, h6.dark-mode,
+p.dark-mode, span.dark-mode, a.dark-mode {
+    color: #cccccc;
+}
+
+/* Buttons */
+.btn-outline-secondary.dark-mode {
+    border-color: #ffffff;
+    color: #ffffff;
+}
+.btn-outline-secondary.dark-mode:hover {
+    background-color: #ffffff;
+    color: #121212;
+}
+
+/* Dropdown Dark Mode */
+.custom-dropdown.dark-mode {
+    background: linear-gradient(135deg, #222222, #333333);
+    box-shadow: 0 8px 16px rgba(255, 255, 255, 0.1);
+}
+.custom-dropdown .dropdown-item.dark-mode {
+    color: #ffffff;
+}
+.custom-dropdown .dropdown-item.dark-mode:hover {
+    background-color: #444444;
+}
+
+/* Profile Picture */
+.profile-pic {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: 2px solid #ddd;
+    object-fit: cover;
+}
+
+/* Custom Dropdown Styling */
+.custom-dropdown {
+    min-width: 200px;
+    max-width: 90vw;
+    background: linear-gradient(135deg, #ffffff, #f9f9f9);
+    border-radius: 10px;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+    overflow: hidden;
+    margin-top: 10px;
+    animation: fadeInScale 0.3s ease forwards;
+    right: 0;
+    left: auto !important;
+}
+.dropdown-menu {
+    right: 0 !important;
+    left: auto !important;
+    transform: translateX(0) !important;
+}
+.custom-dropdown .dropdown-item {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Dropdown Animation */
+@keyframes fadeInScale {
+    0% { opacity: 0; transform: scale(0.95); }
+    100% { opacity: 1; transform: scale(1); }
+}
+
+/* Pulsing Notification */
+.pulsing-icon2 {
+    width: 12px;
+    height: 12px;
+    background-color: green;
+    border-radius: 50%;
+    position: relative;
+    z-index: 2;
+    top: 13px;
+    left: -10px;
+}
+.pulsing-ring2 {
+    position: absolute;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    border: 2px solid rgba(0, 128, 0, 0.5);
+    animation: pulse-ring 1.5s infinite;
+    top: -35%;
+    right: -42%;
+    transform: translate(-50%, -50%);
+}
+@keyframes pulse-ring {
+    0% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.5); opacity: 0.5; }
+    100% { transform: scale(2); opacity: 0; }
+}

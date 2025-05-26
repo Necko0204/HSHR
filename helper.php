@@ -11,7 +11,7 @@ function getUserData($admin_id) {
 
     // Prepare and bind
     $stmt = $conn->prepare("SELECT * FROM admin WHERE id = ?");
-    $stmt->bind_param("i", $admin_id);
+    $stmt->bind_param("s", $admin_id);
 
     // Execute and fetch
     $stmt->execute();
@@ -43,8 +43,10 @@ function getEmployees() {
         die("Connection failed: " . $conn->connect_error);
     }
 
-    // Query to fetch employees
-    $sql = "SELECT id, lastname, firstname, gender, email1, status FROM employees";
+    // Query to fetch employees sorted by numeric ID
+    $sql = "SELECT id, lastname, firstname, gender, email1, status FROM employees 
+            ORDER BY CAST(SUBSTRING(id, 9) AS UNSIGNED)";
+
     $result = $conn->query($sql);
 
     $employees = [];
@@ -59,6 +61,7 @@ function getEmployees() {
 
     return $employees;
 }
+
 
 // Function to get employee details by ID
 function getEmployeeDetails($id) {
@@ -94,8 +97,26 @@ function getEmployeeDetails($id) {
 
     return $row;
 }
+function getStaffAccounts($conn) {
+    $sql = "SELECT staff_accounts.*, employees.* 
+            FROM staff_accounts 
+            LEFT JOIN employees ON staff_accounts.employee_id = employees.id 
+            WHERE staff_accounts.status = 'Active' 
+            ORDER BY CAST(SUBSTRING(staff_accounts.employee_id, 9) AS UNSIGNED)"; // Sort numerically
+
+    $result = mysqli_query($conn, $sql);
+
+    $staffAccounts = [];
+    if ($result && mysqli_num_rows($result) > 0) {
+        while ($row = mysqli_fetch_assoc($result)) {
+            $staffAccounts[] = $row;
+        }
+    }
+
+    return $staffAccounts;
+}
+
 
 // Fetch user data
 $userData = getUserData($_SESSION['admin_id']);
-
 ?>

@@ -1,68 +1,206 @@
 <!-- Navbar -->
 <nav class="navbar navbar-expand-lg navbar-light">
-  <div class="container-fluid d-flex justify-content-end align-items-center gap-3">
-    
-    <!-- Dark Mode Toggle Button -->
-    <button id="darkModeToggle" class="btn btn-outline-secondary border-0">
-      <i id="darkModeIcon" class="fas fa-moon"></i>
-    </button>
-
-    <!-- Notification Dropdown -->
-    <div class="nav-item dropdown">
-        <a href="#" class="nav-link dropdown-toggle d-flex align-items-center" id="notificationDropdown" data-bs-toggle="dropdown">
-            <i class="fas fa-bell"></i> 
-        </a>
-        <ul class="dropdown-menu custom-dropdown" aria-labelledby="notificationDropdown">
-            <li><a class="dropdown-item" href="#">No Notifications</a></li>
-        </ul>
+  <div class="container-fluid d-flex justify-content-between align-items-center">
+    <!-- School name and logo side by side -->
+    <div class="d-flex align-items-center">
+      <img src="images/asdasdasd123123123123123.jpg" alt="School Logo" class="logo" style="width: 50px; height: 50px;">
+      <h4 class="mb-0 ms-2 text-white" style="font-family: 'Poppins', sans-serif; font-weight: 700;">Holy Spirit School of Imus Inc.</h4>
     </div>
-        
-<!-- Message Dropdown -->
-<div class="nav-item dropdown">
-    <a href="#" class="nav-link dropdown-toggle d-flex align-items-center" id="messageDropdown" data-bs-toggle="dropdown">
-        <i class="fas fa-envelope"></i>
-    </a>
-    <ul class="dropdown-menu custom-dropdown" aria-labelledby="messageDropdown" id="messageList">
-        <!-- Recent messages will be loaded here -->
-        <li class="d-flex justify-content-center mt-2">
-            <button class="btn btn-primary btn-sm rounded-circle" id="openMessageModal">
-                <i class="fas fa-plus"></i>
-            </button>
+    <!-- Right side elements -->
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarNav">
+      <ul class="navbar-nav ms-auto d-flex align-items-center gap-3">
+        <!-- Dark Mode Toggle Button -->
+        <li class="nav-item">
+          <button id="darkModeToggle" class="btn btn-outline-secondary border-0">
+            <i id="darkModeIcon" class="fas fa-moon"></i>
+          </button>
         </li>
-    </ul>
-</div>
 
-    <!-- Profile Dropdown -->
-    <div class="nav-item dropdown">
-      <a href="#" class="nav-link dropdown-toggle d-flex align-items-center" id="profileDropdown" data-bs-toggle="dropdown">
-        <img src="<?php echo !empty($userData['profile_picture']) ? $userData['profile_picture'] : 'uploads/profile_pictures/default.jpg'; ?>" 
-        alt="Profile Picture" 
-        class="rounded-circle profile-pic">
-        <div class="pulsing-icon2">
-          <div class="pulsing-ring2"></div>
-        </div>
-      </a>
-      <ul class="dropdown-menu custom-dropdown" aria-labelledby="profileDropdown">
-        <li><a class="dropdown-item" href="view_profile.php">View Profile</a></li>
-        <li><a class="dropdown-item" href="logout.php">Logout</a></li>
+        <!-- Notification Dropdown -->
+        <li class="nav-item dropdown">
+          <a href="#" class="nav-link dropdown-toggle d-flex align-items-center" id="notificationDropdown" data-bs-toggle="dropdown">
+            <i class="fas fa-bell"></i>
+            <?php
+              include 'db_config.php';
+              $query = "SELECT 
+                          (SELECT COUNT(id) FROM attendance WHERE status = 'Pending') +
+                          (SELECT COUNT(leave_id) FROM leave_requests WHERE status = 'Pending') AS notification_count";
+              $result = mysqli_query($conn, $query);
+              $row = mysqli_fetch_assoc($result);
+              $notification_count = $row['notification_count'];
+              if ($notification_count > 0) {
+                echo '<span class="badge bg-danger ms-1">' . $notification_count . '</span>';
+              }
+            ?>
+          </a>
+          <ul class="dropdown-menu custom-dropdown" aria-labelledby="notificationDropdown">
+            <?php
+              $query = "SELECT a.id, e.firstname, a.time_in, 'attendance' AS type FROM attendance a JOIN employees e ON a.employee_id = e.id WHERE a.status = 'Pending'
+                        UNION
+                        SELECT l.leave_id AS id, e.firstname, l.request_date AS time_in, 'leave' AS type FROM leave_requests l JOIN employees e ON l.employee_id = e.id WHERE l.status = 'Pending'
+                        ORDER BY time_in DESC";
+              $result = mysqli_query($conn, $query);
+              $count = 0;
+              $max_items = 6;
+              if (mysqli_num_rows($result) > 0) {
+                while ($row = mysqli_fetch_assoc($result)) {
+                  if ($count < $max_items) {
+                    $icon = $row['type'] == 'attendance' ? 'fas fa-clock' : 'fas fa-calendar-alt';
+                    $type = $row['type'] == 'attendance' ? 'timed in at' : 'requested leave on';
+                    echo '<li><a class="dropdown-item notification-item d-flex align-items-center" href="#" data-id="' . $row['id'] . '"><i class="' . $icon . ' me-2"></i>' . htmlspecialchars($row['firstname']) . ' ' . $type . ' ' . htmlspecialchars($row['time_in']) . '</a></li>';
+                  }
+                  $count++;
+                }
+                if ($count > $max_items) {
+                  echo '<li><a class="dropdown-item text-center" href="#" data-bs-toggle="modal" data-bs-target="#allNotificationsModal"><i class="fas fa-ellipsis-h me-2"></i>More...</a></li>';
+                }
+              } else {
+                echo '<li><a class="dropdown-item" href="#"><i class="fas fa-info-circle me-2"></i>No Notifications</a></li>';
+              }
+            ?>
+          </ul>
+        </li>
+        
+        <!-- Message Dropdown -->
+        <li class="nav-item dropdown">
+          <a href="#" class="nav-link dropdown-toggle d-flex align-items-center" id="messageDropdown" data-bs-toggle="dropdown">
+            <i class="fas fa-envelope"></i>
+            <?php
+            $admin_id = $_SESSION['admin_id'];
+            $admin_role = $_SESSION['position'];
+
+              include 'db_config.php';
+              $query = "SELECT COUNT(id) AS unread_count FROM messages WHERE receiver_id = '$admin_id' AND status = 0";
+              $result = mysqli_query($conn, $query);
+              $row = mysqli_fetch_assoc($result);
+              $unread_count = $row['unread_count'];
+              if ($unread_count > 0) {
+              echo '<span class="badge bg-danger ms-1">' . $unread_count . '</span>';
+              }
+            ?>
+          </a>
+          <ul class="dropdown-menu custom-dropdown" aria-labelledby="messageDropdown" id="messageList">
+            <!-- Recent messages will be loaded here -->
+            <li class="d-flex justify-content-center mt-2">
+              <button class="btn btn-primary btn-sm rounded-circle" id="openMessageModal">
+                <i class="fas fa-plus"></i>
+              </button>
+            </li>
+          </ul>
+        </li>
+
+        <!-- Profile Dropdown -->
+        <li class="nav-item dropdown">
+          <a href="#" class="nav-link dropdown-toggle d-flex align-items-center" id="profileDropdown" data-bs-toggle="dropdown">
+            <img src="<?php echo !empty($userData['profile_picture']) ? $userData['profile_picture'] : 'uploads/profile_pictures/default.jpg'; ?>" 
+            alt="Profile Picture" 
+            class="rounded-circle profile-pic">
+            <div class="pulsing-icon2">
+              <div class="pulsing-ring2"></div>
+            </div>
+          </a>
+          <ul class="dropdown-menu custom-dropdown" aria-labelledby="profileDropdown">
+            <li>
+                <a class="dropdown-item" href="view_profile.php">
+                    <i class="fas fa-user"></i> View Profile
+                </a>
+            </li>
+            <li>
+                <a class="dropdown-item" href="logout.php">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </a>
+            </li>
+          </ul>
+        </li>
       </ul>
     </div>
   </div>
 </nav>
+
+<!-- All Notifications Modal -->
+<div class="modal fade" id="allNotificationsModal" tabindex="-1" aria-labelledby="allNotificationsModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="allNotificationsModalLabel"><i class="fas fa-bell"></i> All Notifications</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body notification-modal-body">
+        <ul class="list-group">
+          <?php
+            include 'db_config.php';
+            $query = "SELECT a.id, e.firstname, a.time_in, 'attendance' AS type FROM attendance a JOIN employees e ON a.employee_id = e.id WHERE a.status = 'Pending'
+                      UNION
+                      SELECT l.leave_id AS id, e.firstname, l.request_date AS time_in, 'leave' AS type FROM leave_requests l JOIN employees e ON l.employee_id = e.id WHERE l.status = 'Pending'
+                      ORDER BY time_in DESC"; // Limit to 10 items
+            $result = mysqli_query($conn, $query);
+            if (mysqli_num_rows($result) > 0) {
+              while ($row = mysqli_fetch_assoc($result)) {
+                $icon = $row['type'] == 'attendance' ? 'fas fa-clock' : 'fas fa-calendar-alt';
+                $type = $row['type'] == 'attendance' ? 'timed in at' : 'requested leave on';
+                echo '<li class="list-group-item d-flex align-items-center"><i class="' . $icon . ' me-2"></i>' . htmlspecialchars($row['firstname']) . ' ' . $type . ' ' . htmlspecialchars($row['time_in']) . '</li>';
+              }
+            } else {
+              echo '<li class="list-group-item text-center"><i class="fas fa-info-circle me-2"></i>No Notifications</li>';
+            }
+          ?>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- NOTIFICATION Modal -->
+<div class="modal fade" id="notificationModal" tabindex="-1" aria-labelledby="notificationModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content shadow-lg rounded-3">
+      <div class="modal-header">
+        <h5 class="modal-title" id="notificationModalLabel">
+          <i class="fas fa-bell"></i> Notification Details
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="mb-3">
+          <i class="fas fa-user text-primary"></i>
+          <strong> Employee: </strong> 
+          <span id="modalEmployee" class="text-dark"></span>
+        </div>
+        <div class="mb-3">
+          <i class="fas fa-clock text-success"></i>
+          <strong> Time In: </strong> 
+          <span id="modalTimeIn" class="text-dark"></span>
+        </div>
+        <div class="alert alert-warning d-flex align-items-center" role="alert">
+          <i class="fas fa-exclamation-circle me-2"></i>
+          <span> The employee is <span class="badge bg-warning text-dark">Waiting for Approval</span></span>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-danger" data-bs-dismiss="modal">
+          <i class="fas fa-times"></i> Close
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
 
 <!-- Messenger Modal -->
 <div class="modal fade" id="messageModal" tabindex="-1" aria-labelledby="messageModalLabel" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered modal-lg">
     <div class="modal-content shadow-lg">
       <!-- Modal Header -->
-      <div class="modal-header bg-primary text-white">
-        <h5 class="modal-title" id="messageModalLabel">Messages</h5>
+      <div class="modal-header ">
+        <h5 class="modal-title" id="messageModalLabel"><i class="fas fa-envelope"></i> Messages</h5>
         <button type="button" class="btn-close text-white" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
 
       <div class="modal-body d-flex" style="height: 450px;">
         <!-- Sidebar for user profiles -->
-        <div class="user-sidebar p-3 border-end" style="width: 250px; overflow-y: auto; background: #f1f5f9; border-radius: 8px;">
+        <div class="user-sidebar p-3 border-end">
           <h6 class="text-center mb-3">Users</h6>
           <ul class="list-unstyled" id="userList">
             <?php
@@ -118,7 +256,40 @@
   </div>
 </div>
 
+<!-- JavaScript -->
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  document.querySelectorAll(".notification-item").forEach(item => {
+    item.addEventListener("click", function (event) {
+      event.preventDefault();
+      let notificationId = this.getAttribute("data-id");
 
+      fetch("includes/fetch_notification.php?id=" + notificationId)
+        .then(response => response.json())
+        .then(data => {
+          if (data.success) {
+            document.getElementById("modalEmployee").textContent = data.firstname;
+            document.getElementById("modalTimeIn").textContent = data.time_in || "N/A";
+            
+            // Change text based on notification type
+            let alertMessage = data.type === "leave" 
+              ? "The employee has requested a leave and waiting for approval."
+              : "The employee is waiting for attendance approval.";
+            
+            document.querySelector(".alert span").textContent = alertMessage;
+
+            new bootstrap.Modal(document.getElementById("notificationModal")).show();
+          } else {
+            alert(data.message || "Failed to fetch notification details.");
+          }
+        })
+        .catch(error => console.error("Error:", error));
+    });
+  });
+});
+
+
+</script>
 <script>
 document.addEventListener("DOMContentLoaded", function () {
     // Initialize variables
@@ -134,7 +305,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
     // Function to load recent messages
     function loadRecentMessages() {
-        fetch("fetch_recent_messages.php")
+        fetch("includes/fetch_recent_messages.php")
             .then(response => response.text())
             .then(data => {
                 messageList.innerHTML = data.trim() || `
@@ -152,6 +323,11 @@ document.addEventListener("DOMContentLoaded", function () {
     function attachEventListeners() {
         document.querySelectorAll(".user-item, .message-item").forEach(item => {
             item.addEventListener("click", function () {
+                // Remove the "active" class from all user items
+                document.querySelectorAll(".user-item").forEach(el => el.classList.remove("active"));
+                // Add the "active" class to the clicked item
+                item.classList.add("active");
+
                 currentReceiverId = item.getAttribute("data-id");
                 currentReceiverRole = item.getAttribute("data-role");
                 messageModal.show();
@@ -167,7 +343,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
     // Load messages for a specific user
     function loadMessages(userId, userRole, scrollToBottom = false) {
-        fetch(`fetch_messages.php?receiver_id=${userId}&receiver_role=${userRole}`)
+        fetch(`includes/fetch_messages.php?receiver_id=${userId}&receiver_role=${userRole}`)
             .then(response => response.text())
             .then(data => {
                 chatBox.innerHTML = data;
@@ -194,7 +370,7 @@ document.addEventListener("DOMContentLoaded", function () {
         formData.append("receiver_role", currentReceiverRole);
         formData.append("message", message);
 
-        fetch("send_message.php", { method: "POST", body: formData })
+        fetch("logics/send_message.php", { method: "POST", body: formData })
             .then(response => response.text())
             .then(() => {
                 loadMessages(currentReceiverId, currentReceiverRole, true);
@@ -269,10 +445,14 @@ document.addEventListener("DOMContentLoaded", function () {
     // Initial load of recent messages
     loadRecentMessages();
 
-    // Event listener for dynamically loaded user list
+    // Event listener for dynamically loaded user list (via delegation)
     document.getElementById("userList").addEventListener("click", function (event) {
         const user = event.target.closest(".user-item");
         if (!user) return;
+
+        // Remove active class from all user items and add to the clicked one
+        document.querySelectorAll(".user-item").forEach(el => el.classList.remove("active"));
+        user.classList.add("active");
 
         currentReceiverId = user.getAttribute("data-id");
         currentReceiverRole = user.getAttribute("data-role");
@@ -298,7 +478,6 @@ document.addEventListener("DOMContentLoaded", function() {
         chatBox.appendChild(box);
     }
 });
-
 </script>
 
 <!-- Font Awesome (Make sure this is included in <head>) -->
@@ -308,46 +487,88 @@ document.addEventListener("DOMContentLoaded", function() {
 <!-- Font Awesome CDN (Include in your <head> if not already) -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/js/all.min.js"></script>
 
+
 <script>
-  document.addEventListener("DOMContentLoaded", function () {
+document.addEventListener("DOMContentLoaded", function () {
     const toggleButton = document.getElementById("darkModeToggle");
-    const darkModeIcon = document.getElementById("darkModeIcon");
 
-    function toggleDarkMode(isDarkMode) {
-      document.body.classList.toggle("dark-mode", isDarkMode);
-      document.querySelector(".navbar")?.classList.toggle("dark-mode", isDarkMode);
+    function applyDarkMode(isDarkMode, withTransition = true) {
+        if (!withTransition) {
+            document.body.classList.add("no-transition");
+        }
 
-      document.querySelectorAll(".card, .card-header, h1, h2, h3, h4, h5, h6, p, span, a, .custom-dropdown, .dropdown-item, .btn-outline-secondary, .modal-content")
+        document.body.classList.toggle("dark-mode", isDarkMode);
+
+        document.querySelectorAll(".nav-tabs .nav-link, .nav-tabs .nav-link.active, .navbar, .sidebar, .sidebar .submenu, .sidebar-divider, .sidebar-divider2, .user-sidebar, .card, .card-header, #searchInput, .card-header2, .modal-header, h1, h2, h3, h4, h5, h6, p, span, a, .custom-dropdown, .dropdown-item, .btn-outline-secondary, .modal-content, .terms-card, .profile-container, .profile-image, #updateProfileCard, .profile-picture-container2, .profile-picture2, .profile-detail, form, .form-control, .btn-primary, .btn-outline-info, .bg-gradient-success, .bg-gradient-danger, .chat-box, .user-item, button, .input-buttons button, .message .text, #messageInput, #sendMessage, .form-group, .form-container, .form-label, .modal-footer, .message-container, label, .btn-close, .background-circles, .circle, .profile-card, .profile-detail")
         .forEach(el => el.classList.toggle("dark-mode", isDarkMode));
 
-      document.querySelector(".sidebar")?.classList.toggle("dark-mode", isDarkMode);
+        // ✅ Update Circles' Background Color
+        document.querySelectorAll(".circle").forEach(circle => {
+            circle.style.background = isDarkMode 
+                ? "rgba(255, 255, 255, 0.3)"  // Light color for dark mode
+                : "rgba(107, 17, 203, 0.3)"; // Default purple color
+        });
 
-      fetch("dark_mode.php", {
-        method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: "dark_mode=" + isDarkMode
-      });
+        const sunIcon = document.getElementById("sun-icon");
+    const moonIcon = document.getElementById("moon-icon");
 
-      // Update icon color
-      darkModeIcon.style.color = isDarkMode ? "#dddddd" : "#000000";
-
-      // Update icon
-      darkModeIcon.classList.toggle("fa-moon", !isDarkMode);
-      darkModeIcon.classList.toggle("fa-sun", isDarkMode);
+    if (sunIcon && moonIcon) {
+        sunIcon.style.display = isDarkMode ? "none" : "block";
+        moonIcon.style.display = isDarkMode ? "block" : "none";
     }
 
-    // Fetch stored dark mode preference
-    fetch("dark_mode.php", { method: "POST" })
-      .then(response => response.json())
-      .then(data => {
-        if (data.dark_mode) {
-          toggleDarkMode(true);
+    if (!withTransition) {
+        setTimeout(() => document.body.classList.remove("no-transition"), 50);
+    }
+        // ✅ Ensure proper icon switching
+        const darkModeIcon = document.getElementById("darkModeIcon");
+        if (darkModeIcon) {
+            darkModeIcon.classList.remove("fa-moon", "fa-sun");
+            darkModeIcon.classList.add(isDarkMode ? "fa-sun" : "fa-moon");
+            darkModeIcon.style.color = isDarkMode ? "#dddddd" : "#000000";
+        } else {
+            console.error("Dark mode icon not found.");
         }
-      });
 
-    toggleButton.addEventListener("click", function () {
-      const isDarkMode = document.body.classList.contains("dark-mode");
-      toggleDarkMode(!isDarkMode);
+        if (!withTransition) {
+            setTimeout(() => document.body.classList.remove("no-transition"), 50);
+        }
+    }
+
+    function toggleDarkMode() {
+        const isDarkMode = document.body.classList.contains("dark-mode") ? 0 : 1;
+
+        fetch("dark_mode.php", {
+            method: "POST",
+            headers: { "Content-Type": "application/x-www-form-urlencoded" },
+            body: "dark_mode=" + isDarkMode
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                applyDarkMode(isDarkMode, true);
+            } else {
+                console.error("Error updating dark mode:", data.error);
+            }
+        })
+        .catch(error => console.error("Fetch error:", error));
+    }
+
+    // ✅ Apply saved dark mode on page load (without transition)
+    fetch("dark_mode.php", { 
+        method: "POST", 
+        headers: { "Content-Type": "application/x-www-form-urlencoded" }, 
+        body: "fetch_mode=true" 
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            applyDarkMode(data.dark_mode === 1, false);
+        }
     });
-  });
-  </script>
+
+    // ✅ Attach click event to toggler
+    toggleButton.addEventListener("click", toggleDarkMode);
+});
+
+</script>

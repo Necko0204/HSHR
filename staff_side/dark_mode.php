@@ -2,7 +2,7 @@
 include 'db_config.php';
 
 // Debug: Check if session is properly set
-if (!isset($_SESSION['admin_id'])) {
+if (!isset($_SESSION['employee_id']) || !in_array($_SESSION['role'], ['Staff', 'Intern'])) {
     header("Location: index.php");
     exit();
 }

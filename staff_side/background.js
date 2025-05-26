@@ -1,39 +1,33 @@
-document.addEventListener("DOMContentLoaded", () => {
-    function createFloatingShapes() {
-        const container = document.createElement('div');
-        container.classList.add('floating-container');
-        document.body.appendChild(container);
+document.addEventListener('DOMContentLoaded', () => {
+    const container = document.querySelector('.background-container');
 
-        const colors = ["#6a86d8", "#4b6584", "#b3cde0", "#2e4053", "#5d6d7e"];
-        const shapes = ["circle", "square", "triangle"];
+    function createBox() {
+        const box = document.createElement('div');
+        box.classList.add('box');
+        container.appendChild(box);
 
-        for (let i = 0; i < 40; i++) { // Balanced number for a clean, professional feel
-            let shape = document.createElement('div');
-            shape.classList.add('floating-shape');
+        const size = Math.floor(Math.random() * 40) + 10;
+        const left = Math.random() * 100;
+        const duration = Math.random() * 10 + 10;
 
-            let randomShape = shapes[Math.floor(Math.random() * shapes.length)];
-            shape.classList.add(randomShape);
+        box.style.width = `${size}px`;
+        box.style.height = `${size}px`;
+        box.style.left = `${left}%`;
+        box.style.animationDuration = `${duration}s`;
 
-            let color = colors[Math.floor(Math.random() * colors.length)];
-            if (randomShape === "triangle") {
-                shape.style.borderBottomColor = color;
-            } else {
-                shape.style.backgroundColor = color;
-            }
-
-            let size = Math.random() * 30 + 15;
-            shape.style.width = size + "px";
-            shape.style.height = size + "px";
-
-            shape.style.top = Math.random() * 100 + "vh";
-            shape.style.left = Math.random() * 100 + "vw";
-
-            shape.style.animationDuration = (Math.random() * 4 + 4) + "s";
-            shape.style.animationDelay = Math.random() * 2 + "s";
-
-            container.appendChild(shape);
-        }
+        box.animate([
+            { transform: 'translateY(120vh) translateX(0) rotate(0)', opacity: 0 },
+            { opacity: 0.5, offset: 0.1 },
+            { opacity: 0.5, offset: 0.9 },
+            { transform: 'translateY(-10vh) translateX(0) rotate(360deg)', opacity: 0 }
+        ], {
+            duration: duration * 1000,
+            iterations: Infinity,
+            easing: 'linear'
+        });
     }
 
-    createFloatingShapes();
+    for (let i = 0; i < 10; i++) {
+        createBox();
+    }
 });

@@ -3,10 +3,10 @@ session_name('staff_session');
 session_start();
 include 'db_config.php';
 
-if (!isset($_SESSION['employee_id'])) {
-    die("Unauthorized access.");
+if (!isset($_SESSION['employee_id']) || !in_array($_SESSION['role'], ['Staff', 'Intern'])) {
+    header("Location: index.php");
+    exit();
 }
-
 $employee_id = $conn->real_escape_string($_SESSION['employee_id']);
 $date = date("Y-m-d");
 $break_out = date("H:i:s");
@@ -14,7 +14,7 @@ $break_out = date("H:i:s");
 // Ensure employee has clocked in and is currently on break
 $query = "SELECT time_in, time_out, break_in, break_out FROM attendance WHERE employee_id = ? AND date = ?";
 $stmt = $conn->prepare($query);
-$stmt->bind_param("is", $employee_id, $date);
+$stmt->bind_param("ss", $employee_id, $date);
 $stmt->execute();
 $stmt->bind_result($time_in, $time_out, $break_in_time, $break_out_time);
 $stmt->fetch();
@@ -56,7 +56,7 @@ $query = "UPDATE attendance
           WHERE employee_id = ? AND date = ? AND break_out IS NULL";
 
 $stmt = $conn->prepare($query);
-$stmt->bind_param("ssis", $break_out, $break_duration, $employee_id, $date);
+$stmt->bind_param("ssss", $break_out, $break_duration, $employee_id, $date);
 
 if ($stmt->execute()) {
     echo "✅ Break ended successfully!";

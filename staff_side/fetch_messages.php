@@ -1,4 +1,5 @@
 <?php
+header('Content-Type: application/json');
 session_name('staff_session');  
 session_start();  
 
@@ -49,7 +50,6 @@ if (!$result) {
     exit;
 }
 
-// Display messages
 if (mysqli_num_rows($result) > 0) {
     while ($row = mysqli_fetch_assoc($result)) {
         $message = htmlspecialchars($row['message']);
@@ -58,23 +58,22 @@ if (mysqli_num_rows($result) > 0) {
         $message_type = $row['message_type'];
 
         if ($message_type == 'sent') {
-            // Sent message (align to right)
             echo "<div class='d-flex justify-content-end mb-3'>
-                    <div class='p-2 bg-primary text-white rounded w-75' style='max-width: 75%; border-radius: 10px;'>
-                        <p class='mb-1'>$message</p>
-                        <small class='text-light text-end d-block'>$timestamp</small>
-                    </div>
-                    <img src='$profile_picture' class='rounded-circle ms-2' width='40' height='40' onerror=\"this.src='uploads/profile_pictures/default.jpg';\">
-                  </div>";
+            <div class='p-2 bg-primary text-white rounded w-75 message-container dark-mode' style='max-width: 75%; border-radius: 10px;'>
+                <p class='mb-1'>$message</p>
+                <small class='text-light text-end d-block'>$timestamp</small>
+            </div>
+            <img src='$profile_picture' class='rounded-circle ms-2' width='40' height='40' onerror=\"this.src='uploads/profile_pictures/default.jpg';\">
+          </div>";
         } else {
-            // Received message (align to left)
             echo "<div class='d-flex justify-content-start mb-3'>
                     <img src='$profile_picture' class='rounded-circle me-2' width='40' height='40' onerror=\"this.src='uploads/profile_pictures/default.jpg';\">
-                    <div class='p-2 bg-light text-dark rounded w-75' style='max-width: 75%; border-radius: 10px;'>
+                   <div class='p-2 bg-light text-dark rounded w-75 message-container' style='max-width: 75%; border-radius: 10px;'>
+
                         <p class='mb-1'>$message</p>
                         <small class='text-muted text-end d-block'>$timestamp</small>
                     </div>
-                  </div>";
+                </div>";
         }
     }
 } else {

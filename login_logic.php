@@ -1,8 +1,10 @@
 <?php
 session_name('admin_session');
 session_start();
+
 header('Content-Type: application/json'); // Ensure JSON response
-require 'db_config.php'; // Include database connection
+require_once('db_config.php');
+
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $username = trim($_POST['username']);
@@ -14,7 +16,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     }
 
     // Use prepared statements to prevent SQL injection
-    $stmt = $conn->prepare("SELECT id, username, position, password FROM admin WHERE username = ?");
+    $stmt = $conn->prepare("SELECT id, username, position, sidebarOn, darkmodeOn ,password FROM admin WHERE username = ?");
     $stmt->bind_param("s", $username);
     $stmt->execute();
     $result = $stmt->get_result();
@@ -28,6 +30,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $_SESSION['admin_id'] = $row['id'];
             $_SESSION['admin_username'] = $row['username'];
             $_SESSION['position'] = $row['position'];
+            $_SESSION['sidebarOn'] = $row['sidebarOn'];
+            $_SESSION['sidebarOn'] = $row['darkmodeOn'];
+            $_SESSION['login_time'] = time(); // Store login time
 
             // Ensure session is saved
             session_write_close();

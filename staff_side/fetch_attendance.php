@@ -10,23 +10,26 @@ if (!isset($_SESSION['employee_id'])) {
 $employee_id = $conn->real_escape_string($_SESSION['employee_id']);
 
 $query = "
-    SELECT 
-        date,
-        MIN(time_in) AS time_in, 
-        MAX(time_out) AS time_out, 
-        SEC_TO_TIME(SUM(TIME_TO_SEC(TIMEDIFF(time_out, time_in)))) AS total_hours,
-        MIN(break_in) AS break_in,
-        MAX(break_out) AS break_out,
-        IFNULL(SUM(TIME_TO_SEC(break_duration)), 0) AS break_duration_seconds
-    FROM attendance 
-    WHERE employee_id = ? 
-    GROUP BY date 
-    ORDER BY date DESC
+  SELECT 
+        a.date,
+        a.time_in,
+        a.time_out,
+        a.break_in,
+        a.break_out,
+        a.break_duration,
+        a.total_hours,
+        IFNULL(ou.status, 'on time') AS status,
+        IFNULL(ou.hours, 0) AS hours
+    FROM attendance a
+    LEFT JOIN overtime_undertime_logs ou 
+        ON a.employee_id = ou.employee_id AND a.date = ou.date
+    WHERE a.employee_id = ?
+    ORDER BY a.date DESC
 ";
 
 
 $stmt = $conn->prepare($query);
-$stmt->bind_param("i", $employee_id);
+$stmt->bind_param("s", $employee_id);
 $stmt->execute();
 $result = $stmt->get_result();
 

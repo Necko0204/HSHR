@@ -7,22 +7,23 @@ ini_set('display_errors', 1);
 
 include 'db_config.php';
 
+header('Content-Type: application/json'); // Set response as JSON
+
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $username = trim($_POST['username']);
     $password = trim($_POST['password']);
 
     if (!empty($username) && !empty($password)) {
+        // Prepare SQL query to fetch user details
         $stmt = $conn->prepare("SELECT employee_id, password, role FROM staff_accounts WHERE username = ?");
         if (!$stmt) {
-            $_SESSION['error'] = "Database error: " . $conn->error;
-            header("Location: index.php");
+            echo json_encode(["status" => "error", "message" => "Database error: " . $conn->error]);
             exit();
         }
 
         $stmt->bind_param("s", $username);
         if (!$stmt->execute()) {
-            $_SESSION['error'] = "Database error: " . $stmt->error;
-            header("Location: index.php");
+            echo json_encode(["status" => "error", "message" => "Database error: " . $stmt->error]);
             exit();
         }
 
@@ -31,29 +32,32 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $stmt->bind_result($employee_id, $stored_hashed_password, $role);
             $stmt->fetch();
 
-            // Hash entered password with SHA-256
-            $entered_hashed_password = hash('sha256', $password);
-
-            if ($entered_hashed_password === $stored_hashed_password) {
+            // ✅ Use password_verify() for bcrypt password comparison
+            if (password_verify($password, $stored_hashed_password)) {
                 session_regenerate_id(true);
                 $_SESSION['employee_id'] = $employee_id;
                 $_SESSION['username'] = $username;
-                $_SESSION['role'] = $role; // Add role to session
-                header("Location: dashboard.php");
+                $_SESSION['role'] = $role;
+
+                $stmt->close();
+                $conn->close();
+
+                echo json_encode(["status" => "success", "message" => "✅ Login successful!", "redirect" => "dashboard.php"]);
                 exit();
             } else {
-                $_SESSION['error'] = "❌ Incorrect username or password.";
+                echo json_encode(["status" => "error", "message" => "❌ Incorrect username or password."]);
+                exit();
             }
         } else {
-            $_SESSION['error'] = "❌ Invalid username or password.";
+            echo json_encode(["status" => "error", "message" => "❌ Invalid username or password."]);
+            exit();
         }
         $stmt->close();
     } else {
-        $_SESSION['error'] = "❌ Please fill in all fields.";
+        echo json_encode(["status" => "error", "message" => "❌ Please fill in all fields."]);
+        exit();
     }
 
     $conn->close();
-    header("Location: index.php"); // Redirect back to login
-    exit();
 }
 ?>

@@ -1,10 +1,45 @@
+/* Futuristic Aurora with White Base */
+.background-aurora {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+    z-index: -1;
+}
+
+.aurora {
+    position: absolute;
+    width: 150vw;
+    height: 150vh;
+    background: linear-gradient(135deg, rgba(0, 191, 255, 0.15), hsla(330, 100%, 71%, 0.15), rgba(75, 0, 130, 0.15));
+    opacity: 0.5;
+    filter: blur(80px);
+    animation: aurora-flow 10s infinite linear;
+}
+
+@keyframes aurora-flow {
+    0% {
+        transform: translate(-50%, -50%) rotate(0deg);
+    }
+    50% {
+        transform: translate(-45%, -45%) rotate(180deg);
+    }
+    100% {
+        transform: translate(-50%, -50%) rotate(360deg);
+    }
+}
+
 /* Bouncing Circles Background */
 @keyframes bounce {
     0%, 100% {
-            transform: translateY(0);
+        transform: translateY(0) scale(1) rotate(0deg);
+        opacity: 0.7;
     }
     50% {
-            transform: translateY(-60px);
+        transform: translateY(-60px) scale(1.1) rotate(10deg);
+        opacity: 1;
     }
 }
 
@@ -20,11 +55,11 @@
 
 .circle {
     position: absolute;
-    width: 50px;
-    height: 50px;
-    background: rgba(106, 17, 203, 0.2);
     border-radius: 50%;
-    animation: bounce 3s infinite ease-in-out alternate;
-    opacity: 0.6;
+    background: radial-gradient(circle, rgba(106, 17, 203, 0.6) 0%, rgba(37, 117, 252, 0.3) 100%);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    animation: bounce 4s infinite ease-in-out alternate;
+    opacity: 0.5;
+    filter: blur(2px);
+    transition: transform 0.3s ease;
 }
-

@@ -1,95 +1,3 @@
-body {
-    overflow: hidden;
-    position: relative;
-    color: white;
-    font-family: 'Poppins', sans-serif;
-    background: rgb(78, 46, 46);
-}
-
-/* Profile Section */
-.profile-container {
-    text-align: center;
-    margin-top: 30px;
-}
-
-.profile-container img {
-    width: 200px;
-    height: 200px;
-    border-radius: 50%;
-    border: 4px solid white;
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
-
-.profile-container img:hover {
-    transform: scale(1.1);
-    box-shadow: 0 0 20px rgba(255, 255, 255, 0.5);
-}
-
-
-/* Dashboard Container (Centered) */
-.dashboard-container {
-    margin-bottom: 0;
-    height: 40vh;
-    padding: 20px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-}
-
-/* Cards - Widgets */
-.card-container {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 20px;
-    max-width: 1000px;
-}
-
-.card {
-    cursor: pointer;
-    font-size: 1.3rem;
-    padding: 2rem !important;
-    background: rgba(255, 255, 255, 0.6); /* Increased opacity */
-    border: none;
-    border-radius: 12px;
-    backdrop-filter: blur(10px);
-    text-align: center;
-    width: 220px;
-    height: 200px;
-    box-sizing: border-box;
-    color: black; /* Ensures text remains readable */
-}
-
-.card:hover {
-    transform: scale(1.1);
-    box-shadow: 0 0 20px rgba(255, 255, 255, 0.5);
-}
-
-/* Media Queries */
-@media (max-width: 768px) {
-    .card-container {
-        flex-direction: column;
-        align-items: center;
-    }
-
-    .profile-container img {
-        width: 100px;
-        height: 100px;
-    }
-
-    .card {
-        width: 80%;
-        margin-bottom: 15px;
-    }
-}
-
-@media (max-width: 576px) {
-    .card {
-        width: 90%;
-    }
-}
 /* Floating Container */
 .floating-container {
     position: fixed;
@@ -99,7 +7,7 @@ body {
     height: 100vh;
     z-index: -1;
     overflow: hidden;
-    background: linear-gradient(120deg, rgba(0, 0, 0, 0.8), rgba(167, 1, 1, 0.7)); /* Professional subtle background */
+    background: linear-gradient(120deg, rgba(0, 0, 0, 0.8), #ffffff); /* Professional subtle background */
 }
 
 /* Floating shapes */
@@ -133,4 +41,3 @@ body {
     50% { transform: translateY(-60px) translateX(-40px) rotate(20deg); opacity: 0.4; }
     100% { transform: translateY(0) translateX(0) rotate(40deg); opacity: 0.6; }
 }
-

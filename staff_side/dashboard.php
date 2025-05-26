@@ -8,7 +8,7 @@ ini_set('display_errors', 1);
 include 'staff_helper.php';
 include 'db_config.php';
 
-if (!isset($_SESSION['employee_id']) || $_SESSION['role'] !== 'staff') {
+if (!isset($_SESSION['employee_id']) || !in_array($_SESSION['role'], ['Staff', 'Intern'])) {
     header("Location: index.php");
     exit();
 }
@@ -16,10 +16,12 @@ if (!isset($_SESSION['employee_id']) || $_SESSION['role'] !== 'staff') {
 // Assign the correct session values
 $sender_id = isset($_SESSION['employee_id']) ? $_SESSION['employee_id'] : "";
 $sender_role = isset($_SESSION['role']) ? $_SESSION['role'] : "";
+$sender_email = isset($_SESSION['email']) ? $_SESSION['email'] : "";
 
 // Debugging: Check if values are now correctly assigned
 error_log("Sender ID: " . $sender_id);
 error_log("Sender Role: " . $sender_role);
+error_log("Sender Email: " . $sender_email);
 
 ?>
 <!DOCTYPE html>
@@ -34,43 +36,72 @@ error_log("Sender Role: " . $sender_role);
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
     <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.9/main.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
-    <link rel="stylesheet" href="background.css">
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <div class="floating-container"></div> <!-- Floating squares container -->
-
+    <!-- Navigation Bar -->
     <div class="main-container">
         <?php include 'staff_navbar.php'; ?>
+    </div>
+
+    <!-- Animated Box Shapes -->
+    <div class="animation-container">
+        <div class="box"></div>
+        <div class="box"></div>
+        <div class="box"></div>
+        <div class="box"></div>
+        <div class="box"></div>
+        <div class="box"></div>
+        <div class="box"></div>
+        <div class="box"></div>
+        <div class="box"></div>
+        <div class="box"></div>
+        <div class="box"></div>
+        <div class="box"></div>
+        <div class="box"></div>
+        <div class="box"></div>
+        <div class="box"></div>
+        <div class="box"></div>
+        <div class="box"></div>
+        <div class="box"></div>
     </div>
 
     <div class="profile-container">
         <img src="../images/asdasdasd123123123123123.jpg" alt="Profile Picture">
     </div>
-
+    
     <main class="dashboard-container">
         <div class="card-container">
-            <div class="card" onclick="location.href='staff_payroll.php'">
+            <div class="card1" onclick="location.href='staff_payroll.php'">
                 <i class="fa-solid fa-money-check-alt fa-4x"></i>
                 <h5 class="mt-3">Payroll</h5>
             </div>
-            <div class="card" onclick="location.href='staff_attendance.php'">
+            <div class="card1" onclick="location.href='staff_attendance.php'">
                 <i class="fa-solid fa-calendar-check fa-4x"></i>
                 <h5 class="mt-3">Attendance</h5>
             </div>
-            <div class="card" onclick="location.href='staff_leave_requests.php'">
+            <div class="card1" onclick="location.href='staff_leave_requests.php'">
                 <i class="fa-solid fa-user-clock fa-4x"></i>
                 <h5 class="mt-3">Leave Requests</h5>
             </div>
-            <div class="card" onclick="location.href='staff_settings.php'">
+            <div class="card1" onclick="location.href='file_reports.php'">
+                <i class="fa-solid fa-file-alt fa-4x"></i>
+                <h5 class="mt-3">File a Report</h5>
+            </div>
+            <div class="card1" onclick="location.href='staff_settings.php'">
                 <i class="fa-solid fa-cogs fa-4x"></i>
                 <h5 class="mt-3">Settings</h5>
             </div>
         </div>
     </main>
 
-    <script src="background.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.9/main.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        console.log("Employee ID: <?php echo $sender_id; ?>");
+        console.log("Role: <?php echo $sender_role; ?>");
+        console.log("Email: <?php echo $sender_email; ?>");
+    </script>
 </body>
 </html>

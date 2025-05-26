@@ -1,0 +1,171 @@
+@media (max-width: 1366px) {
+    body {
+        font-size: 16px; /* Smaller font size */
+    }
+    
+    .navbar {
+        height: auto;
+        padding: 10px 15px;
+    }
+    
+    .sidebar {
+        width: 220px; /* Reduced width */
+        padding: 10px;
+    }
+    
+    .sidebar.minimized {
+        width: 70px;
+    }
+
+    .sidebar a {
+        padding: 10px 15px;
+        font-size: 14px;
+    }
+    
+    .sidebar a i {
+        font-size: 18px;
+        margin-right: 10px;
+    }
+    
+    .submenu {
+        padding-left: 20px;
+    }
+    
+    .submenu a {
+        font-size: 13px;
+        padding: 5px 10px;
+    }
+    
+    .content-container {
+        margin-left: 220px; /* Adjusted margin */
+        padding: 15px;
+    }
+    
+    .content-container.minimized {
+        margin-left: 70px;
+    }
+    
+    .wrapper {
+        margin-left: 220px;
+        padding: 10px;
+    }
+
+    .wrapper.minimized {
+        margin-left: 70px;
+    }
+
+    .sidebar-footer {
+        font-size: 12px;
+        padding: 8px 0;
+    }
+}
+
+@media (max-width: 768px) {
+    .sidebar {
+        width: 200px;
+        padding: 50px;
+    }
+
+    .navbar {
+        padding: 10px 15px;
+    }
+
+    .sidebar a {
+        padding: 10px 15px;
+        font-size: 14px;
+    }
+
+    .sidebar a i {
+        font-size: 18px;
+        margin-right: 10px;
+    }
+
+    .submenu a {
+        padding: 6px 8px;
+        font-size: 12px;
+    }
+
+    .submenu a i {
+        font-size: 16px;
+    }
+
+    .content-container {
+        margin-left: 200px;
+        padding: 15px;
+    }
+
+    .content-container.minimized {
+        margin-left: 60px;
+    }
+
+    .wrapper {
+        margin-left: 200px;
+        padding: 5px;
+    }
+}
+
+@media (max-width: 480px) {
+    .sidebar {
+        width: 150px;
+        padding: 30px;
+    }
+
+    .navbar {
+        padding: 5px 10px;
+    }
+
+    .sidebar a {
+        padding: 8px 10px;
+        font-size: 12px;
+    }
+
+    .sidebar a i {
+        font-size: 16px;
+        margin-right: 5px;
+    }
+
+    .submenu a {
+        padding: 4px 6px;
+        font-size: 10px;
+    }
+
+    .submenu a i {
+        font-size: 14px;
+    }
+
+    .content-container {
+        margin-left: 150px;
+        padding: 10px;
+    }
+
+    .content-container.minimized {
+        margin-left: 50px;
+    }
+
+    .wrapper {
+        margin-left: 150px;
+        padding: 5px;
+    }
+}
+
+/* Responsive adjustments for different viewport sizes */
+  @media (max-width: 1200px) {
+    body {
+        padding: 10px;
+        font-size: 18px; /* slightly larger text for readability on large screens */
+    }
+}
+
+@media (max-width: 768px) {
+    body {
+        padding: 5px;
+        font-size: 16px; /* medium text size for tablets */
+    }
+}
+
+@media (max-width: 480px) {
+    body {
+        padding: 2px;
+        font-size: 14px; /* smallest text for mobile devices */
+    }
+}

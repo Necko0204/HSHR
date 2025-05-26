@@ -2,11 +2,6 @@
 <nav class="navbar navbar-expand-lg navbar-light">
   <div class="container-fluid d-flex justify-content-end align-items-center gap-3">
     
-    <!-- Dark Mode Toggle Button -->
-    <button id="darkModeToggle" class="btn btn-outline-secondary border-0">
-      <i id="darkModeIcon" class="fas fa-moon"></i>
-    </button>
-
     <!-- Notification Dropdown -->
     <div class="nav-item dropdown">
         <a href="#" class="nav-link dropdown-toggle d-flex align-items-center" id="notificationDropdown" data-bs-toggle="dropdown">
@@ -35,18 +30,38 @@
 <!-- Profile Dropdown -->
     <div class="nav-item dropdown">
         <a href="#" class="nav-link dropdown-toggle d-flex align-items-center" id="profileDropdown" data-bs-toggle="dropdown">
-            <img src="<?php echo isset($staffData) && !empty($staffData['profile_picture']) 
-                ? '../' . htmlspecialchars($staffData['profile_picture']) 
-                : '/HSHR/images/default.jpg'; ?>" 
-                alt="Profile Picture" 
-                class="rounded-circle profile-pic">
-            <div class="pulsing-icon2">
-                <div class="pulsing-ring2"></div>
-            </div>
+                <!-- Loading Spinner -->
+        <div id="loading-spinner" style="width: 50px; height: 50px; display: block;">⏳</div>
+
+        <!-- Profile Picture -->
+        <?php
+        $profilePic = isset($staffData['profile_picture']) ? $staffData['profile_picture'] : '/HSHR/images/default-profile.jpgy';
+        ?>
+        <img id="profile-pic" 
+             src="<?php echo $profilePic; ?>?v=<?php echo time(); ?>" 
+             alt="Profile Picture" 
+             class="rounded-circle profile-pic me-2" 
+             width="50" height="50" 
+             style="display: none;" 
+             onload="this.style.display='block'; document.getElementById('loading-spinner').style.display='none';">
+
+        <div class="pulsing-icon2">
+            <div class="pulsing-ring2"></div>
+        </div>
         </a>
-        <ul class="dropdown-menu custom-dropdown" aria-labelledby="profileDropdown">
-            <li><a class="dropdown-item" href="staff_viewprofile.php">View Profile</a></li>
-            <li><a class="dropdown-item" href="staff_logout.php">Logout</a></li>
+        <ul class="dropdown-menu custom-dropdown" aria-labelledby="profileDropdown" style="font-size: 1.15rem;">
+            <li>
+          <a class="dropdown-item d-flex align-items-center" href="staff_viewprofile.php">
+              <i class="fas fa-user-circle me-2"></i>
+              <span>View Profile</span>
+          </a>
+            </li>
+            <li>
+          <a class="dropdown-item d-flex align-items-center" href="staff_logout.php">
+              <i class="fas fa-sign-out-alt me-2"></i>
+              <span>Logout</span>
+          </a>
+            </li>
         </ul>
     </div>
   </div>
@@ -57,7 +72,7 @@
   <div class="modal-dialog modal-dialog-centered modal-lg">
     <div class="modal-content shadow-lg">
       <!-- Modal Header -->
-      <div class="modal-header bg-primary text-white">
+      <div class="modal-header text-white">
         <h5 class="modal-title" id="messageModalLabel">Messages</h5>
         <button type="button" class="btn-close text-white" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
@@ -68,6 +83,7 @@
           <h6 class="text-center mb-3">Users</h6>
           <ul class="list-unstyled" id="userList">
             <?php
+            
               // Fetch users from the database
               include 'db_config.php';
 
@@ -147,27 +163,25 @@
 document.addEventListener("DOMContentLoaded", function () {
     let currentReceiverId = null;
     let currentReceiverRole = null;
+    let chatActive = false;
+    
     const messageDropdown = document.getElementById("messageDropdown");
     const messageList = document.getElementById("messageList");
     const chatBox = document.getElementById("chatBox");
     const messageInput = document.getElementById("messageInput");
     const sendMessageBtn = document.getElementById("sendMessage");
     const messageModalElement = document.getElementById("messageModal");
-
-    // Initialize Bootstrap modal
+    
     const messageModal = new bootstrap.Modal(messageModalElement);
-
-    // Get sender details from PHP safely
+    
     let senderId = "<?php echo isset($sender_id) ? $sender_id : ''; ?>";
     let senderRole = "<?php echo isset($sender_role) ? $sender_role : ''; ?>";
-
-    // Log to check if senderId and senderRole are set correctly
+    
     console.log("Sender ID:", senderId);
     console.log("Sender Role:", senderRole);
-
-    // Function to load recent messages
+    
     function loadRecentMessages() {
-        fetch("fetch_recent_messages.php")
+        fetch("includes/fetch_recent_messages.php")
             .then(response => response.text())
             .then(data => {
                 messageList.innerHTML = data.trim() || ` 
@@ -176,57 +190,49 @@ document.addEventListener("DOMContentLoaded", function () {
                             <i class="fas fa-plus"></i>
                         </button>
                     </li>`;
-                attachEventListeners(); // Rebind click events
+                attachEventListeners();
             })
             .catch(error => console.error("Error loading messages:", error));
     }
-
-    // Attach event listeners dynamically
+    
     function attachEventListeners() {
-        document.querySelectorAll(".user-item, .message-item").forEach(item => {
-            item.addEventListener("click", function () {
-                currentReceiverId = item.getAttribute("data-id");
-                currentReceiverRole = item.getAttribute("data-role");
-                messageModal.show();
-                loadMessages(currentReceiverId, currentReceiverRole);
-            });
+        document.addEventListener("click", function (event) {
+            const user = event.target.closest(".user-item, .message-item");
+            if (!user) return;
+            
+            currentReceiverId = user.getAttribute("data-id");
+            currentReceiverRole = user.getAttribute("data-role");
+            
+            chatActive = true;
+            messageModal.show();
+            loadMessages(currentReceiverId, currentReceiverRole);
         });
-
-        // Open the modal when clicking the button to compose a new message
-        const plusButton = document.getElementById("openMessageModal");
-        if (plusButton) {
-            plusButton.addEventListener("click", () => messageModal.show());
-        }
     }
-
-    // Load messages for a specific user
+    
     function loadMessages(userId, userRole) {
-    fetch(`fetch_messages.php?receiver_id=${userId}&receiver_role=${userRole}`)
-        .then(response => response.text())
-        .then(data => {
-            chatBox.innerHTML = data;
-
-            // Auto-scroll to the bottom after loading messages
-            setTimeout(() => {
-                chatBox.scrollTop = chatBox.scrollHeight;
-            }, 100);
-        })
-        .catch(error => console.error("Error loading chat messages:", error));
-}
-
-    // Send message via AJAX
+        fetch(`includes/fetch_messages.php?receiver_id=${userId}&receiver_role=${userRole}`)
+            .then(response => response.text())
+            .then(data => {
+                chatBox.innerHTML = data;
+                setTimeout(() => {
+                    chatBox.scrollTop = chatBox.scrollHeight;
+                }, 100);
+            })
+            .catch(error => console.error("Error loading chat messages:", error));
+    }
+    
     sendMessageBtn.addEventListener("click", function () {
         const message = messageInput.value.trim();
         if (!message || !currentReceiverId) return;
-
+        
         const formData = new FormData();
         formData.append("sender_id", senderId);
         formData.append("sender_role", senderRole);
         formData.append("receiver_id", currentReceiverId);
         formData.append("receiver_role", currentReceiverRole);
         formData.append("message", message);
-
-        fetch("send_message.php", { method: "POST", body: formData })
+        
+        fetch("logics/send_message.php", { method: "POST", body: formData })
             .then(response => response.text())
             .then(() => {
                 loadMessages(currentReceiverId, currentReceiverRole);
@@ -234,361 +240,22 @@ document.addEventListener("DOMContentLoaded", function () {
             })
             .catch(error => console.log("Error sending message:", error));
     });
-
-    // Auto-refresh chat messages every second
+    
+    messageModalElement.addEventListener("shown.bs.modal", () => chatActive = true);
+    messageModalElement.addEventListener("hidden.bs.modal", () => chatActive = false);
+    
     setInterval(() => {
-        if (currentReceiverId) {
+        if (chatActive && currentReceiverId) {
             loadMessages(currentReceiverId, currentReceiverRole);
         }
-    }, 1000);
-
-    // Handle file upload
-    document.getElementById("insertFileButton").addEventListener("click", function () {
-        const fileInput = document.createElement("input");
-        fileInput.type = "file";
-        fileInput.accept = "*/*";  
-        fileInput.click();
-
-        fileInput.addEventListener("change", function () {
-            const file = fileInput.files[0];
-            if (file) {
-                console.log("File selected:", file.name);
-            }
-        });
-    });
-
-    // Handle camera access
-    document.getElementById("cameraButton").addEventListener("click", function () {
-        if (navigator.mediaDevices?.getUserMedia) {
-            navigator.mediaDevices.getUserMedia({ video: true })
-                .then(stream => {
-                    const videoElement = document.createElement("video");
-                    videoElement.srcObject = stream;
-                    videoElement.play();
-                    document.body.appendChild(videoElement);
-                    console.log("Camera is ready to use!");
-                })
-                .catch(error => console.error("Camera error:", error));
-        }
-    });
-
-    // Handle voice message recording
-    document.getElementById("voiceMessageButton").addEventListener("click", function () {
-        if (navigator.mediaDevices?.getUserMedia) {
-            navigator.mediaDevices.getUserMedia({ audio: true })
-                .then(stream => {
-                    const mediaRecorder = new MediaRecorder(stream);
-                    const audioChunks = [];
-
-                    mediaRecorder.ondataavailable = event => audioChunks.push(event.data);
-                    mediaRecorder.onstop = () => {
-                        const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
-                        const audioURL = URL.createObjectURL(audioBlob);
-                        new Audio(audioURL).play();
-                        console.log("Voice message recorded and played.");
-                    };
-
-                    mediaRecorder.start();
-                    setTimeout(() => mediaRecorder.stop(), 5000);
-                })
-                .catch(error => console.error("Microphone error:", error));
-        }
-    });
-
-    // Load messages when dropdown is clicked
-    messageDropdown.addEventListener("click", loadRecentMessages);
-
-    // Initial load of recent messages
-    loadRecentMessages();
-
-    // Event listener for dynamically loaded user list
-    document.getElementById("userList").addEventListener("click", function (event) {
-        const user = event.target.closest(".user-item");
-        if (!user) return;
-
-        currentReceiverId = user.getAttribute("data-id");
-        currentReceiverRole = user.getAttribute("data-role");
-
-        messageModal.show();
-        loadMessages(currentReceiverId, currentReceiverRole);
-    });
-});
-</script>
-
-<style>
-
-  /* Enhanced Chat Modal Styles */
-#chatBox {
-    scroll-behavior: smooth;
-    padding: 10px;
-}
-
-.user-item:hover {
-    background-color: #dee2e6;
-    border-radius: 10px;
-    transition: background 0.3s ease;
-}
-
-button {
-    transition: all 0.3s ease;
-}
-
-button:hover {
-    transform: scale(1.05);
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
-}
-
-.input-buttons button {
-    padding: 8px;
-    border-radius: 50%;
-    background-color: #f8f9fa;
-    border: none;
-    cursor: pointer;
-    transition: background 0.3s ease;
-}
-
-.input-buttons button:hover {
-    background-color: #e2e6ea;
-}
-
-.input-buttons i {
-    font-size: 20px;
-    color:rgb(255, 39, 39);
-}
-
-.message {
-    display: flex;
-    align-items: center;
-    margin-bottom: 12px;
-    width: 100%;
-}
-
-.message.sent {
-    justify-content: flex-end;
-}
-
-.message.received {
-    justify-content: flex-start;
-}
-
-.message .profile-picture {
-    border-radius: 50%;
-    margin: 0 10px;
-}
-
-.message .text {
-    max-width: 75%;
-    background-color: #f8f9fa;
-    padding: 12px;
-    border-radius: 12px;
-    font-size: 14px;
-}
-
-.message.sent .text {
-    background-color:rgb(201, 41, 36);
-    color: white;
-}
-
-.message.received .text {
-    background-color: #e9ecef;
-    color: black;
-}
-
-.chat-box {
-    overflow-y: auto;
-    scrollbar-width: none;
-    -ms-overflow-style: none;
-}
-
-.chat-box::-webkit-scrollbar {
-    display: none;
-}
-
-.modal-header {
-    border-bottom: none;
-    background: linear-gradient(135deg,rgb(139, 0, 0), black);
-}
-
-.modal-footer {
-    border-top: none;
-    background: #f8f9fa;
-}
-
-#messageInput {
-    border-radius: 30px;
-    padding: 10px 15px;
-}
-
-#sendMessage {
-    border-radius: 30px;
-    padding: 8px 20px;
-    font-weight: 600;
-}
-  #darkModeToggle:hover {
-    opacity: 0.7; /* Slight transparency on hover */
-    cursor: pointer; /* Changes cursor to indicate clickability */
-}
-
-/* Dark Mode Styles */
-body.dark-mode {
-    background-color: #121212;
-    color: #ffffff;
-}
-
-/* Navbar Dark Mode */
-.navbar.dark-mode {
-    background-color: #333333;
-    color: #ffffff;
-    box-shadow: 0px 4px 10px rgba(255, 255, 255, 0.1);
-}
-
-/* Table Body Dark Mode */
-.table.dark-mode tbody {
-    background-color: #1e1e1e;
-    color: #ffffff;
-}
-
-/* Table Rows Dark Mode */
-.table.dark-mode tr {
-    border-color: #444444;
-}
-
-/* Table Header and Cells Dark Mode */
-.table.dark-mode th, .table.dark-mode td {
-    background-color: #222222;
-    color: #e0e0e0;
-    border-color: #444444;
-}
-
-/* Hover Effect for Table Rows */
-.table.dark-mode tbody tr:hover {
-    background-color: #333333;
-}
-
-/* Improve Readability for Lighter Text */
-.table.dark-mode td {
-    color: #dddddd;
-}
-
-
-/* Card Dark Mode */
-.card.dark-mode, .modal-content.dark-mode {
-    background-color: #222222;
-    color: #ffffff;
-    border: 1px solid #444444;
-}
-
-/* Card & Modal Header/Footer Dark Mode */
-.card-header.dark-mode, .modal-header.dark-mode, .modal-footer.dark-mode {
-    background-color: #333333;
-    color: #ffffff;
-    border-bottom: 1px solid #444444;
-}
-
-/* Typography */
-h1.dark-mode, h2.dark-mode, h3.dark-mode, h4.dark-mode, h5.dark-mode, h6.dark-mode,
-p.dark-mode, span.dark-mode, a.dark-mode {
-    color: #cccccc;
-}
-
-/* Buttons */
-.btn-outline-secondary.dark-mode {
-    border-color: #ffffff;
-    color: #ffffff;
-}
-.btn-outline-secondary.dark-mode:hover {
-    background-color: #ffffff;
-    color: #121212;
-}
-
-/* Dropdown Dark Mode */
-.custom-dropdown.dark-mode {
-    background: linear-gradient(135deg, #222222, #333333);
-    box-shadow: 0 8px 16px rgba(255, 255, 255, 0.1);
-}
-.custom-dropdown .dropdown-item.dark-mode {
-    color: #ffffff;
-}
-.custom-dropdown .dropdown-item.dark-mode:hover {
-    background-color: #444444;
-}
-
-/* Navbar & Sidebar */
-.navbar {
-    background-color:rgb(218, 255, 255);
-    top: 0;
-    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
-    padding: 15px 20px;
+    }, 3000);
     
-}
+    messageDropdown.addEventListener("click", loadRecentMessages);
+    loadRecentMessages();
+    
+});
 
-/* Profile Picture */
-.profile-pic {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    border: 2px solid #ddd;
-    object-fit: cover;
-}
-
-/* Custom Dropdown Styling */
-.custom-dropdown {
-    min-width: 200px;
-    max-width: 90vw;
-    background: linear-gradient(135deg, #ffffff, #f9f9f9);
-    border-radius: 10px;
-    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
-    overflow: hidden;
-    margin-top: 10px;
-    animation: fadeInScale 0.3s ease forwards;
-    right: 0;
-    left: auto !important;
-}
-.dropdown-menu {
-    right: 0 !important;
-    left: auto !important;
-    transform: translateX(0) !important;
-}
-.custom-dropdown .dropdown-item {
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-/* Dropdown Animation */
-@keyframes fadeInScale {
-    0% { opacity: 0; transform: scale(0.95); }
-    100% { opacity: 1; transform: scale(1); }
-}
-
-/* Pulsing Notification */
-.pulsing-icon2 {
-    width: 12px;
-    height: 12px;
-    background-color: green;
-    border-radius: 50%;
-    position: relative;
-    z-index: 2;
-    top: 13px;
-    left: -10px;
-}
-.pulsing-ring2 {
-    position: absolute;
-    width: 22px;
-    height: 22px;
-    border-radius: 50%;
-    border: 2px solid rgba(0, 128, 0, 0.5);
-    animation: pulse-ring 1.5s infinite;
-    top: -35%;
-    right: -42%;
-    transform: translate(-50%, -50%);
-}
-@keyframes pulse-ring {
-    0% { transform: scale(1); opacity: 1; }
-    50% { transform: scale(1.5); opacity: 0.5; }
-    100% { transform: scale(2); opacity: 0; }
-}
-</style>
+</script>
 
 <!-- Font Awesome CDN (Include in your <head> if not already) -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/js/all.min.js"></script>
@@ -622,17 +289,8 @@ p.dark-mode, span.dark-mode, a.dark-mode {
     }
 
     // Fetch stored dark mode preference
-    fetch("dark_mode.php", { method: "POST" })
-      .then(response => response.json())
-      .then(data => {
-        if (data.dark_mode) {
-          toggleDarkMode(true);
-        }
-      });
+    
 
-    toggleButton.addEventListener("click", function () {
-      const isDarkMode = document.body.classList.contains("dark-mode");
-      toggleDarkMode(!isDarkMode);
-    });
+   
   });
   </script>
