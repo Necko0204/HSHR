@@ -1,12 +1,11 @@
 <?php
-session_name('staff_session');
-session_start();
+require_once __DIR__ . '/includes/staff_session.php';
 
 include 'db_config.php';
 include 'staff_helper.php';
 
 // 1) AUTH
-if (!isset($_SESSION['employee_id']) || !in_array($_SESSION['role'], ['Staff', 'Intern'])) {
+if (!isset($_SESSION['employee_id']) || !in_array(strtolower($_SESSION['role'] ?? ''), ['staff', 'intern'], true)) {
     header("Location: index.php");
     exit();
 }
@@ -42,11 +41,19 @@ if ($monthly_required_hours > 0 && $monthly_salary > 0) {
 
 // 5) PULL attendance and build payroll_data
 $query = "
-  SELECT 
+  SELECT
     DATE_FORMAT(date, '%M %Y') AS month,
-    SEC_TO_TIME(SUM(TIME_TO_SEC(TIMEDIFF(time_out, time_in)))) AS total_hours
+    SEC_TO_TIME(SUM(
+      COALESCE(
+        TIME_TO_SEC(total_hours),
+        GREATEST(
+          TIME_TO_SEC(TIMEDIFF(time_out, time_in)) - COALESCE(TIME_TO_SEC(break_duration), 0),
+          0
+        )
+      )
+    )) AS total_hours
   FROM attendance
-  WHERE employee_id = ?
+  WHERE employee_id = ? AND time_in IS NOT NULL AND time_out IS NOT NULL
   GROUP BY DATE_FORMAT(date, '%Y-%m')
   ORDER BY MIN(date) DESC
 ";
@@ -90,7 +97,7 @@ $stmt->close();
 </head>
 <body   >
 
-    
+
 
 <!-- Back to Dashboard Button -->
 <div style="position: absolute; top: 7px; left: 20px; z-index: 1000;">
@@ -102,7 +109,7 @@ $stmt->close();
     <div class="main-container">
         <?php include 'staff_navbar.php'; ?>
     </div>
-    
+
 
      <!-- Animated Box Shapes -->
 <!-- Animated Box Shapes -->
@@ -133,6 +140,7 @@ $stmt->close();
     <div class="card shadow-lg border-0 rounded-4 w-100" style="max-width: 100%; background: rgba(255,255,255,0.97);">
         <div class="card-header text-center rounded-top-4" style="background: linear-gradient(90deg, #f8fafc 0%, #e9ecef 100%); border-bottom: none;">
             <h2 class="mb-0" style="font-weight: 700; letter-spacing: 1px; color: #333;">Monthly Payroll Summary</h2>
+            <small class="text-muted">Dates and attendance cutoffs use Philippine Standard Time (GMT+8).</small>
         </div>
         <div class="card-body p-4">
 
@@ -205,6 +213,6 @@ $stmt->close();
 </main>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    
+
 </body>
 </html>

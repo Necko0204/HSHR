@@ -1,181 +1,147 @@
 <?php
-use PHPMailer\PHPMailer\PHPMailer;
-use PHPMailer\PHPMailer\Exception;
+declare(strict_types=1);
+
 use Endroid\QrCode\QrCode;
 use Endroid\QrCode\Writer\PngWriter;
+use PHPMailer\PHPMailer\PHPMailer;
 
-require '../vendor/autoload.php'; // Load PHPMailer and QR Code libraries (Composer required)
-include 'db_config.php'; // Database connection
-date_default_timezone_set('Asia/Manila'); // Set timezone
+require_once __DIR__ . '/../includes/admin_api.php';
+require_once __DIR__ . '/../vendor/autoload.php';
+require_once __DIR__ . '/../includes/mailer.php';
+require_once __DIR__ . '/db_config.php';
 
-header('Content-Type: application/json');
-$response = ["success" => false, "message" => ""];
-
-if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['applicant_id'])) {
-    $applicant_id = trim($_POST['applicant_id']);
-    $applicant_id = htmlspecialchars($applicant_id);
-
-    error_log("Applicant ID received: " . $applicant_id);
-
-    // 🔹 Fetch applicant details
-    $query = "SELECT lastname, firstname, middlename, gender, dateofbirth, contact, email 
-              FROM applicants WHERE applicant_id = ?";
-    $stmt = $conn->prepare($query);
-    $stmt->bind_param("s", $applicant_id);
-    $stmt->execute();
-    $stmt->bind_result($lastname, $firstname, $middlename, $gender, $dateofbirth, $mobilephone, $email1);
-
-    if ($stmt->fetch()) {
-        $stmt->close();
-
-        // 🔹 Generate Employee ID with fixed "HS-EID2020" format
-        $prefix = "HS-EID2020"; // Fixed prefix
-        $likePrefix = $prefix . "%";
-
-        // 🔹 Get the last inserted ID
-        $getLastID = "SELECT id FROM employees WHERE id LIKE ? 
-                      ORDER BY CAST(SUBSTRING(id, 12) AS UNSIGNED) DESC LIMIT 1";
-        $stmt = $conn->prepare($getLastID);
-        $stmt->bind_param("s", $likePrefix);
-        $stmt->execute();
-        $result = $stmt->get_result();
-
-        if ($result->num_rows > 0) {
-            $row = $result->fetch_assoc();
-            $lastID = $row['id'];
-
-            $lastNumber = (int)substr($lastID, -7); // Extract last 7 digits
-            $newNumber = str_pad($lastNumber + 1, 7, "0", STR_PAD_LEFT);
-        } else {
-            $newNumber = "0000001";
-        }
-        $stmt->close();
-
-        $newEmployeeID = $prefix . $newNumber;
-
-        // 🔹 Prevent duplicate insertion
-        $checkExists = "SELECT id FROM employees WHERE id = ?";
-        $stmt = $conn->prepare($checkExists);
-        $stmt->bind_param("s", $newEmployeeID);
-        $stmt->execute();
-        $stmt->store_result();
-
-        if ($stmt->num_rows == 0) { // Only insert if it doesn't exist
-            $stmt->close();
-
-            // 🔹 Insert into employees table
-            $insertQuery = "INSERT INTO employees (
-                id, lastname, firstname, middlename, gender, dateofbirth, mobilephone, email1, status, employment_type, datejoiningindsclc
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'Active', 'Full-Time', NOW())";
-
-            $stmt = $conn->prepare($insertQuery);
-            $stmt->bind_param("ssssssss", $newEmployeeID, $lastname, $firstname, $middlename, $gender, $dateofbirth, $mobilephone, $email1);
-
-            if ($stmt->execute()) {
-                // 🔹 Insert into ed_2ndhalf table (only employee_id)
-                $insertEd2ndHalf = "INSERT INTO ed_2ndhalf (employee_id) VALUES (?)";
-                $stmtEd2ndHalf = $conn->prepare($insertEd2ndHalf);
-                $stmtEd2ndHalf->bind_param("s", $newEmployeeID);
-            
-                if ($stmtEd2ndHalf->execute()) {
-                    error_log("Employee ID inserted into ed_2ndhalf successfully.");
-                } else {
-                    error_log("Failed to insert into ed_2ndhalf: " . $stmtEd2ndHalf->error);
-                }
-                $stmtEd2ndHalf->close();
-            
-                // 🔹 Update Applicant Status
-                $updateApplicant = "UPDATE applicants SET status = 'Accepted' WHERE applicant_id = ?";
-                $updateStmt = $conn->prepare($updateApplicant);
-                $updateStmt->bind_param("s", $applicant_id);
-            
-                if ($updateStmt->execute()) {
-                    // 🔹 Send Acceptance Email
-                    if (sendAcceptanceEmail($firstname, $lastname, $email1, $newEmployeeID)) {
-                        $response["success"] = true;
-                        $response["message"] = "Applicant successfully added as an employee! New Employee ID: " . $newEmployeeID;
-                    } else {
-                        $response["message"] = "Employee added, but email failed to send.";
-                    }
-                } else {
-                    $response["message"] = "Failed to update applicant status.";
-                }
-                $updateStmt->close();
-            } else {
-                $response["message"] = "Error inserting employee: " . $stmt->error;
-            }
-            $stmt->close();
-        } else {
-            $response["message"] = "Duplicate Employee ID detected: " . $newEmployeeID;
-        }
-    } else {
-        $response["message"] = "Applicant not found.";
-    }
-} else {
-    $response["message"] = "Invalid request.";
+function acceptanceResponse(int $status, bool $success, string $message, array $extra = []): never
+{
+    http_response_code($status);
+    echo json_encode(['success' => $success, 'message' => $message] + $extra);
+    exit;
 }
 
-$conn->close();
-echo json_encode($response);
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') acceptanceResponse(405, false, 'Method not allowed.');
+$applicantId = trim((string) ($_POST['applicant_id'] ?? ''));
+if ($applicantId === '') acceptanceResponse(422, false, 'Applicant ID is required.');
 
-/**
- * 🔹 Send Acceptance Email using PHPMailer
- */
-function sendAcceptanceEmail($firstname, $lastname, $email, $employeeID) {
-    $mail = new PHPMailer(true);
+$newEmployeeId = null;
+$applicant = null;
+$sequenceLockAcquired = false;
+$conn->begin_transaction();
+try {
+    $applicantStatement = $conn->prepare(
+        "SELECT lastname, firstname, middlename, gender, dateofbirth, contact, email, status
+         FROM applicants WHERE applicant_id = ? LIMIT 1 FOR UPDATE"
+    );
+    $applicantStatement->bind_param('s', $applicantId);
+    $applicantStatement->execute();
+    $applicant = $applicantStatement->get_result()->fetch_assoc();
+    $applicantStatement->close();
+    if (!$applicant) throw new OutOfBoundsException('Applicant not found.');
+    if ((string) $applicant['status'] === 'Accepted') throw new DomainException('Applicant has already been accepted.');
 
-    try {
-        // Generate QR Code with URL
-        $loginUrl = "http://localhost/HSHR/staff_side/index.php" . urlencode($employeeID);
-        $qrCode = new QrCode($loginUrl);
-        $writer = new PngWriter();
-        $qrCodeImage = $writer->write($qrCode)->getString();
+    $sequenceLock = $conn->query("SELECT GET_LOCK('hshr_employee_sequence', 5) AS acquired");
+    $sequenceLockAcquired = (int) ($sequenceLock->fetch_assoc()['acquired'] ?? 0) === 1;
+    if (!$sequenceLockAcquired) throw new RuntimeException('Employee sequence is busy.');
 
-        // Save QR Code to a temporary file
-        $qrCodePath = tempnam(sys_get_temp_dir(), 'qrcode') . '.png';
-        file_put_contents($qrCodePath, $qrCodeImage);
+    $existing = $conn->prepare(
+        'SELECT id FROM employees WHERE email1 = ? AND lastname = ? AND firstname = ? AND dateofbirth = ? LIMIT 1 FOR UPDATE'
+    );
+    $existing->bind_param('ssss', $applicant['email'], $applicant['lastname'], $applicant['firstname'], $applicant['dateofbirth']);
+    $existing->execute();
+    $newEmployeeId = $existing->get_result()->fetch_assoc()['id'] ?? null;
+    $existing->close();
 
-        // SMTP Configuration
-        $mail->isSMTP();
-        $mail->Host = 'smtp.gmail.com';
-        $mail->SMTPAuth = true;
-        $mail->Username = getenv('EMAIL_USERNAME') ?: 'mendoza.marcangelo28@gmail.com'; 
-        $mail->Password = getenv('EMAIL_PASSWORD') ?: 'jjmv pgae dlhh kmqp'; 
-        $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
-        $mail->Port = 587;
+    if ($newEmployeeId === null) {
+        $year = date('Y');
+        $prefix = 'HS-EID' . $year;
+        $lastId = $conn->prepare('SELECT id FROM employees WHERE id LIKE CONCAT(?, \'%\') ORDER BY id DESC LIMIT 1 FOR UPDATE');
+        $lastId->bind_param('s', $prefix);
+        $lastId->execute();
+        $previous = $lastId->get_result()->fetch_assoc()['id'] ?? null;
+        $lastId->close();
+        $sequence = $previous ? ((int) substr((string) $previous, -7) + 1) : 1;
+        $newEmployeeId = $prefix . str_pad((string) $sequence, 7, '0', STR_PAD_LEFT);
 
-        // Email Headers
-        $mail->setFrom('mendoza.marcangelo28@gmail.com', 'Marc Angelo Mendoza');
-        $mail->addAddress($email, "$firstname $lastname");
+        $birthDate = new DateTimeImmutable((string) $applicant['dateofbirth']);
+        $age = $birthDate->diff(new DateTimeImmutable('today'))->y;
+        $insertEmployee = $conn->prepare(
+            "INSERT INTO employees
+             (id, lastname, firstname, middlename, gender, maritalstatus, no_of_children, `height(cm)`, `weight(kg)`,
+              dateofbirth, age, mobilephone, email1, datejoiningindsclc, status, employment_type)
+             VALUES (?, ?, ?, ?, ?, 'Single', 0, 0, 0, ?, ?, ?, ?, CURDATE(), 'Active', 'full_time')"
+        );
+        $insertEmployee->bind_param(
+            'ssssssiss',
+            $newEmployeeId,
+            $applicant['lastname'],
+            $applicant['firstname'],
+            $applicant['middlename'],
+            $applicant['gender'],
+            $applicant['dateofbirth'],
+            $age,
+            $applicant['contact'],
+            $applicant['email']
+        );
+        $insertEmployee->execute();
+        $insertEmployee->close();
 
-        // 🔹 Email Content
-        $mail->isHTML(true);
-        $mail->Subject = "🎉 Congratulations! Welcome to Our Team!";
-        $mail->Body = "
-            <h2>Dear $firstname $lastname,</h2>
-            <p>We are thrilled to inform you that you have been officially accepted into our team!</p>
-            <p>Your Employee ID: <strong>$employeeID</strong></p>
-            <p>You can log in to your account using the following link: <a href='$loginUrl'>$loginUrl</a></p>
-            <p>Your account details will be emailed to you soon.</p>
-            <br>
-            <p>Best regards,</p>
-            <p><strong>Company Name</strong></p>
-            <p><img src='cid:qrcode'></p>
-        ";
-
-        // Attach QR Code
-        $mail->addEmbeddedImage($qrCodePath, 'qrcode');
-
-        // 🔹 Send Email
-        return $mail->send();
-    } catch (Exception $e) {
-        error_log("Mailer Error: " . $mail->ErrorInfo);
-        return false;
-    } finally {
-        // Clean up temporary file
-        if (file_exists($qrCodePath)) {
-            unlink($qrCodePath);
-        }
+        $secondHalf = $conn->prepare('INSERT INTO ed_2ndhalf (employee_id) VALUES (?)');
+        $secondHalf->bind_param('s', $newEmployeeId);
+        $secondHalf->execute();
+        $secondHalf->close();
     }
+
+    $updateApplicant = $conn->prepare("UPDATE applicants SET status = 'Accepted' WHERE applicant_id = ?");
+    $updateApplicant->bind_param('s', $applicantId);
+    $updateApplicant->execute();
+    $updateApplicant->close();
+    $conn->commit();
+    try { $conn->query("SELECT RELEASE_LOCK('hshr_employee_sequence')"); } catch (Throwable $ignored) {}
+    $sequenceLockAcquired = false;
+} catch (OutOfBoundsException $error) {
+    $conn->rollback();
+    if ($sequenceLockAcquired) try { $conn->query("SELECT RELEASE_LOCK('hshr_employee_sequence')"); } catch (Throwable $ignored) {}
+    acceptanceResponse(404, false, $error->getMessage());
+} catch (DomainException $error) {
+    $conn->rollback();
+    if ($sequenceLockAcquired) try { $conn->query("SELECT RELEASE_LOCK('hshr_employee_sequence')"); } catch (Throwable $ignored) {}
+    acceptanceResponse(409, false, $error->getMessage());
+} catch (Throwable $error) {
+    $conn->rollback();
+    if ($sequenceLockAcquired) try { $conn->query("SELECT RELEASE_LOCK('hshr_employee_sequence')"); } catch (Throwable $ignored) {}
+    error_log('Applicant acceptance failed: ' . $error->getMessage());
+    acceptanceResponse(500, false, 'Applicant could not be converted to an employee.');
 }
-?>
+
+$mailSent = false;
+$qrCodePath = null;
+try {
+    $loginUrl = hshr_application_base_url() . '/staff_side/';
+    $qrCodePath = tempnam(sys_get_temp_dir(), 'hshr-qr-');
+    if ($qrCodePath === false) throw new RuntimeException('Temporary QR-code storage is unavailable.');
+    $qrCodeImage = (new PngWriter())->write(new QrCode($loginUrl))->getString();
+    if (file_put_contents($qrCodePath, $qrCodeImage, LOCK_EX) === false) throw new RuntimeException('QR code could not be created.');
+
+    $mailer = new PHPMailer(true);
+    hshr_configure_mailer($mailer);
+    $fullName = trim((string) ($applicant['firstname'] . ' ' . $applicant['lastname']));
+    $mailer->addAddress((string) $applicant['email'], $fullName);
+    $mailer->isHTML(true);
+    $mailer->Subject = 'Welcome to Holy Spirit School of Imus';
+    $safeFirstName = htmlspecialchars((string) $applicant['firstname'], ENT_QUOTES, 'UTF-8');
+    $safeEmployeeId = htmlspecialchars((string) $newEmployeeId, ENT_QUOTES, 'UTF-8');
+    $safeLoginUrl = htmlspecialchars($loginUrl, ENT_QUOTES, 'UTF-8');
+    $mailer->Body = "<p>Dear {$safeFirstName},</p><p>Your application has been accepted.</p>"
+        . "<p>Your employee ID is <strong>{$safeEmployeeId}</strong>.</p>"
+        . "<p>An administrator will provide your account credentials. Staff portal: <a href=\"{$safeLoginUrl}\">{$safeLoginUrl}</a></p>"
+        . '<p><img src="cid:hshr-login-qr" alt="Staff portal QR code"></p>';
+    $mailer->AltBody = "Your application has been accepted. Employee ID: {$newEmployeeId}. Staff portal: {$loginUrl}";
+    $mailer->addEmbeddedImage($qrCodePath, 'hshr-login-qr', 'staff-portal.png');
+    $mailSent = $mailer->send();
+} catch (Throwable $error) {
+    error_log('Acceptance email failed: ' . $error->getMessage());
+} finally {
+    if (is_string($qrCodePath) && is_file($qrCodePath)) @unlink($qrCodePath);
+}
+
+$message = "Applicant added as employee {$newEmployeeId}.";
+if (!$mailSent) $message .= ' The employee was created, but the email could not be sent; verify SMTP configuration and notify the applicant manually.';
+acceptanceResponse(200, true, $message, ['employee_id' => $newEmployeeId, 'email_sent' => $mailSent]);

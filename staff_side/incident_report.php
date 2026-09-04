@@ -1,14 +1,13 @@
 <?php
-session_name('staff_session');
-session_start();
+require_once __DIR__ . '/includes/staff_session.php';
 
 error_reporting(E_ALL);
-ini_set('display_errors', 1);
+ini_set('display_errors', '0');
 
 include 'staff_helper.php';
 include 'db_config.php';
 
-if (!isset($_SESSION['employee_id']) || !in_array($_SESSION['role'], ['Staff', 'Intern'])) {
+if (!isset($_SESSION['employee_id']) || !in_array(strtolower($_SESSION['role'] ?? ''), ['staff', 'intern'], true)) {
     header("Location: index.php");
     exit();
 }
@@ -66,7 +65,7 @@ $employee_id = $_SESSION['employee_id']; // This is the staff member reporting t
 </div>
 
     <div class="container py-5">
-      
+
 
     <div class="card shadow-lg border-0 rounded-4 overflow-hidden" style="background: linear-gradient(to bottom right, #f8f9fa, #e9ecef);">
     <div class="card-header text-white text-center rounded-top-4" style="background: linear-gradient(135deg, #6a11cb, #2575fc); box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);">
@@ -75,6 +74,7 @@ $employee_id = $_SESSION['employee_id']; // This is the staff member reporting t
 
     <div class="card-body p-4">
         <form action="incident_report_logic.php" method="POST">
+            <?= hshr_csrf_field() ?>
             <input type="hidden" name="employee_id" value="<?php echo $employee_id; ?>">
 
             <div class="p-3 rounded shadow-sm" style="background: white;">
@@ -183,7 +183,7 @@ $employee_id = $_SESSION['employee_id']; // This is the staff member reporting t
 </div>
 
     </div>
-    
+
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
@@ -221,7 +221,7 @@ document.addEventListener("DOMContentLoaded", function() {
     <?php if (isset($_SESSION['success_message'])) { ?>
         Swal.fire({
             icon: 'success',
-            title: '<?php echo $_SESSION['success_message']; ?>',
+            title: <?= json_encode((string) $_SESSION['success_message'], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>,
             showConfirmButton: false,
             timer: 2000
         });
@@ -231,7 +231,7 @@ document.addEventListener("DOMContentLoaded", function() {
     <?php if (isset($_SESSION['error_message'])) { ?>
         Swal.fire({
             icon: 'error',
-            title: '<?php echo $_SESSION['error_message']; ?>',
+            title: <?= json_encode((string) $_SESSION['error_message'], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>,
             confirmButtonColor: '#3085d6',
             confirmButtonText: 'OK'
         });
@@ -242,6 +242,6 @@ document.addEventListener("DOMContentLoaded", function() {
 
 
 
-    
+
 </body>
 </html>

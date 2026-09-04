@@ -1,14 +1,14 @@
 <?php
-session_name('admin_session');
-session_start();
-include 'includes/breadcrumb.php';
-include 'helper.php';
-include 'db_config.php';
+require_once __DIR__ . '/includes/admin_page.php';
 
 if (!isset($_SESSION['admin_id'])) {
     header("Location: index.php");
     exit();
 }
+
+include 'includes/breadcrumb.php';
+include 'helper.php';
+include 'db_config.php';
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -20,12 +20,10 @@ if (!isset($_SESSION['admin_id'])) {
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
-    <link rel="stylesheet" href="background.css">
 </head>
-<body>
+<body class="admin-profile-page">
     <!-- Sidebar & Navbar in a separate container -->
     <div class="main-container">
         <?php include 'sidebar.php'; ?>
@@ -70,7 +68,7 @@ if (!isset($_SESSION['admin_id'])) {
                         <div class="cloud">☁️</div>
                     </div>
 
-                    
+
                     <div class="flowers">
                         <div class="flower"></div>
                         <div class="flower"></div>
@@ -81,12 +79,12 @@ if (!isset($_SESSION['admin_id'])) {
                         <div class="flower"></div>
                         <div class="flower"></div>
                         <div class="flower"></div>
-                    </div> 
+                    </div>
         <div class="profile-header">
             <div class="profile-image-container2">
-                <img src="<?php echo !empty($userData['profile_picture']) ? $userData['profile_picture'] : 'uploads/profile_pictures/default.jpg'; ?>" 
-                    alt="Profile Picture" 
-                    class="profile-picture2">
+                <img src="<?= htmlspecialchars(hshr_profile_picture_url($userData['profile_picture'] ?? null), ENT_QUOTES, 'UTF-8') ?>"
+                    alt="Profile Picture"
+                    class="profile-picture2" onerror="this.onerror=null;this.src='images/image-not-found.jpg'">
             </div>
             <h3 style="margin: 20px 0;"><?php echo htmlspecialchars($userData['name']); ?> </h3>
         </div>
@@ -128,7 +126,7 @@ if (!isset($_SESSION['admin_id'])) {
         </div>
 
     <div id="updateProfileCard" class="hidden">
-        <form action="logics/update_profile.php" method="POST" enctype="multipart/form-data">
+        <form action="update_profile.php" method="POST" enctype="multipart/form-data">
                 <div class="sun-container">
                         <div class="sun theme-icon" id="sun-icon">☀️</div>
                     </div>
@@ -164,7 +162,7 @@ if (!isset($_SESSION['admin_id'])) {
                         <div class="flower"></div>
                         <div class="flower"></div>
                         <div class="flower"></div>
-                    </div> 
+                    </div>
 
                     <div class="cloud-container">
                         <div class="cloud">☁️</div>
@@ -175,7 +173,7 @@ if (!isset($_SESSION['admin_id'])) {
                         <div class="cloud">☁️</div>
                         <div class="cloud">☁️</div>
                     </div>
-             
+
                     <!-- <div class="basketballs">
                         <div class="basketball"></div>
                         <div class="basketball"></div>
@@ -193,14 +191,14 @@ if (!isset($_SESSION['admin_id'])) {
             <!-- Profile Picture Section -->
             <div class="profile-picture-container2">
                 <div class="profile-picture2">
-                    <img id="profilePreview" src="<?php echo !empty($userData['profile_picture']) ? $userData['profile_picture'] : 'uploads/profile_pictures/default.jpg'; ?>" alt="Profile Picture">
+                    <img id="profilePreview" src="<?= htmlspecialchars(hshr_profile_picture_url($userData['profile_picture'] ?? null), ENT_QUOTES, 'UTF-8') ?>" alt="Profile Picture" onerror="this.onerror=null;this.src='images/image-not-found.jpg'">
                     <input type="file" id="profilePicInput" name="profile_picture" accept="image/*" style="display: none;">
                 </div>
                 <label class="form-label">Profile Picture</label>
             </div>
 
             <!-- Form Fields Section -->
-            <div class="form-container" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+            <div class="form-container">
                 <div class="form-group">
                     <label class="form-label">Full Name</label>
                     <input type="text" class="form-control" name="name" value="<?php echo htmlspecialchars($userData['name']); ?>" required>
@@ -256,96 +254,85 @@ if (!isset($_SESSION['admin_id'])) {
     </div>
 
     </main>
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
-<script src="background.js"></script>
 <script>
-    $(document).ready(function () {
-        // Toastr configuration for smooth alerts
-        toastr.options = {
-            "closeButton": true,
-            "progressBar": true,
-            "positionClass": "toast-top-right",
-            "timeOut": "1000", // Show alert for 3 seconds
-            "extendedTimeOut": "1000",
-            "showEasing": "swing",
-            "hideEasing": "linear",
-            "showMethod": "fadeIn",
-            "hideMethod": "fadeOut"
-        };
+document.addEventListener('DOMContentLoaded', () => {
+    const profileCard = document.getElementById('profileCard');
+    const updateProfileCard = document.getElementById('updateProfileCard');
+    const editProfileButton = document.getElementById('editProfileBtn');
+    const cancelEditButton = document.getElementById('cancelEdit');
+    const profilePreview = document.getElementById('profilePreview');
+    const profileInput = document.getElementById('profilePicInput');
+    const form = updateProfileCard?.querySelector('form');
 
-        // Get form elements
-        const profileCard = $("#profileCard");
-        const updateProfileCard = $("#updateProfileCard");
-        const editProfileBtn = $("#editProfileBtn");
-        const cancelEdit = $("#cancelEdit");
-        const form = $("form");
+    function showStatus(message, type) {
+        let status = document.getElementById('profileStatus');
+        if (!status) {
+            status = document.createElement('div');
+            status.id = 'profileStatus';
+            status.setAttribute('role', 'status');
+            status.setAttribute('aria-live', 'polite');
+            document.body.appendChild(status);
+        }
 
-        // Show update profile form
-        editProfileBtn.on("click", function () {
-            profileCard.addClass("hidden");
-            updateProfileCard.removeClass("hidden").addClass("show");
-        });
+        status.className = `profile-status ${type}`;
+        status.textContent = message;
+        status.hidden = false;
+        window.clearTimeout(showStatus.timeoutId);
+        showStatus.timeoutId = window.setTimeout(() => {
+            status.hidden = true;
+        }, 2500);
+    }
 
-        // Cancel edit and return to profile view
-        cancelEdit.on("click", function () {
-            updateProfileCard.addClass("hidden").removeClass("show");
-            profileCard.removeClass("hidden");
-        });
-
-        // Handle profile picture preview
-        $("#profilePreview").on("click", function () {
-            $("#profilePicInput").click();
-        });
-
-        $("#profilePicInput").on("change", function (event) {
-            const file = event.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = function (e) {
-                    $("#profilePreview").attr("src", e.target.result);
-                };
-                reader.readAsDataURL(file);
-            }
-        });
-
-        // Handle form submission with AJAX
-        form.on("submit", function (event) {
-            event.preventDefault(); // Prevent default form submission
-
-            console.log("Form submitted!"); // Debugging
-
-            var formData = new FormData(this); // Get form data
-
-            $.ajax({
-                url: "update_profile.php", // PHP script to process the request
-                type: "POST",
-                data: formData,
-                contentType: false,
-                processData: false,
-                dataType: "json", // Expect JSON response
-                success: function (data) {
-                    console.log("Response received:", data); // Debugging response
-
-                    if (data.status === "success") {
-                        toastr.success(data.message); // Show success Toastr alert
-
-                        // Delay the page reload to let the Toastr message show
-                        setTimeout(function () {
-                            location.reload(); // Reload the page
-                        }, 1000); // 3 seconds delay
-                    } else {
-                        toastr.error(data.message); // Show error Toastr alert
-                    }
-                },
-                error: function (xhr, status, error) {
-                    console.error("AJAX error:", error);
-                    toastr.error("An error occurred while updating your profile.");
-                }
-            });
-        });
+    editProfileButton?.addEventListener('click', () => {
+        profileCard?.classList.add('hidden');
+        updateProfileCard?.classList.remove('hidden');
+        updateProfileCard?.classList.add('show');
     });
-    
+
+    cancelEditButton?.addEventListener('click', () => {
+        updateProfileCard?.classList.add('hidden');
+        updateProfileCard?.classList.remove('show');
+        profileCard?.classList.remove('hidden');
+    });
+
+    profilePreview?.addEventListener('click', () => profileInput?.click());
+
+    profileInput?.addEventListener('change', (event) => {
+        const file = event.target.files?.[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.addEventListener('load', (loadEvent) => {
+            profilePreview.src = loadEvent.target.result;
+        });
+        reader.readAsDataURL(file);
+    });
+
+    form?.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        const submitButton = form.querySelector('button[type="submit"]');
+        submitButton?.setAttribute('disabled', 'disabled');
+
+        try {
+            const response = await fetch(form.action, {
+                method: 'POST',
+                body: new FormData(form)
+            });
+            const data = await response.json();
+
+            if (!response.ok || data.status !== 'success') {
+                throw new Error(data.message || 'Unable to update your profile.');
+            }
+
+            showStatus(data.message, 'success');
+            window.setTimeout(() => window.location.reload(), 700);
+        } catch (error) {
+            showStatus(error.message || 'An error occurred while updating your profile.', 'error');
+            submitButton?.removeAttribute('disabled');
+        }
+    });
+});
+
 </script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>

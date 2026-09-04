@@ -1,5 +1,5 @@
 <?php
-session_start();
+require_once __DIR__ . '/../includes/admin_api.php';
 require 'db_config.php'; // Database connection
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -7,7 +7,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     // Validate input
     $id = trim($id); // Sanitize the input
-    
+
     if (empty($id)) {
         echo json_encode(["success" => false, "message" => "Invalid deduction ID"]);
         exit;
@@ -21,7 +21,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($stmt->execute()) {
         echo json_encode(["success" => true, "message" => "Deduction deactivated successfully"]);
     } else {
-        echo json_encode(["success" => false, "message" => "Failed to deactivate deduction: " . $conn->error]);
+        error_log('Deduction deactivation failed: ' . $conn->error);
+        echo json_encode(["success" => false, "message" => "Failed to deactivate deduction."]);
     }
 
     $stmt->close();

@@ -1,6 +1,5 @@
 <?php
-session_name('admin_session');
-session_start();
+require_once __DIR__ . '/includes/admin_page.php';
 include 'includes/breadcrumb.php';
 include 'db_config.php';
 include 'helper.php';

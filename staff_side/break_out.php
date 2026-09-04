@@ -1,66 +1,61 @@
 <?php
-session_name('staff_session');
-session_start();
-include 'db_config.php';
+declare(strict_types=1);
 
-if (!isset($_SESSION['employee_id']) || !in_array($_SESSION['role'], ['Staff', 'Intern'])) {
-    header("Location: index.php");
-    exit();
+require_once __DIR__ . '/includes/attendance_api.php';
+require_once __DIR__ . '/db_config.php';
+
+$conn->begin_transaction();
+
+try {
+    $attendance = $conn->prepare(
+        'SELECT time_in, time_out, break_in, break_out
+         FROM attendance
+         WHERE employee_id = ? AND date = CURDATE()
+         LIMIT 1 FOR UPDATE'
+    );
+    $attendance->bind_param('s', $attendanceEmployeeId);
+    $attendance->execute();
+    $row = $attendance->get_result()->fetch_assoc();
+    $attendance->close();
+
+    if (!$row || empty($row['time_in'])) {
+        $conn->rollback();
+        attendance_respond(false, 'Clock in before ending a break.', 409);
+    }
+    if (!empty($row['time_out'])) {
+        $conn->rollback();
+        attendance_respond(false, 'A break cannot be ended after clocking out.', 409);
+    }
+    if (empty($row['break_in'])) {
+        $conn->rollback();
+        attendance_respond(false, 'No active break was found. Start your break first.', 409);
+    }
+    if (!empty($row['break_out'])) {
+        $conn->rollback();
+        attendance_respond(false, 'You have already ended your break today.', 409);
+    }
+
+    $update = $conn->prepare(
+        'UPDATE attendance
+         SET break_out = CURTIME(),
+             break_duration = SEC_TO_TIME(
+                 GREATEST(TIME_TO_SEC(TIMEDIFF(CURTIME(), break_in)), 0)
+             )
+         WHERE employee_id = ? AND date = CURDATE() AND break_out IS NULL'
+    );
+    $update->bind_param('s', $attendanceEmployeeId);
+    $update->execute();
+
+    if ($update->affected_rows !== 1) {
+        $update->close();
+        throw new RuntimeException('Break-out row was not updated.');
+    }
+    $update->close();
+    $conn->commit();
+
+    attendance_respond(true, 'Break ended successfully.');
+} catch (Throwable $error) {
+    $conn->rollback();
+    error_log('Break-out failed: ' . $error->getMessage());
+    attendance_respond(false, 'Break-out could not be recorded. Please try again.', 500);
 }
-$employee_id = $conn->real_escape_string($_SESSION['employee_id']);
-$date = date("Y-m-d");
-$break_out = date("H:i:s");
-
-// Ensure employee has clocked in and is currently on break
-$query = "SELECT time_in, time_out, break_in, break_out FROM attendance WHERE employee_id = ? AND date = ?";
-$stmt = $conn->prepare($query);
-$stmt->bind_param("ss", $employee_id, $date);
-$stmt->execute();
-$stmt->bind_result($time_in, $time_out, $break_in_time, $break_out_time);
-$stmt->fetch();
-$stmt->close();
-
-// Validate conditions
-if (!$time_in) {
-    die("⚠ Cannot end break without clocking in.");
-} elseif ($time_out) {
-    die("⚠ Cannot end break after clocking out.");
-} elseif (!$break_in_time) {
-    die("⚠ No active break found. Please break in first.");
-} elseif ($break_out_time) {
-    die("⚠ You have already ended your break.");
-}
-
-// Calculate break duration in seconds
-$break_in_sec = strtotime($break_in_time);
-$break_out_sec = strtotime($break_out);
-$break_duration_seconds = $break_out_sec - $break_in_sec;
-
-// Debug: Check if the break duration is reasonable
-if ($break_duration_seconds <= 0) {
-    die("⚠ Invalid break duration: $break_duration_seconds seconds.");
-}
-
-// Calculate hours, minutes, and seconds for break duration
-$hours = floor($break_duration_seconds / 3600);
-$minutes = floor(($break_duration_seconds % 3600) / 60);
-$seconds = $break_duration_seconds % 60;
-
-// Format the break duration with hours, minutes, and seconds
-$break_duration = sprintf("%02d:%02d:%02d", $hours, $minutes, $seconds);
-
-// Update the attendance record with break_out and formatted break_duration
-$query = "UPDATE attendance 
-          SET break_out = ?, 
-              break_duration = ? 
-          WHERE employee_id = ? AND date = ? AND break_out IS NULL";
-
-$stmt = $conn->prepare($query);
-$stmt->bind_param("ssss", $break_out, $break_duration, $employee_id, $date);
-
-if ($stmt->execute()) {
-    echo "✅ Break ended successfully!";
-} else {
-    echo "❌ Failed to end break.";
-}
-?>

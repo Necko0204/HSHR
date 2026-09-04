@@ -1,70 +1,45 @@
-document.addEventListener("DOMContentLoaded", function() {
-    const circleContainer = document.createElement("div");
-    circleContainer.classList.add("background-circles");
-    document.body.appendChild(circleContainer);
+document.addEventListener('DOMContentLoaded', function () {
+    const isCompact = window.matchMedia('(max-width: 768px)').matches;
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const circleCount = reduceMotion ? 0 : (isCompact ? 5 : 10);
+    const auroraCount = reduceMotion ? 0 : (isCompact ? 1 : 2);
 
-    for (let i = 0; i < 25; i++) {
-        let circle = document.createElement("div");
-        circle.classList.add("circle");
+    const circleContainer = document.createElement('div');
+    circleContainer.className = 'background-circles';
+    circleContainer.setAttribute('aria-hidden', 'true');
 
-        let size = Math.random() * 80 + 40; // Random size between 40px and 120px
-        let posX = Math.random() * window.innerWidth;
-        let posY = Math.random() * window.innerHeight;
-        let delay = Math.random() * 3; // Random animation delay
-        let duration = Math.random() * 4 + 3; // Random duration between 3s and 7s
+    const circleFragment = document.createDocumentFragment();
+    for (let index = 0; index < circleCount; index += 1) {
+        const circle = document.createElement('div');
+        const size = Math.random() * 64 + 32;
 
+        circle.className = 'circle';
         circle.style.width = `${size}px`;
         circle.style.height = `${size}px`;
-        circle.style.left = `${posX}px`;
-        circle.style.top = `${posY}px`;
-        circle.style.animationDelay = `${delay}s`;
-        circle.style.animationDuration = `${duration}s`;
-
-        circleContainer.appendChild(circle);
+        circle.style.left = `${Math.random() * 100}%`;
+        circle.style.top = `${Math.random() * 100}%`;
+        circle.style.animationDelay = `${Math.random() * 5}s`;
+        circle.style.animationDuration = `${Math.random() * 7 + 8}s`;
+        circleFragment.appendChild(circle);
     }
-});
+    circleContainer.appendChild(circleFragment);
+    document.body.appendChild(circleContainer);
 
-document.addEventListener("DOMContentLoaded", function() {
-    const auroraContainer = document.createElement("div");
-    auroraContainer.classList.add("background-aurora");
-    document.body.appendChild(auroraContainer);
+    const auroraContainer = document.createElement('div');
+    auroraContainer.className = 'background-aurora';
+    auroraContainer.setAttribute('aria-hidden', 'true');
 
-    // Create aurora layers
-    for (let i = 0; i < 3; i++) {
-        let aurora = document.createElement("div");
-        aurora.classList.add("aurora");
+    const auroraFragment = document.createDocumentFragment();
+    for (let index = 0; index < auroraCount; index += 1) {
+        const aurora = document.createElement('div');
+        aurora.className = 'aurora';
         aurora.style.top = `${Math.random() * 100}%`;
         aurora.style.left = `${Math.random() * 100}%`;
-        aurora.style.animationDuration = `${Math.random() * 8 + 6}s`;
-        aurora.style.opacity = `${Math.random() * 0.3 + 0.3}`;
-        auroraContainer.appendChild(aurora);
+        aurora.style.animationDuration = `${Math.random() * 10 + 18}s`;
+        aurora.style.opacity = `${Math.random() * 0.15 + 0.18}`;
+        auroraFragment.appendChild(aurora);
     }
 
-    // Create soft particles
-    for (let i = 0; i < 40; i++) {
-        let particle = document.createElement("div");
-        particle.classList.add("particle");
-
-        let size = Math.random() * 8 + 4;
-        let posX = Math.random() * window.innerWidth;
-        let posY = Math.random() * window.innerHeight;
-        let delay = Math.random() * 4;
-        let duration = Math.random() * 5 + 3;
-
-        particle.style.width = `${size}px`;
-        particle.style.height = `${size}px`;
-        particle.style.left = `${posX}px`;
-        particle.style.top = `${posY}px`;
-        particle.style.animationDelay = `${delay}s`;
-        particle.style.animationDuration = `${duration}s`;
-
-        auroraContainer.appendChild(particle);
-    }
-
-    // Interactive effect
-    document.addEventListener("mousemove", (e) => {
-        auroraContainer.style.setProperty("--mouse-x", `${e.clientX}px`);
-        auroraContainer.style.setProperty("--mouse-y", `${e.clientY}px`);
-    });
+    auroraContainer.appendChild(auroraFragment);
+    document.body.appendChild(auroraContainer);
 });
-

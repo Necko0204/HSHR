@@ -1,6 +1,5 @@
 <?php
-session_name('admin_session');
-session_start();
+require_once __DIR__ . '/includes/admin_page.php';
 include 'includes/breadcrumb.php';
 include 'db_config.php';
 include 'helper.php';
@@ -108,8 +107,8 @@ if (!isset($_SESSION['admin_id'])) {
                                         <button class="btn btn-warning btn-sm" data-bs-toggle="modal" data-bs-target="#editDeductionModal" data-id="<?= htmlspecialchars($row["id"]) ?>">
                                             <i class="fa fa-edit"></i> Edit
                                         </button>
-                                        <button class="btn btn-danger btn-sm" 
-                                            data-id="<?= htmlspecialchars($row["id"]) ?>" 
+                                        <button class="btn btn-danger btn-sm"
+                                            data-id="<?= htmlspecialchars($row["id"]) ?>"
                                             onclick="deactivateDeduction(this)">
                                             <i class="fa fa-trash"></i> Deactivate
                                         </button>
@@ -123,7 +122,7 @@ if (!isset($_SESSION['admin_id'])) {
         </div>
 
         <hr>
-        
+
         <div class="d-flex justify-content-start align-items-center mb-3">
             <h2 class="fw-bold mb-0">
                 <i class="fa fa-list-alt"></i> SSS Deductions
@@ -354,9 +353,9 @@ if (!isset($_SESSION['admin_id'])) {
             <div class="modal-body">
                 <div class="table-responsive" style="overflow-x: auto; white-space: nowrap;">
                     <?php
-                    include 'db_config.php';	
-                    $sql = "SELECT id, name, description, deduction_type, amount, percentage, max_cap, is_mandatory, status 
-                            FROM deductions 
+                    include 'db_config.php';
+                    $sql = "SELECT id, name, description, deduction_type, amount, percentage, max_cap, is_mandatory, status
+                            FROM deductions
                             WHERE status = 'Inactive'";
                     $result = $conn->query($sql);
                     if ($result->num_rows > 0): ?>
@@ -389,8 +388,8 @@ if (!isset($_SESSION['admin_id'])) {
                                             <td><?= htmlspecialchars($row["is_mandatory"]) ?></td>
                                             <td><?= htmlspecialchars($row["status"]) ?></td>
                                             <td>
-                                                <button class="btn btn-success btn-sm" 
-                                                    data-id="<?= htmlspecialchars($row["id"]) ?>" 
+                                                <button class="btn btn-success btn-sm"
+                                                    data-id="<?= htmlspecialchars($row["id"]) ?>"
                                                     onclick="restoreDeduction(this)">
                                                     <i class="fa fa-undo"></i> Restore
                                                 </button>
@@ -528,7 +527,7 @@ if (!isset($_SESSION['admin_id'])) {
     document.getElementById('editDeductionForm').addEventListener('submit', (e) => {
         e.preventDefault();
         const formData = new FormData(e.target);
-        
+
         fetch('logics/deduction_update.php', {
             method: 'POST',
             body: formData
@@ -545,7 +544,6 @@ if (!isset($_SESSION['admin_id'])) {
 // Handle deactivate confirmation modal
 function deactivateDeduction(button) {
     const id = button.getAttribute('data-id');
-    console.log("Deactivating ID:", id); // Debugging output
     document.getElementById('deactivateDeductionId').value = id;
 
     const modal = new bootstrap.Modal(document.getElementById('deactivateDeductionModal'));
@@ -554,18 +552,17 @@ function deactivateDeduction(button) {
 
 document.getElementById('deactivateDeductionForm').addEventListener('submit', (e) => {
     e.preventDefault();
-    
+
     const id = document.getElementById('deactivateDeductionId').value;
     const formData = new FormData();
     formData.append('id', id);
-    
+
     fetch('logics/deduction_deactivate.php', {
     method: 'POST',
     body: formData
 })
 .then(response => response.text()) // Change from .json() to .text()
 .then(data => {
-    console.log("Raw Response:", data); // Debugging output
     try {
         let jsonData = JSON.parse(data);
         if (jsonData.success) {
@@ -593,11 +590,11 @@ document.getElementById('deactivateDeductionForm').addEventListener('submit', (e
 
  function restoreDeduction(button) {
     deductionIdToRestore = button.getAttribute('data-id');
-    
+
     // Close the Archives modal first
     const archivesModal = bootstrap.Modal.getInstance(document.getElementById('ArchivesModal'));
     archivesModal.hide();
-    
+
     // Then show the restore confirmation modal
     setTimeout(() => {
         const restoreModal = new bootstrap.Modal(document.getElementById('restoreConfirmationModal'));

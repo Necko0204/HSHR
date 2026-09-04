@@ -1,5 +1,7 @@
 <?php
-session_start();
+declare(strict_types=1);
+require_once __DIR__ . '/includes/security.php';
+hshr_security_headers();
 ?>
 <!DOCTYPE html>
 <html lang="en">

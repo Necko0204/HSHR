@@ -1,22 +1,33 @@
 <?php
 error_reporting(E_ALL);
-ini_set('display_errors', 1);
+ini_set('display_errors', '0');
 
-session_name('admin_session');
-session_start();
+require_once __DIR__ . '/includes/admin_page.php';
 include 'includes/breadcrumb.php';
 require 'db_config.php'; // Ensure this file contains your MySQLi connection ($conn)
 include 'helper.php';
 
 
 // Employee Detail - Fetch employee details from the database
-if (isset($_GET['id'])) {
-    $id = $_GET['id'];
+if (isset($_GET['id']) && preg_match('/^[A-Za-z0-9-]{3,50}$/', (string) $_GET['id'])) {
+    $id = (string) $_GET['id'];
 
     // Prepare and execute the query to fetch employee details
-    $stmt = $conn->prepare("SELECT employees.*, ed_2ndhalf.* 
+    $stmt = $conn->prepare("SELECT employees.*,
+                                   employees.id AS employee_id,
+                                   employees.`height(cm)` AS height,
+                                   employees.`weight(kg)` AS weight,
+                                   employees.work_occupation AS workoccupation,
+                                   employees.tel_no_home AS homephone,
+                                   employees.businessphonenumber AS businessphone,
+                                   employees.fb_messenger_vibername AS fbvibername,
+                                   employees.instagramname AS instagram,
+                                   employees.sss_gsisno AS sss_gsis,
+                                   employees.typeofvisaissued AS typeofvisa,
+                                   employees.datejoiningindsclc AS datejoined,
+                                   ed_2ndhalf.*
                             FROM employees
-                            LEFT JOIN ed_2ndhalf ON employees.id = ed_2ndhalf.employee_id 
+                            LEFT JOIN ed_2ndhalf ON employees.id = ed_2ndhalf.employee_id
                             WHERE employees.id = ?");
     $stmt->bind_param("s", $id); // Use "s" for string parameter, use "i" for integer if needed
     $stmt->execute();
@@ -24,6 +35,12 @@ if (isset($_GET['id'])) {
 
     if ($result->num_rows > 0) {
         $employeeDetails = $result->fetch_assoc();
+        $employeeDetails['inclusive_dates'] = $employeeDetails['inclusivedates'] ?? null;
+        foreach ($employeeDetails as $key => $value) {
+            if (is_string($value)) {
+                $employeeDetails[$key] = htmlspecialchars($value, ENT_QUOTES, 'UTF-8');
+            }
+        }
     } else {
         $employeeDetails = null; // No records found
     }
@@ -69,7 +86,7 @@ if (isset($_GET['id'])) {
             <div class="d-flex justify-content-start align-items-center mb-4">
             <h2 class="fw-bold text-dark mb-0">Employee Detailed View</h2>
             </div>
-        
+
             <!-- Personal Information -->
             <div class="card mb-3">
             <div class="card-header2">Personal Information</div>
@@ -412,8 +429,7 @@ if (isset($_GET['id'])) {
 
                 <div style="text-align: center;">
                     <div class="btn-container2">
-                        <a href="edit_employee.php?id=<?= $id ?>" class="btn btn-warning">Edit</a>
-                        <a href="delete_employee.php?id=<?= $id ?>" class="btn btn-danger" onclick="return confirm('Are you sure you want to delete this employee?');">Delete</a>
+                        <a href="employees.php" class="btn btn-secondary">Back to employee masterlist</a>
                         <a href="employees.php" class="btn btn-secondary">Close</a>
                     </div>
                 </div>
@@ -427,7 +443,7 @@ if (isset($_GET['id'])) {
     <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
     <script>
         window.onload = function () {
-        window.scrollTo(0, 0); 
+        window.scrollTo(0, 0);
         window.history.replaceState({}, document.title, window.location.pathname + window.location.search);
         };
     </script>

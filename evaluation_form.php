@@ -1,4 +1,6 @@
 <?php
+require_once __DIR__ . '/includes/admin_page.php';
+
 function createRatingInput($name, $criterion) {
     return <<<HTML
     <tr class="hover:bg-purple-50 transition-colors">
@@ -71,11 +73,11 @@ function createRatingInput($name, $criterion) {
     }
 
     @keyframes starGlow {
-        0%, 100% { 
+        0%, 100% {
             transform: translate(-50%, -50%) scale(1.2);
             filter: blur(4px);
         }
-        50% { 
+        50% {
             transform: translate(-50%, -50%) scale(1.5);
             filter: blur(6px);
         }
@@ -231,7 +233,7 @@ function createRatingInput($name, $criterion) {
                 <!-- Remarks Section -->
                 <div class="space-y-4">
                     <h2 class="text-xl font-semibold section-header">Remarks</h2>
-                    <textarea 
+                    <textarea
                         name="remarks"
                         class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all"
                         rows="4"
@@ -240,7 +242,7 @@ function createRatingInput($name, $criterion) {
 
                 <!-- Submit Button -->
                 <div class="text-center">
-                    <button type="submit" 
+                    <button type="submit"
                             class="inline-flex items-center px-8 py-3 rounded-full bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold shadow-lg transform transition-all hover:-translate-y-1 hover:shadow-xl">
                         <i class="fas fa-paper-plane mr-2"></i>
                         Submit Evaluation
@@ -268,7 +270,7 @@ function createRatingInput($name, $criterion) {
                     hiddenInput.value = value;
                     scoreDisplay.textContent = value;
                     group.style.setProperty('--rating', stars.length - Array.from(stars).indexOf(this));
-                    
+
                     updateEmoji(value, emojiContainer);
                     if (hiddenInput.value === "0") answeredQuestions++;
                     updateProgress();
@@ -313,7 +315,7 @@ function createRatingInput($name, $criterion) {
                 const rect = element.getBoundingClientRect();
                 const startX = rect.left + rect.width / 2;
                 const startY = rect.top + rect.height / 2;
-                
+
                 const angle = Math.random() * Math.PI * 2;
                 const velocity = 1 + Math.random() * 2;
                 const destinationX = startX + Math.cos(angle) * 100;
@@ -349,20 +351,20 @@ function createRatingInput($name, $criterion) {
             const group = this.closest('.rating-group');
             const value = this.dataset.value;
             const color = this.dataset.color;
-            
+
             // Remove active class from all stars
             group.querySelectorAll('.rating__star').forEach(s => s.classList.remove('active'));
-            
+
             // Add active class to selected stars
             let current = this;
             while (current) {
                 current.classList.add('active');
                 current = current.nextElementSibling;
             }
-            
+
             // Set the rating value as a data attribute for CSS targeting
             group.dataset.rating = value;
-            
+
             // Apply color-specific glow effect
             group.querySelectorAll('.rating__star.active').forEach(activeStar => {
                 activeStar.style.setProperty('--star-color', color);

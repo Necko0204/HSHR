@@ -1,6 +1,5 @@
 <?php
-session_name('admin_session');
-session_start();
+require_once __DIR__ . '/includes/admin_page.php';
 include 'includes/breadcrumb.php';
 include 'db_config.php';
 include 'helper.php';
@@ -28,7 +27,7 @@ if (!isset($_SESSION['admin_id'])) {
     <link rel="stylesheet" href="background.css">
     <link href="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
-    
+
 <body>
 <!-- Sidebar & Navbar in a separate container -->
 <div class="main-container">
@@ -42,7 +41,7 @@ if (!isset($_SESSION['admin_id'])) {
                 echo generateBreadcrumb();
                 ?>
             <div class="d-flex justify-content-start align-items-center"></div>
-    
+
 
 <!-- New Settings Section -->
 <div class="card mb-4 shadow-sm border-1 rounded-lg">
@@ -52,8 +51,8 @@ if (!isset($_SESSION['admin_id'])) {
     <div class="card-body">
         <!-- Search Settings -->
             <input type="text" class="form-control mb-3" placeholder="Search settings" name="search">
-       
-        
+
+
         <h5 class="fw-bold">Most visited settings</h5>
         <div class="row g-3">
             <div class="col-md-6 col-lg-4">
@@ -84,7 +83,7 @@ if (!isset($_SESSION['admin_id'])) {
                 </a>
             </div>
         </div>
-        
+
         <h5 class="fw-bold mt-4">Looking for something else?</h5>
         <div class="row g-3">
             <div class="col-md-6">

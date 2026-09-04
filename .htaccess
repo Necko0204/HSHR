@@ -1,6 +1,33 @@
 # Use mod_rewrite for URL routing
 RewriteEngine On
 
+Options -Indexes
+
+# Block repository internals and database bootstrap assets even in local
+# development where the repository itself is Apache's document root.
+RewriteRule (^|/)\. - [F,L]
+RewriteRule ^docker(?:/|$) - [F,L,NC]
+
+# Never serve configuration, database dumps, private keys, or dependency metadata.
+<FilesMatch "(?i)^(?:\.env(?:\..*)?|.*-key\.pem|database\.sql|composer\.(?:json|lock)|package(?:-lock)?\.json|compose\.ya?ml|Dockerfile)$">
+    Require all denied
+</FilesMatch>
+
+# Uploaded content is data, never executable application code.
+RewriteRule ^(?:uploads|applicants_uploads|staff_side/uploads)/.*\.(?:php\d*|phtml|phar|cgi|pl|py|sh)$ - [F,L,NC]
+
+# Applicant documents, employee documents, and attendance evidence contain
+# private data and are served only through authenticated download handlers.
+RewriteRule ^(?:applicants_uploads|staff_side/uploads|uploads/employee_documents)(?:/|$) - [F,L,NC]
+
+<IfModule mod_headers.c>
+    Header always set X-Content-Type-Options "nosniff"
+    Header always set X-Frame-Options "SAMEORIGIN"
+    Header always set Referrer-Policy "strict-origin-when-cross-origin"
+    Header always set Permissions-Policy "camera=(self), microphone=(), geolocation=()"
+    Header always set Content-Security-Policy "base-uri 'self'; frame-ancestors 'self'; object-src 'none'; form-action 'self'"
+</IfModule>
+
 # If the requested file or directory doesn't exist, rewrite to index.php
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d

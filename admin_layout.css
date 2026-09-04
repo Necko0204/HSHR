@@ -1,0 +1,580 @@
+:root {
+    --admin-navbar-height: 80px;
+    --admin-sidebar-width: 270px;
+    --admin-sidebar-mini-width: 80px;
+}
+
+/* Shared layout guardrails. This file intentionally loads after style.css. */
+html,
+body {
+    width: 100%;
+    max-width: 100%;
+}
+
+body.admin-dashboard-page,
+body.admin-profile-page {
+    background-color: #fbf7fb;
+    background-image:
+        radial-gradient(circle at 88% 8%, rgba(255, 80, 130, 0.09), transparent 27%),
+        radial-gradient(circle at 18% 82%, rgba(116, 70, 220, 0.08), transparent 30%);
+}
+
+body.dark-mode.admin-dashboard-page,
+body.dark-mode.admin-profile-page {
+    background-color: #0d0d10;
+    background-image:
+        radial-gradient(circle at 88% 8%, rgba(255, 80, 130, 0.09), transparent 27%),
+        radial-gradient(circle at 18% 82%, rgba(116, 70, 220, 0.1), transparent 30%);
+}
+
+#sidebar,
+.content-container,
+.navbar,
+.wrapper {
+    visibility: visible;
+}
+
+.mobile-sidebar-toggle,
+.sidebar-backdrop {
+    display: none;
+}
+
+/* Large glass blurs across every dashboard card are expensive to repaint. */
+.admin-dashboard-page .card,
+.admin-profile-page .profile-card,
+.admin-profile-page #updateProfileCard,
+.admin-profile-page .profile-details-container,
+.admin-profile-page .profile-detail {
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+}
+
+.admin-profile-page .profile-card,
+.admin-profile-page #updateProfileCard {
+    background-color: rgba(255, 255, 255, 0.88);
+}
+
+.admin-profile-page .profile-details-container {
+    background-color: rgba(255, 255, 255, 0.36);
+}
+
+.admin-profile-page .profile-detail {
+    background-color: rgba(255, 255, 255, 0.72);
+}
+
+.admin-profile-page .form-container {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1.25rem;
+}
+
+.profile-status {
+    position: fixed;
+    top: 92px;
+    right: 18px;
+    z-index: 2000;
+    max-width: min(360px, calc(100vw - 36px));
+    padding: 12px 16px;
+    color: #fff;
+    border-radius: 10px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+    font-weight: 600;
+}
+
+.profile-status.success {
+    background: #198754;
+}
+
+.profile-status.error {
+    background: #c62828;
+}
+
+/* These decorations caused continuous compositing and repaint work. */
+.admin-dashboard-page .stars,
+.admin-dashboard-page .flowers,
+.admin-dashboard-page .cloud-container,
+.admin-dashboard-page .sun-container,
+.admin-dashboard-page .moon-container,
+.admin-profile-page .stars,
+.admin-profile-page .flowers,
+.admin-profile-page .cloud-container,
+.admin-profile-page .sun-container,
+.admin-profile-page .moon-container,
+.admin-dashboard-page .background-circles,
+.admin-dashboard-page .background-aurora,
+.admin-profile-page .background-circles,
+.admin-profile-page .background-aurora {
+    display: none !important;
+}
+
+.admin-dashboard-page .calendar-card,
+.admin-profile-page .calendar-card,
+.admin-dashboard-page .pulsing-icon,
+.admin-dashboard-page .pulsing-ring,
+.admin-dashboard-page .pulsing-icon2,
+.admin-dashboard-page .pulsing-ring2,
+.admin-profile-page .pulsing-icon,
+.admin-profile-page .pulsing-ring,
+.admin-profile-page .pulsing-icon2,
+.admin-profile-page .pulsing-ring2 {
+    animation: none !important;
+}
+
+.admin-dashboard-page .card,
+.admin-profile-page .profile-card,
+.admin-profile-page .profile-detail {
+    transition-property: box-shadow, border-color, background-color !important;
+}
+
+.admin-dashboard-page .card:hover,
+.admin-profile-page .profile-detail:hover,
+.admin-profile-page .profile-image-container2:hover {
+    transform: none !important;
+}
+
+.admin-dashboard-page #performanceChart,
+.admin-dashboard-page #departmentChart,
+.admin-dashboard-page #evaluationChart,
+.admin-dashboard-page #payslipChart,
+.admin-dashboard-page #reportTrendChart {
+    min-height: 350px;
+}
+
+.admin-dashboard-page #attendanceChart {
+    min-height: 370px;
+}
+
+body.dark-mode.admin-profile-page .profile-card,
+body.dark-mode.admin-profile-page #updateProfileCard,
+body.dark-mode.admin-profile-page .profile-details-container,
+body.dark-mode.admin-profile-page .profile-detail {
+    background-color: rgba(15, 15, 18, 0.92);
+}
+
+body.dark-mode .circle {
+    background: rgba(255, 255, 255, 0.18);
+}
+
+@media (min-width: 1025px) {
+    .sidebar {
+        top: var(--admin-navbar-height);
+        margin-top: 0 !important;
+        height: calc(100vh - var(--admin-navbar-height)) !important;
+    }
+
+    .sidebar-footer {
+        margin-bottom: 12px !important;
+    }
+
+    .wrapper {
+        margin-top: calc(var(--admin-navbar-height) + 16px) !important;
+    }
+}
+
+@media (max-width: 1024px) {
+    :root {
+        --admin-navbar-height: 68px;
+    }
+
+    body {
+        padding: 0 !important;
+    }
+
+    body.sidebar-open {
+        overflow: hidden;
+    }
+
+    .content-container,
+    .content-container.minimized {
+        width: 100% !important;
+        height: var(--admin-navbar-height);
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+
+    .navbar,
+    .navbar.minimized {
+        min-height: var(--admin-navbar-height);
+        padding: 7px 12px !important;
+        z-index: 1200;
+    }
+
+    .navbar > .container-fluid {
+        display: grid !important;
+        grid-template-columns: 40px minmax(0, 1fr) auto;
+        gap: 8px;
+        flex-wrap: nowrap !important;
+        padding: 0;
+    }
+
+    .mobile-sidebar-toggle {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 40px;
+        height: 40px;
+        padding: 0;
+        color: #fff;
+        background: rgba(255, 255, 255, 0.14);
+        border: 1px solid rgba(255, 255, 255, 0.28);
+        border-radius: 10px;
+    }
+
+    .mobile-sidebar-toggle i {
+        color: #fff !important;
+        font-size: 1.1rem !important;
+    }
+
+    .navbar .logo {
+        width: 40px !important;
+        height: 40px !important;
+        flex: 0 0 40px;
+    }
+
+    .navbar h4 {
+        min-width: 0;
+        margin-left: 8px !important;
+        font-size: clamp(0.78rem, 2.4vw, 1rem);
+        line-height: 1.15;
+    }
+
+    .navbar-toggler {
+        display: none !important;
+    }
+
+    .navbar-collapse,
+    .navbar-collapse.collapse {
+        display: flex !important;
+        flex-basis: auto;
+        flex-grow: 0;
+    }
+
+    .navbar-nav {
+        flex-direction: row !important;
+        gap: 2px !important;
+    }
+
+    .navbar-nav .nav-link,
+    .navbar-nav .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 34px;
+        min-height: 34px;
+        padding: 5px !important;
+    }
+
+    .navbar i {
+        font-size: 1rem !important;
+    }
+
+    .profile-pic {
+        width: 34px !important;
+        height: 34px !important;
+    }
+
+    .navbar .dropdown-toggle::after {
+        display: none;
+    }
+
+    .sidebar,
+    .sidebar.minimized {
+        position: fixed !important;
+        top: var(--admin-navbar-height) !important;
+        left: 0;
+        width: min(320px, 86vw) !important;
+        height: calc(100dvh - var(--admin-navbar-height)) !important;
+        margin: 0 !important;
+        padding: 12px !important;
+        transform: translateX(-105%);
+        transition: transform 0.24s ease !important;
+        z-index: 1150;
+        visibility: visible !important;
+        overflow: hidden;
+    }
+
+    .sidebar.mobile-open {
+        transform: translateX(0);
+    }
+
+    .sidebar.minimized .text,
+    .sidebar.minimized h4 {
+        display: inline;
+    }
+
+    .sidebar.minimized .submenu a {
+        justify-content: flex-start;
+    }
+
+    .sidebar.minimized .submenu a .text {
+        display: inline;
+    }
+
+    .sidebar.minimized .submenu a i {
+        margin-right: 0.5rem;
+    }
+
+    #toggleButton {
+        top: 8px !important;
+        right: 8px;
+        left: auto !important;
+        z-index: 2;
+        color: #fff;
+    }
+
+    #toggleButton i {
+        color: #fff !important;
+    }
+
+    .calendar-time-container {
+        min-height: 82px;
+        padding: 5px 42px 5px 5px !important;
+    }
+
+    .calendar-card {
+        width: auto !important;
+        min-width: 92px;
+        padding: 5px !important;
+        animation: none !important;
+    }
+
+    .calendar-month,
+    .calendar-weekday,
+    .calendar-year {
+        font-size: 0.68rem !important;
+    }
+
+    .calendar-day {
+        font-size: 1.35rem !important;
+    }
+
+    .digital-clock {
+        padding: 4px 8px !important;
+    }
+
+    #clock {
+        font-size: 0.78rem !important;
+    }
+
+    .mini-calendar-time {
+        display: none !important;
+    }
+
+    .sidebar-content {
+        max-height: none !important;
+        padding-right: 3px;
+    }
+
+    .sidebar a,
+    .sidebar.minimized a {
+        padding: 10px 12px !important;
+        font-size: 0.9rem !important;
+    }
+
+    .sidebar-footer {
+        margin-bottom: 4px !important;
+        padding: 8px 0 !important;
+    }
+
+    .credits {
+        font-size: 0.66rem !important;
+    }
+
+    .sidebar-backdrop {
+        position: fixed;
+        inset: var(--admin-navbar-height) 0 0;
+        z-index: 1100;
+        width: 100%;
+        padding: 0;
+        background: rgba(18, 8, 12, 0.55);
+        border: 0;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.2s ease;
+    }
+
+    .sidebar-backdrop.show {
+        display: block;
+        opacity: 1;
+        pointer-events: auto;
+    }
+
+    .wrapper,
+    .wrapper.minimized {
+        width: 100% !important;
+        max-width: none !important;
+        min-width: 0;
+        margin: 0 !important;
+        padding: 16px !important;
+        visibility: visible !important;
+    }
+
+    .breadcrumb-title {
+        font-size: clamp(1.45rem, 6vw, 2rem) !important;
+    }
+
+    .admin-dashboard-page .wrapper > .d-flex:first-child {
+        align-items: flex-start !important;
+        gap: 10px;
+    }
+
+    .admin-dashboard-page #dateRangePicker {
+        white-space: nowrap;
+        font-size: 0.75rem;
+    }
+
+    .admin-dashboard-page .card {
+        padding: 16px !important;
+        border-radius: 14px !important;
+    }
+
+    .admin-dashboard-page .profile-container {
+        width: 128px;
+        height: 128px;
+    }
+
+    .admin-dashboard-page .chart-container,
+    .admin-dashboard-page [id$="Chart"] {
+        min-width: 0;
+        max-width: 100%;
+    }
+
+    .admin-dashboard-page .card .row > [class*="col-"] {
+        min-width: 0;
+    }
+
+    .admin-profile-page .profile-card,
+    .admin-profile-page #updateProfileCard {
+        width: 100% !important;
+        margin: 0 !important;
+        padding: 18px !important;
+    }
+
+    .admin-profile-page .profile-details-container,
+    .admin-profile-page .form-container {
+        grid-template-columns: minmax(0, 1fr) !important;
+        gap: 12px;
+        padding: 12px !important;
+    }
+
+    .admin-profile-page .profile-detail,
+    .admin-profile-page .full-width {
+        grid-column: 1 !important;
+        min-width: 0;
+        padding: 14px;
+    }
+
+    .admin-profile-page .profile-detail span,
+    .admin-profile-page .profile-detail p {
+        overflow-wrap: anywhere;
+        font-size: 0.95rem;
+    }
+
+    .admin-profile-page form {
+        padding: 0 !important;
+    }
+
+    .admin-profile-page .btn2-container {
+        flex-direction: row;
+        flex-wrap: wrap;
+    }
+
+    .admin-profile-page .btn2 {
+        flex: 1 1 150px;
+    }
+
+    /* Decorative motion is the first thing to trim on battery-powered devices. */
+    .admin-dashboard-page .star,
+    .admin-dashboard-page .flower,
+    .admin-dashboard-page .cloud,
+    .admin-dashboard-page .theme-icon,
+    .admin-profile-page .star,
+    .admin-profile-page .flower,
+    .admin-profile-page .cloud,
+    .admin-profile-page .theme-icon {
+        animation: none !important;
+    }
+}
+
+@media (max-width: 640px) {
+    :root {
+        --admin-navbar-height: 62px;
+    }
+
+    .navbar,
+    .navbar.minimized {
+        padding: 6px 8px !important;
+    }
+
+    .navbar > .container-fluid {
+        grid-template-columns: 38px minmax(0, 1fr) auto;
+        gap: 5px;
+    }
+
+    .mobile-sidebar-toggle {
+        width: 38px;
+        height: 38px;
+    }
+
+    .navbar .logo {
+        width: 34px !important;
+        height: 34px !important;
+        flex-basis: 34px;
+    }
+
+    .navbar h4 {
+        margin-left: 5px !important;
+        font-size: 0.72rem;
+    }
+
+    #darkModeToggle {
+        display: none;
+    }
+
+    .navbar-nav .nav-link,
+    .navbar-nav .btn {
+        min-width: 30px;
+        min-height: 30px;
+        padding: 3px !important;
+    }
+
+    .profile-pic {
+        width: 30px !important;
+        height: 30px !important;
+    }
+
+    .wrapper,
+    .wrapper.minimized {
+        padding: 12px !important;
+    }
+
+    .admin-dashboard-page .wrapper > .d-flex:first-child {
+        flex-wrap: wrap;
+    }
+
+    .admin-dashboard-page .wrapper > .d-flex:first-child .dropdown {
+        margin-left: auto;
+    }
+
+    .admin-dashboard-page .card .row.align-items-center > [class*="col-"] {
+        width: 100%;
+        text-align: center;
+    }
+
+    .admin-profile-page .profile-image-container2,
+    .admin-profile-page .profile-picture2 {
+        width: 108px;
+        height: 108px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        scroll-behavior: auto !important;
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}

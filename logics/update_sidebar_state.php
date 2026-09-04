@@ -1,52 +1,41 @@
 <?php
-session_name('admin_session');
-session_start();
-include 'db_config.php'; // Include MySQLi database connection
+declare(strict_types=1);
 
-header('Content-Type: application/json'); // Ensure JSON response
+require_once __DIR__ . '/../includes/admin_api.php';
 
-// Check if session exists
-if (!isset($_SESSION['admin_id'])) {
-    echo json_encode(["success" => false, "error" => "No admin session"]);
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    http_response_code(405);
+    echo json_encode(['success' => false, 'error' => 'Method not allowed']);
+    exit;
+}
+require_once __DIR__ . '/db_config.php';
+$payload = $_POST;
+if (!$payload) {
+    $decoded = json_decode((string) file_get_contents('php://input'), true);
+    $payload = is_array($decoded) ? $decoded : [];
+}
+if (!array_key_exists('sidebarOn', $payload)) {
+    http_response_code(422);
+    echo json_encode(['success' => false, 'error' => 'sidebarOn is required']);
     exit;
 }
 
-$data = json_decode(file_get_contents("php://input"), true);
-
-// Ensure sidebarOn is received
-if (!isset($data['sidebarOn'])) {
-    echo json_encode(["success" => false, "error" => "sidebarOn not provided"]);
+$sidebarOn = filter_var($payload['sidebarOn'], FILTER_VALIDATE_BOOL) ? 1 : 0;
+$adminId = (string) $_SESSION['admin_id'];
+$statement = $conn->prepare('UPDATE admin SET sidebarOn = ? WHERE id = ?');
+if (!$statement) {
+    http_response_code(500);
+    echo json_encode(['success' => false, 'error' => 'Unable to save navigation state']);
+    exit;
+}
+$statement->bind_param('is', $sidebarOn, $adminId);
+$saved = $statement->execute();
+$statement->close();
+if (!$saved) {
+    http_response_code(500);
+    echo json_encode(['success' => false, 'error' => 'Unable to save navigation state']);
     exit;
 }
 
-$sidebarOn = ($data['sidebarOn'] == 1) ? 1 : 0; // Ensure it's either 0 or 1
-$userId = $_SESSION['admin_id']; // Get the logged-in admin ID
-
-// Check database connection
-if (!$conn) {
-    echo json_encode(["success" => false, "error" => "Database connection failed"]);
-    exit;
-}
-
-// Prepare the SQL query
-$query = "UPDATE admin SET sidebarOn = ? WHERE id = ?";
-$stmt = $conn->prepare($query);
-
-if (!$stmt) {
-    echo json_encode(["success" => false, "error" => "SQL Prepare Failed"]);
-    exit;
-}
-
-$stmt->bind_param("is", $sidebarOn, $userId);
-$success = $stmt->execute();
-
-// Check execution
-if (!$success) {
-    echo json_encode(["success" => false, "error" => "SQL Execution Failed"]);
-} else {
-    echo json_encode(["success" => true, "sidebarOn" => $sidebarOn]);
-}
-
-// Close statement
-$stmt->close();
-?>
+$_SESSION['sidebarOn'] = $sidebarOn;
+echo json_encode(['success' => true, 'sidebarOn' => $sidebarOn]);

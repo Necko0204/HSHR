@@ -1,6 +1,5 @@
 <?php
-session_name('admin_session');
-session_start();
+require_once __DIR__ . '/includes/admin_page.php';
 include 'includes/breadcrumb.php';
 include 'db_config.php';
 include 'helper.php';
@@ -63,7 +62,7 @@ if (!isset($_SESSION['admin_id'])) {
         <div class="table-responsive" style="overflow-x: auto; white-space: nowrap;">
             <?php
             $sql = "SELECT a.id, a.employee_id, e.firstname, e.lastname, a.date, a.time_in, a.time_out, a.total_hours, a.image_path,
-                        a.break_in, a.break_out, a.break_duration, a.status 
+                        a.break_in, a.break_out, a.break_duration, a.status
                     FROM attendance a
                     JOIN employees e ON a.employee_id = e.id";
             $result = $conn->query($sql);
@@ -91,7 +90,7 @@ if (!isset($_SESSION['admin_id'])) {
                             <?php while ($row = $result->fetch_assoc()): ?>
                                 <tr>
                                     <td class="hidden-id"><?= htmlspecialchars($row["id"]) ?></td>
-                                    <td><img src="staff_side/<?= htmlspecialchars($row["image_path"]) ?>" alt="Proof of Time in" class="img-thumbnail" style="width: 100px; height: 100px;" ></td>
+                                    <td><img src="includes/admin_download.php?type=attendance&amp;id=<?= (int) $row['id'] ?>" alt="Clock-in evidence" class="img-thumbnail" style="width: 100px; height: 100px;" loading="lazy"></td>
                                     <td><?= htmlspecialchars($row["firstname"] . ' ' . $row["lastname"]) ?></td>
                                     <td><?= htmlspecialchars($row["date"]) ?></td>
                                     <td><?= htmlspecialchars($row["time_in"]) ?></td>
@@ -144,11 +143,11 @@ if (!isset($_SESSION['admin_id'])) {
                 </ul>
 
                 <div class="tab-content" id="archivesTabsContent">
-                    
+
                     <?php
                     include 'db_config.php';
-                    $sql = "SELECT a.id, a.employee_id, e.firstname, e.lastname, a.date, a.time_in, a.time_out, a.total_hours, 
-                                a.break_in, a.break_out, a.break_duration, a.status 
+                    $sql = "SELECT a.id, a.employee_id, e.firstname, e.lastname, a.date, a.time_in, a.time_out, a.total_hours,
+                                a.break_in, a.break_out, a.break_duration, a.status
                             FROM attendance a
                             JOIN employees e ON a.employee_id = e.id
                             WHERE a.status IN ('Approved', 'Rejected')";
@@ -185,7 +184,7 @@ if (!isset($_SESSION['admin_id'])) {
                                             <th style="min-width: 150px;">Break In</th>
                                             <th style="min-width: 150px;">Break Out</th>
                                             <th style="min-width: 150px;">Break Duration</th>
-                                            
+
                                         </tr>
                                     </thead>
                                     <tbody>

@@ -1,8 +1,6 @@
 <?php
-session_name('admin_session');  
-session_start();  
-
-include 'db_config.php';  
+require_once __DIR__ . '/admin_session.php';
+include 'db_config.php';
 
 // Validate session variables
 if (!isset($_SESSION['admin_id']) || !isset($_SESSION['position'])) {

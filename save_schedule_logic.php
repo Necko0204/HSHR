@@ -1,85 +1,185 @@
 <?php
-// save_schedule_logic.php
-ini_set('display_errors', 0);
-ini_set('log_errors',     1);
-error_reporting(E_ALL);
+declare(strict_types=1);
 
-header('Content-Type: application/json');
-require 'db_config.php';  // make sure this defines $conn as your mysqli handle
+require_once __DIR__ . '/includes/admin_api.php';
+require_once __DIR__ . '/db_config.php';
 
-try {
-    if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-        throw new Exception('Invalid request method');
-    }
-
-    // 1) Read the raw JSON
-    $raw = file_get_contents('php://input');
-    $obj = json_decode($raw, true);
-    if (json_last_error() !== JSON_ERROR_NONE) {
-        throw new Exception('Invalid JSON: ' . json_last_error_msg());
-    }
-
-    $emp = $obj['employee_id'] ?? '';
-    $hrs = $obj['hours']       ?? [];
-
-    if ($emp === '' || !is_array($hrs)) {
-        throw new Exception('Malformed data');
-    }
-
-    // 2) Start transaction
-    $conn->begin_transaction();
-
-    // 3) Delete any old schedule for this employee
-    $del = $conn->prepare("
-        DELETE FROM work_schedules
-         WHERE employee_id = ?
-    ");
-    $del->bind_param("s", $emp);
-    $del->execute();
-    if ($del->errno) {
-        throw new Exception("Delete failed: " . $del->error);
-    }
-    $del->close();
-
-    // 4) Insert new rows
-    $ins = $conn->prepare("
-        INSERT INTO work_schedules
-           (employee_id, day_of_week, required_hours)
-        VALUES
-           (?, ?, ?)
-    ");
-
-    // Only days 1–5 (Mon–Fri)
-    for ($d = 1; $d <= 5; $d++) {
-        $h = floatval($hrs[$d] ?? 0);
-        if ($h > 0) {
-            $ins->bind_param("sid", $emp, $d, $h);
-            $ins->execute();
-            if ($ins->errno) {
-                throw new Exception("Insert failed for day $d: " . $ins->error);
-            }
-        }
-    }
-
-    $ins->close();
-    $conn->commit();
-
-    // 5) Return success
-    echo json_encode([
-        'success' => true,
-        'message' => 'Schedule saved and ' . $conn->affected_rows . ' rows written.'
-    ]);
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    http_response_code(405);
+    echo json_encode(['success' => false, 'message' => 'This endpoint requires a POST request.']);
     exit;
 }
-catch (Exception $e) {
-    if ($conn->errno) {
-        $conn->rollback();
+
+function scheduleMinutes(string $time): ?int
+{
+    if (!preg_match('/^(?:[01]\d|2[0-3]):[0-5]\d$/', $time)) {
+        return null;
     }
-    // Log the error server-side and return a safe JSON payload
-    error_log("Schedule save error: " . $e->getMessage());
-    echo json_encode([
-        'success' => false,
-        'message' => $e->getMessage()
-    ]);
+    [$hours, $minutes] = array_map('intval', explode(':', $time));
+    return ($hours * 60) + $minutes;
+}
+
+$payload = json_decode((string) file_get_contents('php://input'), true);
+if (!is_array($payload)) {
+    http_response_code(400);
+    echo json_encode(['success' => false, 'message' => 'Invalid schedule request.']);
     exit;
+}
+
+$employeeId = trim((string) ($payload['employee_id'] ?? ''));
+$days = $payload['days'] ?? [];
+$clearSchedule = filter_var($payload['clear'] ?? false, FILTER_VALIDATE_BOOL);
+$presetName = substr(trim((string) ($payload['preset_name'] ?? 'Custom weekly schedule')), 0, 60);
+
+if ($employeeId === '') {
+    http_response_code(422);
+    echo json_encode(['success' => false, 'message' => 'Choose an employee before saving.']);
+    exit;
+}
+if (!$clearSchedule && (!is_array($days) || count($days) < 1 || count($days) > 7)) {
+    http_response_code(422);
+    echo json_encode(['success' => false, 'message' => 'Select at least one and at most seven working days.']);
+    exit;
+}
+
+$employeeStatement = $conn->prepare("SELECT 1 FROM employees WHERE id = ? AND status = 'Active' LIMIT 1");
+$employeeStatement->bind_param('s', $employeeId);
+$employeeStatement->execute();
+$employeeExists = (bool) $employeeStatement->get_result()->fetch_row();
+$employeeStatement->close();
+if (!$employeeExists) {
+    http_response_code(404);
+    echo json_encode(['success' => false, 'message' => 'Active employee not found.']);
+    exit;
+}
+
+$allowedDays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+$normalizedDays = [];
+$seenDays = [];
+$weeklyHours = 0.0;
+
+if (!$clearSchedule) {
+    foreach ($days as $index => $dayInput) {
+        if (!is_array($dayInput)) {
+            http_response_code(422);
+            echo json_encode(['success' => false, 'message' => 'Invalid day entry at position ' . ($index + 1) . '.']);
+            exit;
+        }
+
+        $day = (string) ($dayInput['day'] ?? '');
+        $startTime = (string) ($dayInput['start_time'] ?? '');
+        $endTime = (string) ($dayInput['end_time'] ?? '');
+        $breakStart = trim((string) ($dayInput['break_start'] ?? ''));
+        $breakEnd = trim((string) ($dayInput['break_end'] ?? ''));
+
+        if (!in_array($day, $allowedDays, true) || isset($seenDays[$day])) {
+            http_response_code(422);
+            echo json_encode(['success' => false, 'message' => 'Each selected weekday must appear exactly once.']);
+            exit;
+        }
+        $seenDays[$day] = true;
+
+        $startMinutes = scheduleMinutes($startTime);
+        $endMinutes = scheduleMinutes($endTime);
+        if ($startMinutes === null || $endMinutes === null || $endMinutes <= $startMinutes) {
+            http_response_code(422);
+            echo json_encode(['success' => false, 'message' => $day . ': end time must be later than start time.']);
+            exit;
+        }
+
+        $shiftMinutes = $endMinutes - $startMinutes;
+        if ($shiftMinutes > 16 * 60) {
+            http_response_code(422);
+            echo json_encode(['success' => false, 'message' => $day . ': a shift cannot exceed 16 hours.']);
+            exit;
+        }
+
+        $breakMinutes = 0;
+        if ($breakStart !== '' || $breakEnd !== '') {
+            $breakStartMinutes = scheduleMinutes($breakStart);
+            $breakEndMinutes = scheduleMinutes($breakEnd);
+            if (
+                $breakStartMinutes === null ||
+                $breakEndMinutes === null ||
+                $breakEndMinutes <= $breakStartMinutes ||
+                $breakStartMinutes < $startMinutes ||
+                $breakEndMinutes > $endMinutes
+            ) {
+                http_response_code(422);
+                echo json_encode(['success' => false, 'message' => $day . ': break time must fall completely inside the shift.']);
+                exit;
+            }
+            $breakMinutes = $breakEndMinutes - $breakStartMinutes;
+        } else {
+            $breakStart = null;
+            $breakEnd = null;
+        }
+
+        $paidMinutes = $shiftMinutes - $breakMinutes;
+        if ($paidMinutes <= 0) {
+            http_response_code(422);
+            echo json_encode(['success' => false, 'message' => $day . ': paid working time must be greater than zero.']);
+            exit;
+        }
+
+        $requiredHours = round($paidMinutes / 60, 2);
+        $weeklyHours += $requiredHours;
+        $normalizedDays[] = [
+            'day' => $day,
+            'start_time' => $startTime,
+            'end_time' => $endTime,
+            'break_start' => $breakStart,
+            'break_end' => $breakEnd,
+            'break_minutes' => $breakMinutes,
+            'required_hours' => $requiredHours,
+        ];
+    }
+}
+
+$conn->begin_transaction();
+try {
+    $delete = $conn->prepare('DELETE FROM work_schedules WHERE employee_id = ?');
+    $delete->bind_param('s', $employeeId);
+    $delete->execute();
+    $delete->close();
+
+    if (!$clearSchedule) {
+        $insert = $conn->prepare(
+            "INSERT INTO work_schedules
+                (employee_id, day_of_week, required_hours, start_time, end_time,
+                 break_start, break_end, break_minutes, preset_name, timezone)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'Asia/Manila')"
+        );
+
+        foreach ($normalizedDays as $day) {
+            $insert->bind_param(
+                'ssdssssis',
+                $employeeId,
+                $day['day'],
+                $day['required_hours'],
+                $day['start_time'],
+                $day['end_time'],
+                $day['break_start'],
+                $day['break_end'],
+                $day['break_minutes'],
+                $presetName
+            );
+            $insert->execute();
+        }
+        $insert->close();
+    }
+
+    $conn->commit();
+    echo json_encode([
+        'success' => true,
+        'message' => $clearSchedule ? 'Weekly schedule cleared.' : 'Weekly schedule saved successfully.',
+        'day_count' => count($normalizedDays),
+        'weekly_hours' => round($weeklyHours, 2),
+        'timezone' => 'Asia/Manila',
+    ]);
+} catch (Throwable $error) {
+    $conn->rollback();
+    error_log('Schedule save failed: ' . $error->getMessage());
+    http_response_code(500);
+    echo json_encode(['success' => false, 'message' => 'The schedule could not be saved. Please try again.']);
 }

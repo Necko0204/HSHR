@@ -1,83 +1,60 @@
 <?php
-session_name('staff_session');  
-session_start();  
+declare(strict_types=1);
 
-include 'db_config.php';  
+require_once __DIR__ . '/staff_session.php';
+header('Content-Type: text/html; charset=utf-8');
 
-// Validate session variables
-if (!isset($_SESSION['employee_id']) || !isset($_SESSION['role'])) {
-    echo "<p class='text-muted text-center'>Error: Not logged in</p>";
+if (empty($_SESSION['employee_id'])) {
+    http_response_code(401);
+    echo '<div class="hshr-staff-empty error"><p>Authentication required.</p></div>';
     exit;
 }
 
-if (!isset($_GET['receiver_id']) || !isset($_GET['receiver_role'])) {
-    echo "<p class='text-muted text-center'>Error: Missing receiver data</p>";
+$receiverId = trim((string) ($_GET['receiver_id'] ?? ''));
+$receiverRole = (string) ($_GET['receiver_role'] ?? '');
+if ($receiverId === '' || !in_array($receiverRole, ['Administrator', 'staff'], true)) {
+    http_response_code(422);
+    echo '<div class="hshr-staff-empty error"><p>Select a valid conversation.</p></div>';
     exit;
 }
 
-// Sanitize inputs
-$sender_id = trim(mysqli_real_escape_string($conn, $_SESSION['employee_id']));
-$sender_role = trim(mysqli_real_escape_string($conn, $_SESSION['role']));
-$receiver_id = trim(mysqli_real_escape_string($conn, $_GET['receiver_id']));
-$receiver_role = trim(mysqli_real_escape_string($conn, $_GET['receiver_role']));
+require_once __DIR__ . '/db_config.php';
+$senderId = (string) $_SESSION['employee_id'];
+$statement = $conn->prepare(
+    "SELECT m.message, m.sent_at,
+            CASE WHEN m.sender_id = ? AND m.sender_type = 'staff' THEN 'sent' ELSE 'received' END AS message_type,
+            COALESCE(a.profile_picture, sa.profile_picture, 'uploads/profile_pictures/default.jpg') AS profile_picture
+     FROM messages m
+     LEFT JOIN admin a ON a.id = m.sender_id AND m.sender_type = 'Administrator'
+     LEFT JOIN staff_accounts sa ON sa.employee_id = m.sender_id AND m.sender_type = 'staff'
+     WHERE (m.sender_id = ? AND m.sender_type = 'staff' AND m.receiver_id = ? AND m.receiver_type = ?)
+        OR (m.sender_id = ? AND m.sender_type = ? AND m.receiver_id = ? AND m.receiver_type = 'staff')
+     ORDER BY m.sent_at ASC"
+);
+$statement->bind_param('sssssss', $senderId, $senderId, $receiverId, $receiverRole, $receiverId, $receiverRole, $senderId);
+$statement->execute();
+$messages = $statement->get_result();
 
-// Fetch messages with correct profile picture
-$query = "SELECT m.*, 
-                 CASE 
-                    WHEN m.sender_id = '$sender_id' THEN 'sent' 
-                    ELSE 'received' 
-                 END AS message_type,
-                 COALESCE(
-                    (SELECT profile_picture FROM admin WHERE id = m.sender_id),
-                    (SELECT profile_picture FROM staff_accounts WHERE employee_id = m.sender_id),
-                    'uploads/profile_pictures/default.jpg'
-                 ) AS profile_picture
-          FROM messages m
-          WHERE 
-            (m.sender_id = '$sender_id' AND m.sender_type = '$sender_role' 
-             AND m.receiver_id = '$receiver_id' AND m.receiver_type = '$receiver_role')
-            OR 
-            (m.sender_id = '$receiver_id' AND m.sender_type = '$receiver_role' 
-             AND m.receiver_id = '$sender_id' AND m.receiver_type = '$sender_role') 
-          ORDER BY m.sent_at ASC";
-
-$result = mysqli_query($conn, $query);
-
-// Error handling
-if (!$result) {
-    echo "<p class='text-danger text-center'>Error loading messages.</p>";
-    exit;
-}
-
-// Display messages
-if (mysqli_num_rows($result) > 0) {
-    while ($row = mysqli_fetch_assoc($result)) {
-        $message = htmlspecialchars($row['message']);
-        $timestamp = date("h:i A", strtotime($row['sent_at']));
-        $profile_picture = !empty($row['profile_picture']) ? htmlspecialchars($row['profile_picture']) : 'uploads/profile_pictures/default.jpg';
-        $message_type = $row['message_type'];
-
-        if ($message_type == 'sent') {
-            // Sent message (align to right)
-            echo "<div class='d-flex justify-content-end mb-3'>
-                    <div class='p-2 bg-primary text-white rounded w-75' style='max-width: 75%; border-radius: 10px;'>
-                        <p class='mb-1'>$message</p>
-                        <small class='text-light text-end d-block'>$timestamp</small>
-                    </div>
-                    <img src='$profile_picture' class='rounded-circle ms-2' width='40' height='40' onerror=\"this.src='uploads/profile_pictures/default.jpg';\">
-                  </div>";
-        } else {
-            // Received message (align to left)
-            echo "<div class='d-flex justify-content-start mb-3'>
-                    <img src='$profile_picture' class='rounded-circle me-2' width='40' height='40' onerror=\"this.src='uploads/profile_pictures/default.jpg';\">
-                    <div class='p-2 bg-light text-dark rounded w-75' style='max-width: 75%; border-radius: 10px;'>
-                        <p class='mb-1'>$message</p>
-                        <small class='text-muted text-end d-block'>$timestamp</small>
-                    </div>
-                  </div>";
-        }
-    }
+if ($messages->num_rows === 0) {
+    echo '<div class="hshr-staff-empty"><i class="fa-regular fa-comments"></i><p>No messages yet. Start the conversation.</p></div>';
 } else {
-    echo "<p class='text-muted text-center'>No messages yet. Start the conversation!</p>";
+    while ($row = $messages->fetch_assoc()) {
+        $sent = $row['message_type'] === 'sent';
+        $message = htmlspecialchars((string) $row['message'], ENT_QUOTES, 'UTF-8');
+        $time = htmlspecialchars(date('g:i A', strtotime((string) $row['sent_at'])), ENT_QUOTES, 'UTF-8');
+        $picture = htmlspecialchars(hshr_profile_picture_url($row['profile_picture'] ?? null, '../'), ENT_QUOTES, 'UTF-8');
+        $side = $sent ? 'hshr-message-sent' : 'hshr-message-received';
+        echo '<div class="hshr-chat-message ' . $side . '">';
+        if (!$sent) echo '<img src="' . $picture . '" alt="" loading="lazy">';
+        echo '<div class="message-container"><p>' . nl2br($message) . '</p><time>' . $time . '</time></div></div>';
+    }
 }
-?>
+$statement->close();
+
+$seen = $conn->prepare(
+    "UPDATE messages SET status = 'seen'
+     WHERE sender_id = ? AND sender_type = ? AND receiver_id = ? AND receiver_type = 'staff' AND status <> 'seen'"
+);
+$seen->bind_param('sss', $receiverId, $receiverRole, $senderId);
+$seen->execute();
+$seen->close();

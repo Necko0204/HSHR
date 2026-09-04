@@ -1,574 +1,237 @@
-<!-- Navbar -->
-<nav class="navbar navbar-expand-lg navbar-light">
-  <div class="container-fluid d-flex justify-content-between align-items-center">
-    <!-- School name and logo side by side -->
-    <div class="d-flex align-items-center">
-      <img src="images/asdasdasd123123123123123.jpg" alt="School Logo" class="logo" style="width: 50px; height: 50px;">
-      <h4 class="mb-0 ms-2 text-white" style="font-family: 'Poppins', sans-serif; font-weight: 700;">Holy Spirit School of Imus Inc.</h4>
-    </div>
-    <!-- Right side elements -->
-    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-      <span class="navbar-toggler-icon"></span>
-    </button>
-    <div class="collapse navbar-collapse" id="navbarNav">
-      <ul class="navbar-nav ms-auto d-flex align-items-center gap-3">
-        <!-- Dark Mode Toggle Button -->
-        <li class="nav-item">
-          <button id="darkModeToggle" class="btn btn-outline-secondary border-0">
-            <i id="darkModeIcon" class="fas fa-moon"></i>
-          </button>
-        </li>
+<?php
+require_once __DIR__ . '/includes/admin_page.php';
+require_once __DIR__ . '/db_config.php';
 
-        <!-- Notification Dropdown -->
-        <li class="nav-item dropdown">
-          <a href="#" class="nav-link dropdown-toggle d-flex align-items-center" id="notificationDropdown" data-bs-toggle="dropdown">
-            <i class="fas fa-bell"></i>
-            <?php
-              include 'db_config.php';
-              $query = "SELECT 
-                          (SELECT COUNT(id) FROM attendance WHERE status = 'Pending') +
-                          (SELECT COUNT(leave_id) FROM leave_requests WHERE status = 'Pending') AS notification_count";
-              $result = mysqli_query($conn, $query);
-              $row = mysqli_fetch_assoc($result);
-              $notification_count = $row['notification_count'];
-              if ($notification_count > 0) {
-                echo '<span class="badge bg-danger ms-1">' . $notification_count . '</span>';
-              }
-            ?>
-          </a>
-          <ul class="dropdown-menu custom-dropdown" aria-labelledby="notificationDropdown">
-            <?php
-              $query = "SELECT a.id, e.firstname, a.time_in, 'attendance' AS type FROM attendance a JOIN employees e ON a.employee_id = e.id WHERE a.status = 'Pending'
-                        UNION
-                        SELECT l.leave_id AS id, e.firstname, l.request_date AS time_in, 'leave' AS type FROM leave_requests l JOIN employees e ON l.employee_id = e.id WHERE l.status = 'Pending'
-                        ORDER BY time_in DESC";
-              $result = mysqli_query($conn, $query);
-              $count = 0;
-              $max_items = 6;
-              if (mysqli_num_rows($result) > 0) {
-                while ($row = mysqli_fetch_assoc($result)) {
-                  if ($count < $max_items) {
-                    $icon = $row['type'] == 'attendance' ? 'fas fa-clock' : 'fas fa-calendar-alt';
-                    $type = $row['type'] == 'attendance' ? 'timed in at' : 'requested leave on';
-                    echo '<li><a class="dropdown-item notification-item d-flex align-items-center" href="#" data-id="' . $row['id'] . '"><i class="' . $icon . ' me-2"></i>' . htmlspecialchars($row['firstname']) . ' ' . $type . ' ' . htmlspecialchars($row['time_in']) . '</a></li>';
-                  }
-                  $count++;
-                }
-                if ($count > $max_items) {
-                  echo '<li><a class="dropdown-item text-center" href="#" data-bs-toggle="modal" data-bs-target="#allNotificationsModal"><i class="fas fa-ellipsis-h me-2"></i>More...</a></li>';
-                }
-              } else {
-                echo '<li><a class="dropdown-item" href="#"><i class="fas fa-info-circle me-2"></i>No Notifications</a></li>';
-              }
-            ?>
-          </ul>
-        </li>
-        
-        <!-- Message Dropdown -->
-        <li class="nav-item dropdown">
-          <a href="#" class="nav-link dropdown-toggle d-flex align-items-center" id="messageDropdown" data-bs-toggle="dropdown">
-            <i class="fas fa-envelope"></i>
-            <?php
-            $admin_id = $_SESSION['admin_id'];
-            $admin_role = $_SESSION['position'];
+$adminId = $_SESSION['admin_id'] ?? null;
+$adminRole = $_SESSION['position'] ?? 'Administrator';
+$profilePicture = hshr_profile_picture_url($userData['profile_picture'] ?? null);
+$displayName = $userData['name'] ?? 'Administrator';
 
-              include 'db_config.php';
-              $query = "SELECT COUNT(id) AS unread_count FROM messages WHERE receiver_id = '$admin_id' AND status = 0";
-              $result = mysqli_query($conn, $query);
-              $row = mysqli_fetch_assoc($result);
-              $unread_count = $row['unread_count'];
-              if ($unread_count > 0) {
-              echo '<span class="badge bg-danger ms-1">' . $unread_count . '</span>';
-              }
-            ?>
-          </a>
-          <ul class="dropdown-menu custom-dropdown" aria-labelledby="messageDropdown" id="messageList">
-            <!-- Recent messages will be loaded here -->
-            <li class="d-flex justify-content-center mt-2">
-              <button class="btn btn-primary btn-sm rounded-circle" id="openMessageModal">
-                <i class="fas fa-plus"></i>
-              </button>
-            </li>
-          </ul>
-        </li>
+$pageTitles = [
+    'dashboard.php' => ['Dashboard', 'A concise view of your people operations'],
+    'employees.php' => ['Employee directory', 'Manage employee records and employment status'],
+    'staff_accounts.php' => ['Staff accounts', 'Manage access to the employee portal'],
+    'employee_details.php' => ['Employee profile', 'Review complete employee information'],
+    'employee_schedule.php' => ['Work schedules', 'Plan and maintain employee schedules'],
+    'role_management.php' => ['Roles & access', 'Control permissions and responsibility levels'],
+    'employment_applicants_list.php' => ['Applicants', 'Review and process employment applications'],
+    'payroll.php' => ['Payroll', 'Prepare and review employee compensation'],
+    'deductions.php' => ['Deductions', 'Manage payroll deductions and contribution rules'],
+    'leave_requests.php' => ['Leave requests', 'Review employee leave submissions'],
+    'employee_attendance.php' => ['Attendance', 'Monitor daily time and attendance records'],
+    'settings.php' => ['Settings', 'Configure your HR workspace'],
+    'view_profile.php' => ['My profile', 'Manage your administrator profile'],
+];
 
-        <!-- Profile Dropdown -->
-        <li class="nav-item dropdown">
-          <a href="#" class="nav-link dropdown-toggle d-flex align-items-center" id="profileDropdown" data-bs-toggle="dropdown">
-            <img src="<?php echo !empty($userData['profile_picture']) ? $userData['profile_picture'] : 'uploads/profile_pictures/default.jpg'; ?>" 
-            alt="Profile Picture" 
-            class="rounded-circle profile-pic">
-            <div class="pulsing-icon2">
-              <div class="pulsing-ring2"></div>
-            </div>
-          </a>
-          <ul class="dropdown-menu custom-dropdown" aria-labelledby="profileDropdown">
-            <li>
-                <a class="dropdown-item" href="view_profile.php">
-                    <i class="fas fa-user"></i> View Profile
-                </a>
-            </li>
-            <li>
-                <a class="dropdown-item" href="logout.php">
-                    <i class="fas fa-sign-out-alt"></i> Logout
-                </a>
-            </li>
-          </ul>
-        </li>
-      </ul>
-    </div>
-  </div>
-</nav>
+$currentPage = basename($_SERVER['PHP_SELF']);
+[$pageTitle, $pageSubtitle] = $pageTitles[$currentPage] ?? ['Human Resources', 'Holy Spirit School of Imus, Inc.'];
 
-<!-- All Notifications Modal -->
-<div class="modal fade" id="allNotificationsModal" tabindex="-1" aria-labelledby="allNotificationsModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-lg">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="allNotificationsModalLabel"><i class="fas fa-bell"></i> All Notifications</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <div class="modal-body notification-modal-body">
-        <ul class="list-group">
-          <?php
-            include 'db_config.php';
-            $query = "SELECT a.id, e.firstname, a.time_in, 'attendance' AS type FROM attendance a JOIN employees e ON a.employee_id = e.id WHERE a.status = 'Pending'
-                      UNION
-                      SELECT l.leave_id AS id, e.firstname, l.request_date AS time_in, 'leave' AS type FROM leave_requests l JOIN employees e ON l.employee_id = e.id WHERE l.status = 'Pending'
-                      ORDER BY time_in DESC"; // Limit to 10 items
-            $result = mysqli_query($conn, $query);
-            if (mysqli_num_rows($result) > 0) {
-              while ($row = mysqli_fetch_assoc($result)) {
-                $icon = $row['type'] == 'attendance' ? 'fas fa-clock' : 'fas fa-calendar-alt';
-                $type = $row['type'] == 'attendance' ? 'timed in at' : 'requested leave on';
-                echo '<li class="list-group-item d-flex align-items-center"><i class="' . $icon . ' me-2"></i>' . htmlspecialchars($row['firstname']) . ' ' . $type . ' ' . htmlspecialchars($row['time_in']) . '</li>';
-              }
-            } else {
-              echo '<li class="list-group-item text-center"><i class="fas fa-info-circle me-2"></i>No Notifications</li>';
+$notificationCount = 0;
+$unreadMessageCount = 0;
+$notifications = [];
+$messageContacts = [];
+
+if ($adminId !== null && isset($conn) && $conn instanceof mysqli) {
+    $notificationResult = $conn->query(
+        "SELECT
+            (SELECT COUNT(*) FROM attendance WHERE status = 'Pending') +
+            (SELECT COUNT(*) FROM leave_requests WHERE status = 'Pending') AS total"
+    );
+    if ($notificationResult) {
+        $notificationCount = (int) ($notificationResult->fetch_assoc()['total'] ?? 0);
+    }
+
+    $notificationItems = $conn->query(
+        "(SELECT a.id, CONCAT(e.firstname, ' ', e.lastname) AS employee_name,
+                a.time_in AS event_time, 'Attendance approval' AS event_label,
+                'employee_attendance.php' AS event_url, 'fa-solid fa-clock' AS event_icon
+         FROM attendance a
+         JOIN employees e ON e.id = a.employee_id
+         WHERE a.status = 'Pending')
+         UNION ALL
+         (SELECT l.leave_id AS id, CONCAT(e.firstname, ' ', e.lastname) AS employee_name,
+                l.request_date AS event_time, 'Leave request' AS event_label,
+                'leave_requests.php' AS event_url, 'fa-solid fa-calendar-day' AS event_icon
+         FROM leave_requests l
+         JOIN employees e ON e.id = l.employee_id
+         WHERE l.status = 'Pending')
+         ORDER BY event_time DESC
+         LIMIT 6"
+    );
+    if ($notificationItems) {
+        while ($notification = $notificationItems->fetch_assoc()) {
+            $notifications[] = $notification;
+        }
+    }
+
+    $unreadStatement = $conn->prepare("SELECT COUNT(*) FROM messages WHERE receiver_id = ? AND receiver_type = 'Administrator' AND status <> 'seen'");
+    if ($unreadStatement) {
+        $adminIdString = (string) $adminId;
+        $unreadStatement->bind_param('s', $adminIdString);
+        $unreadStatement->execute();
+        $unreadStatement->bind_result($unreadMessageCount);
+        $unreadStatement->fetch();
+        $unreadStatement->close();
+        $unreadMessageCount = (int) $unreadMessageCount;
+    }
+
+    $contactResult = $conn->query(
+        "SELECT contact_id, username, display_name, profile_picture, contact_role
+         FROM (
+            SELECT CAST(id AS CHAR) AS contact_id, username, name AS display_name,
+                   profile_picture, 'Administrator' AS contact_role
+            FROM admin
+            UNION ALL
+            SELECT sa.employee_id AS contact_id, sa.username,
+                   TRIM(CONCAT(COALESCE(e.firstname, ''), ' ', COALESCE(e.lastname, ''))) AS display_name,
+                   sa.profile_picture, 'staff' AS contact_role
+            FROM staff_accounts sa
+            LEFT JOIN employees e ON e.id = sa.employee_id
+            WHERE sa.status = 'active'
+         ) contacts
+         ORDER BY display_name, username"
+    );
+    if ($contactResult) {
+        while ($contact = $contactResult->fetch_assoc()) {
+            if ((string) $contact['contact_id'] === (string) $adminId && strtolower($contact['contact_role']) === strtolower($adminRole)) {
+                continue;
             }
-          ?>
-        </ul>
-      </div>
-    </div>
-  </div>
-</div>
+            $messageContacts[] = $contact;
+        }
+    }
+}
+?>
 
-<!-- NOTIFICATION Modal -->
-<div class="modal fade" id="notificationModal" tabindex="-1" aria-labelledby="notificationModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content shadow-lg rounded-3">
-      <div class="modal-header">
-        <h5 class="modal-title" id="notificationModalLabel">
-          <i class="fas fa-bell"></i> Notification Details
-        </h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <div class="modal-body">
-        <div class="mb-3">
-          <i class="fas fa-user text-primary"></i>
-          <strong> Employee: </strong> 
-          <span id="modalEmployee" class="text-dark"></span>
-        </div>
-        <div class="mb-3">
-          <i class="fas fa-clock text-success"></i>
-          <strong> Time In: </strong> 
-          <span id="modalTimeIn" class="text-dark"></span>
-        </div>
-        <div class="alert alert-warning d-flex align-items-center" role="alert">
-          <i class="fas fa-exclamation-circle me-2"></i>
-          <span> The employee is <span class="badge bg-warning text-dark">Waiting for Approval</span></span>
-        </div>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-outline-danger" data-bs-dismiss="modal">
-          <i class="fas fa-times"></i> Close
+<header class="navbar hshr-topbar" id="topbar">
+    <div class="hshr-topbar-leading">
+        <button class="hshr-icon-button hshr-mobile-nav-toggle" id="mobileSidebarToggle" type="button" aria-controls="sidebar" aria-expanded="false" aria-label="Open navigation">
+            <i class="fa-solid fa-bars" aria-hidden="true"></i>
         </button>
-      </div>
+        <div class="hshr-page-context">
+            <p><?= htmlspecialchars($pageSubtitle) ?></p>
+            <h1><?= htmlspecialchars($pageTitle) ?></h1>
+        </div>
     </div>
-  </div>
-</div>
 
-<!-- Messenger Modal -->
-<div class="modal fade" id="messageModal" tabindex="-1" aria-labelledby="messageModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered modal-lg">
-    <div class="modal-content shadow-lg">
-      <!-- Modal Header -->
-      <div class="modal-header ">
-        <h5 class="modal-title" id="messageModalLabel"><i class="fas fa-envelope"></i> Messages</h5>
-        <button type="button" class="btn-close text-white" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
+    <div class="hshr-topbar-actions">
+        <button class="hshr-icon-button" id="darkModeToggle" type="button" aria-label="Toggle dark mode" title="Toggle appearance">
+            <i id="darkModeIcon" class="fa-solid <?= !empty($userData['darkmodeOn']) ? 'fa-sun' : 'fa-moon' ?>" aria-hidden="true"></i>
+        </button>
 
-      <div class="modal-body d-flex" style="height: 450px;">
-        <!-- Sidebar for user profiles -->
-        <div class="user-sidebar p-3 border-end">
-          <h6 class="text-center mb-3">Users</h6>
-          <ul class="list-unstyled" id="userList">
-            <?php
-              include 'db_config.php';
-              $sender_id = $_SESSION['admin_id'];
-              $sender_role = $_SESSION['position'];
-              if (!$sender_id || !$sender_role) {
-                  echo "Sender ID or role is missing!";
-                  exit;
-              }
-              $query = "SELECT id, username, profile_picture, 'Administrator' AS role FROM admin 
-                        UNION 
-                        SELECT employee_id AS id, username, profile_picture, 'staff' AS role FROM staff_accounts";
-              $result = mysqli_query($conn, $query);
-              while ($row = mysqli_fetch_assoc($result)) {
-                  if ($row['id'] == $sender_id && $row['role'] == $sender_role) continue;
-                  echo '<li class="d-flex align-items-center mb-3 user-item" data-id="' . $row['id'] . '" data-role="' . $row['role'] . '" style="cursor: pointer;">';
-                  echo '<img src="' . (!empty($row['profile_picture']) ? $row['profile_picture'] : 'uploads/profile_pictures/default.jpg') . '" class="rounded-circle me-2" width="50" height="50">';
-                  echo '<span class="fw-semibold">' . htmlspecialchars($row['username']) . '</span>';
-                  echo '</li>';
-              }
-            ?>
-          </ul>
+        <div class="hshr-menu" data-hshr-menu="notifications">
+            <button class="hshr-icon-button" type="button" data-hshr-menu-toggle aria-expanded="false" aria-label="Notifications" title="Notifications">
+                <i class="fa-regular fa-bell" aria-hidden="true"></i>
+                <?php if ($notificationCount > 0): ?>
+                    <span class="hshr-action-badge"><?= $notificationCount > 99 ? '99+' : $notificationCount ?></span>
+                <?php endif; ?>
+            </button>
+            <div class="hshr-popover hshr-notification-popover" data-hshr-menu-panel hidden>
+                <div class="hshr-popover-header">
+                    <div>
+                        <strong>Notifications</strong>
+                        <span><?= $notificationCount ?> pending item<?= $notificationCount === 1 ? '' : 's' ?></span>
+                    </div>
+                </div>
+                <div class="hshr-popover-list">
+                    <?php if (!$notifications): ?>
+                        <div class="hshr-empty-state hshr-empty-state-compact">
+                            <i class="fa-regular fa-circle-check" aria-hidden="true"></i>
+                            <p>You are all caught up.</p>
+                        </div>
+                    <?php else: ?>
+                        <?php foreach ($notifications as $notification): ?>
+                            <a class="hshr-notification-item" href="<?= htmlspecialchars($notification['event_url']) ?>">
+                                <span class="hshr-notification-icon"><i class="<?= htmlspecialchars($notification['event_icon']) ?>" aria-hidden="true"></i></span>
+                                <span>
+                                    <strong><?= htmlspecialchars($notification['employee_name']) ?></strong>
+                                    <small><?= htmlspecialchars($notification['event_label']) ?> · <?= htmlspecialchars(date('M j, g:i A', strtotime($notification['event_time']))) ?></small>
+                                </span>
+                            </a>
+                        <?php endforeach; ?>
+                    <?php endif; ?>
+                </div>
+            </div>
         </div>
 
-        <!-- Chat Box -->
-        <div class="chat-box flex-grow-1 d-flex flex-column bg-light p-3 position-relative" id="chatBox" style="border-radius: 8px; overflow-y: auto;">
-            <p class="text-muted text-center">Select a user to start chatting.</p>
-        </div>
+        <button class="hshr-icon-button" type="button" data-open-message-center aria-label="Messages" title="Messages">
+            <i class="fa-regular fa-envelope" aria-hidden="true"></i>
+            <?php if ($unreadMessageCount > 0): ?>
+                <span class="hshr-action-badge"><?= $unreadMessageCount > 99 ? '99+' : $unreadMessageCount ?></span>
+            <?php endif; ?>
+        </button>
 
-
-      </div>
-      
-      <!-- Modal Footer with input buttons -->
-      <div class="modal-footer d-flex align-items-center">
-        <div class="d-flex flex-grow-1 align-items-center">
-          <input type="text" class="form-control me-2" id="messageInput" placeholder="Type a message..." style="border-radius: 25px;">
-          <button class="btn btn-danger" id="sendMessage" style="border-radius: 25px;">Send <i class="bi bi-send"></i></button>
+        <div class="hshr-menu" data-hshr-menu="profile">
+            <button class="hshr-profile-trigger" type="button" data-hshr-menu-toggle aria-expanded="false">
+                <img src="<?= htmlspecialchars($profilePicture) ?>" alt="<?= htmlspecialchars($displayName) ?>" onerror="this.onerror=null;this.src='images/image-not-found.jpg'">
+                <span class="hshr-profile-copy">
+                    <strong><?= htmlspecialchars($displayName) ?></strong>
+                    <small><?= htmlspecialchars($adminRole) ?></small>
+                </span>
+                <i class="fa-solid fa-chevron-down" aria-hidden="true"></i>
+            </button>
+            <div class="hshr-popover hshr-profile-popover" data-hshr-menu-panel hidden>
+                <a href="view_profile.php"><i class="fa-regular fa-user" aria-hidden="true"></i> My profile</a>
+                <a href="settings.php"><i class="fa-solid fa-sliders" aria-hidden="true"></i> Settings</a>
+                <hr>
+                <a href="logout.php" class="hshr-danger-link"><i class="fa-solid fa-arrow-right-from-bracket" aria-hidden="true"></i> Sign out</a>
+            </div>
         </div>
-        <div class="d-flex align-items-center ms-3">
-          <button class="btn btn-outline-secondary me-2" id="insertFileButton" title="Insert File">
-            <i class="bi bi-file-earmark"></i>
-          </button>
-          <button class="btn btn-outline-secondary me-2" id="cameraButton" title="Open Camera">
-            <i class="bi bi-camera"></i>
-          </button>
-          <button class="btn btn-outline-secondary" id="voiceMessageButton" title="Record Voice">
-            <i class="bi bi-mic"></i>
-          </button>
-        </div>
-      </div>
     </div>
-  </div>
-</div>
+</header>
 
-<!-- JavaScript -->
-<script>
-document.addEventListener("DOMContentLoaded", function () {
-  document.querySelectorAll(".notification-item").forEach(item => {
-    item.addEventListener("click", function (event) {
-      event.preventDefault();
-      let notificationId = this.getAttribute("data-id");
+<div class="hshr-message-overlay" data-message-overlay hidden></div>
+<aside class="hshr-message-center" data-message-center aria-hidden="true" data-sender-id="<?= htmlspecialchars((string) $adminId) ?>" data-sender-role="<?= htmlspecialchars($adminRole) ?>">
+    <div class="hshr-message-header">
+        <div>
+            <span class="hshr-eyebrow">Communication</span>
+            <h2>Messages</h2>
+        </div>
+        <button class="hshr-icon-button" type="button" data-close-message-center aria-label="Close messages">
+            <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+        </button>
+    </div>
 
-      fetch("includes/fetch_notification.php?id=" + notificationId)
-        .then(response => response.json())
-        .then(data => {
-          if (data.success) {
-            document.getElementById("modalEmployee").textContent = data.firstname;
-            document.getElementById("modalTimeIn").textContent = data.time_in || "N/A";
-            
-            // Change text based on notification type
-            let alertMessage = data.type === "leave" 
-              ? "The employee has requested a leave and waiting for approval."
-              : "The employee is waiting for attendance approval.";
-            
-            document.querySelector(".alert span").textContent = alertMessage;
+    <div class="hshr-message-layout">
+        <div class="hshr-contact-list" data-contact-list>
+            <label class="hshr-search-field">
+                <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+                <input type="search" placeholder="Search people" data-contact-search>
+            </label>
+            <div class="hshr-contacts">
+                <?php foreach ($messageContacts as $contact): ?>
+                    <?php
+                    $contactPicture = hshr_profile_picture_url($contact['profile_picture'] ?? null);
+                    $contactName = trim($contact['display_name']) ?: $contact['username'];
+                    ?>
+                    <button class="hshr-contact" type="button" data-message-contact data-id="<?= htmlspecialchars((string) $contact['contact_id']) ?>" data-role="<?= htmlspecialchars($contact['contact_role']) ?>" data-search="<?= htmlspecialchars(strtolower($contactName . ' ' . $contact['username'])) ?>">
+                        <img src="<?= htmlspecialchars($contactPicture) ?>" alt="" onerror="this.onerror=null;this.src='images/image-not-found.jpg'">
+                        <span>
+                            <strong><?= htmlspecialchars($contactName) ?></strong>
+                            <small><?= htmlspecialchars($contact['contact_role']) ?></small>
+                        </span>
+                    </button>
+                <?php endforeach; ?>
+            </div>
+        </div>
 
-            new bootstrap.Modal(document.getElementById("notificationModal")).show();
-          } else {
-            alert(data.message || "Failed to fetch notification details.");
-          }
-        })
-        .catch(error => console.error("Error:", error));
-    });
-  });
-});
-
-
-</script>
-<script>
-document.addEventListener("DOMContentLoaded", function () {
-    // Initialize variables
-    let currentReceiverId = null;
-    let currentReceiverRole = null;
-    const messageDropdown = document.getElementById("messageDropdown");
-    const messageList = document.getElementById("messageList");
-    const chatBox = document.getElementById("chatBox");
-    const messageInput = document.getElementById("messageInput");
-    const sendMessageBtn = document.getElementById("sendMessage");
-    const messageModalElement = document.getElementById("messageModal");
-    const messageModal = new bootstrap.Modal(messageModalElement);
-
-    // Function to load recent messages
-    function loadRecentMessages() {
-        fetch("includes/fetch_recent_messages.php")
-            .then(response => response.text())
-            .then(data => {
-                messageList.innerHTML = data.trim() || `
-                    <li class="d-flex justify-content-center mt-2">
-                        <button class="btn btn-primary btn-sm rounded-circle" id="openMessageModal">
-                            <i class="fas fa-plus"></i>
-                        </button>
-                    </li>`;
-                attachEventListeners(); // Rebind click events
-            })
-            .catch(error => console.error("Error loading messages:", error));
-    }
-
-    // Attach event listeners dynamically
-    function attachEventListeners() {
-        document.querySelectorAll(".user-item, .message-item").forEach(item => {
-            item.addEventListener("click", function () {
-                // Remove the "active" class from all user items
-                document.querySelectorAll(".user-item").forEach(el => el.classList.remove("active"));
-                // Add the "active" class to the clicked item
-                item.classList.add("active");
-
-                currentReceiverId = item.getAttribute("data-id");
-                currentReceiverRole = item.getAttribute("data-role");
-                messageModal.show();
-                loadMessages(currentReceiverId, currentReceiverRole, true);
-            });
-        });
-
-        const plusButton = document.getElementById("openMessageModal");
-        if (plusButton) {
-            plusButton.addEventListener("click", () => messageModal.show());
-        }
-    }
-
-    // Load messages for a specific user
-    function loadMessages(userId, userRole, scrollToBottom = false) {
-        fetch(`includes/fetch_messages.php?receiver_id=${userId}&receiver_role=${userRole}`)
-            .then(response => response.text())
-            .then(data => {
-                chatBox.innerHTML = data;
-
-                // Scroll to the bottom if specified
-                if (scrollToBottom) {
-                    setTimeout(() => {
-                        chatBox.scrollTop = chatBox.scrollHeight;
-                    }, 100);
-                }
-            })
-            .catch(error => console.error("Error loading chat messages:", error));
-    }
-
-    // Send message via AJAX
-    sendMessageBtn.addEventListener("click", function () {
-        const message = messageInput.value.trim();
-        if (!message || !currentReceiverId) return;
-
-        const formData = new FormData();
-        formData.append("sender_id", <?php echo json_encode($sender_id); ?>);
-        formData.append("sender_role", <?php echo json_encode($sender_role); ?>);
-        formData.append("receiver_id", currentReceiverId);
-        formData.append("receiver_role", currentReceiverRole);
-        formData.append("message", message);
-
-        fetch("logics/send_message.php", { method: "POST", body: formData })
-            .then(response => response.text())
-            .then(() => {
-                loadMessages(currentReceiverId, currentReceiverRole, true);
-                messageInput.value = "";
-            })
-            .catch(error => console.log("Error sending message:", error));
-    });
-
-    // Auto-refresh chat messages every second
-    setInterval(() => {
-        if (currentReceiverId) {
-            loadMessages(currentReceiverId, currentReceiverRole);
-        }
-    }, 1000);
-
-    // Handle file upload
-    document.getElementById("insertFileButton").addEventListener("click", function () {
-        const fileInput = document.createElement("input");
-        fileInput.type = "file";
-        fileInput.accept = "*/*";  
-        fileInput.click();
-
-        fileInput.addEventListener("change", function () {
-            const file = fileInput.files[0];
-            if (file) {
-                console.log("File selected:", file.name);
-            }
-        });
-    });
-
-    // Handle camera access
-    document.getElementById("cameraButton").addEventListener("click", function () {
-        if (navigator.mediaDevices?.getUserMedia) {
-            navigator.mediaDevices.getUserMedia({ video: true })
-                .then(stream => {
-                    const videoElement = document.createElement("video");
-                    videoElement.srcObject = stream;
-                    videoElement.play();
-                    document.body.appendChild(videoElement);
-                    console.log("Camera is ready to use!");
-                })
-                .catch(error => console.error("Camera error:", error));
-        }
-    });
-
-    // Handle voice message recording
-    document.getElementById("voiceMessageButton").addEventListener("click", function () {
-        if (navigator.mediaDevices?.getUserMedia) {
-            navigator.mediaDevices.getUserMedia({ audio: true })
-                .then(stream => {
-                    const mediaRecorder = new MediaRecorder(stream);
-                    const audioChunks = [];
-
-                    mediaRecorder.ondataavailable = event => audioChunks.push(event.data);
-                    mediaRecorder.onstop = () => {
-                        const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
-                        const audioURL = URL.createObjectURL(audioBlob);
-                        new Audio(audioURL).play();
-                        console.log("Voice message recorded and played.");
-                    };
-
-                    mediaRecorder.start();
-                    setTimeout(() => mediaRecorder.stop(), 5000);
-                })
-                .catch(error => console.error("Microphone error:", error));
-        }
-    });
-
-    // Load messages when dropdown is clicked
-    messageDropdown.addEventListener("click", loadRecentMessages);
-
-    // Initial load of recent messages
-    loadRecentMessages();
-
-    // Event listener for dynamically loaded user list (via delegation)
-    document.getElementById("userList").addEventListener("click", function (event) {
-        const user = event.target.closest(".user-item");
-        if (!user) return;
-
-        // Remove active class from all user items and add to the clicked one
-        document.querySelectorAll(".user-item").forEach(el => el.classList.remove("active"));
-        user.classList.add("active");
-
-        currentReceiverId = user.getAttribute("data-id");
-        currentReceiverRole = user.getAttribute("data-role");
-
-        messageModal.show();
-        loadMessages(currentReceiverId, currentReceiverRole, true);
-    });
-
-    // Ensure chat scrolls to bottom when modal is shown
-    messageModalElement.addEventListener('shown.bs.modal', function () {
-        if (currentReceiverId) {
-            loadMessages(currentReceiverId, currentReceiverRole, true);
-        }
-    });
-});
-
-document.addEventListener("DOMContentLoaded", function() {
-    const chatBox = document.getElementById('chatBox');
-    
-    for (let i = 0; i < 5; i++) {
-        const box = document.createElement('div');
-        box.classList.add('box');
-        chatBox.appendChild(box);
-    }
-});
-</script>
-
-<!-- Font Awesome (Make sure this is included in <head>) -->
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
-
-
-<!-- Font Awesome CDN (Include in your <head> if not already) -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/js/all.min.js"></script>
-
-
-<script>
-document.addEventListener("DOMContentLoaded", function () {
-    const toggleButton = document.getElementById("darkModeToggle");
-
-    function applyDarkMode(isDarkMode, withTransition = true) {
-        if (!withTransition) {
-            document.body.classList.add("no-transition");
-        }
-
-        document.body.classList.toggle("dark-mode", isDarkMode);
-
-        document.querySelectorAll(".nav-tabs .nav-link, .nav-tabs .nav-link.active, .navbar, .sidebar, .sidebar .submenu, .sidebar-divider, .sidebar-divider2, .user-sidebar, .card, .card-header, #searchInput, .card-header2, .modal-header, h1, h2, h3, h4, h5, h6, p, span, a, .custom-dropdown, .dropdown-item, .btn-outline-secondary, .modal-content, .terms-card, .profile-container, .profile-image, #updateProfileCard, .profile-picture-container2, .profile-picture2, .profile-detail, form, .form-control, .btn-primary, .btn-outline-info, .bg-gradient-success, .bg-gradient-danger, .chat-box, .user-item, button, .input-buttons button, .message .text, #messageInput, #sendMessage, .form-group, .form-container, .form-label, .modal-footer, .message-container, label, .btn-close, .background-circles, .circle, .profile-card, .profile-detail")
-        .forEach(el => el.classList.toggle("dark-mode", isDarkMode));
-
-        // ✅ Update Circles' Background Color
-        document.querySelectorAll(".circle").forEach(circle => {
-            circle.style.background = isDarkMode 
-                ? "rgba(255, 255, 255, 0.3)"  // Light color for dark mode
-                : "rgba(107, 17, 203, 0.3)"; // Default purple color
-        });
-
-        const sunIcon = document.getElementById("sun-icon");
-    const moonIcon = document.getElementById("moon-icon");
-
-    if (sunIcon && moonIcon) {
-        sunIcon.style.display = isDarkMode ? "none" : "block";
-        moonIcon.style.display = isDarkMode ? "block" : "none";
-    }
-
-    if (!withTransition) {
-        setTimeout(() => document.body.classList.remove("no-transition"), 50);
-    }
-        // ✅ Ensure proper icon switching
-        const darkModeIcon = document.getElementById("darkModeIcon");
-        if (darkModeIcon) {
-            darkModeIcon.classList.remove("fa-moon", "fa-sun");
-            darkModeIcon.classList.add(isDarkMode ? "fa-sun" : "fa-moon");
-            darkModeIcon.style.color = isDarkMode ? "#dddddd" : "#000000";
-        } else {
-            console.error("Dark mode icon not found.");
-        }
-
-        if (!withTransition) {
-            setTimeout(() => document.body.classList.remove("no-transition"), 50);
-        }
-    }
-
-    function toggleDarkMode() {
-        const isDarkMode = document.body.classList.contains("dark-mode") ? 0 : 1;
-
-        fetch("dark_mode.php", {
-            method: "POST",
-            headers: { "Content-Type": "application/x-www-form-urlencoded" },
-            body: "dark_mode=" + isDarkMode
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                applyDarkMode(isDarkMode, true);
-            } else {
-                console.error("Error updating dark mode:", data.error);
-            }
-        })
-        .catch(error => console.error("Fetch error:", error));
-    }
-
-    // ✅ Apply saved dark mode on page load (without transition)
-    fetch("dark_mode.php", { 
-        method: "POST", 
-        headers: { "Content-Type": "application/x-www-form-urlencoded" }, 
-        body: "fetch_mode=true" 
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            applyDarkMode(data.dark_mode === 1, false);
-        }
-    });
-
-    // ✅ Attach click event to toggler
-    toggleButton.addEventListener("click", toggleDarkMode);
-});
-
-</script>
+        <div class="hshr-conversation">
+            <div class="hshr-conversation-title" data-conversation-title>
+                <div>
+                    <strong>Select a person</strong>
+                    <small>Choose someone to view your conversation.</small>
+                </div>
+            </div>
+            <div class="hshr-chat-body" data-chat-body>
+                <div class="hshr-empty-state">
+                    <i class="fa-regular fa-comments" aria-hidden="true"></i>
+                    <h3>Your conversations</h3>
+                    <p>Choose a colleague from the list to start messaging.</p>
+                </div>
+            </div>
+            <form class="hshr-message-composer" data-message-form>
+                <input type="text" data-message-input placeholder="Write a message…" autocomplete="off" disabled>
+                <button type="submit" disabled aria-label="Send message"><i class="fa-solid fa-paper-plane" aria-hidden="true"></i></button>
+            </form>
+        </div>
+    </div>
+</aside>

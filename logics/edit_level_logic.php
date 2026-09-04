@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/../includes/admin_api.php';
 include '../db_config.php';
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
@@ -7,7 +8,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
     // Prepare and bind
     $stmt = $conn->prepare("UPDATE levels SET level_name = ? WHERE level_id = ?");
-    $stmt->bind_param("sss", $levelName, $levelId);
+    $stmt->bind_param("ss", $levelName, $levelId);
 
     if ($stmt->execute()) {
         echo json_encode(["status" => "success", "message" => "Level updated successfully"]);

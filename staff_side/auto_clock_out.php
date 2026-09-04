@@ -1,51 +1,41 @@
 <?php
-include 'db_config.php';
+declare(strict_types=1);
 
-date_default_timezone_set('Asia/Manila'); // Set your timezone
-$date = date("Y-m-d");
-$current_time = date("H:i:s");
-$default_timeout = "23:59:59"; // Auto-timeout time
-
-if (strtotime($current_time) >= strtotime($default_timeout)) {
-    // Find users who clocked in but didn't clock out
-    $query = "SELECT employee_id, time_in, 
-                     IFNULL(SUM(TIME_TO_SEC(TIMEDIFF(break_out, break_in))), 0) AS total_break 
-              FROM attendance 
-              WHERE date = ? AND time_out IS NULL 
-              GROUP BY employee_id, time_in";
-    $stmt = $conn->prepare($query);
-    $stmt->bind_param("s", $date);
-    $stmt->execute();
-    $result = $stmt->get_result();
-
-    while ($row = $result->fetch_assoc()) {
-        $employee_id = $row['employee_id'];
-        $time_in = strtotime($row['time_in']);
-        $time_out_sec = strtotime($default_timeout);
-        $break_duration = $row['total_break']; // Break duration in seconds
-
-        // Calculate total worked time (excluding break duration)
-        $worked_seconds = ($time_out_sec - $time_in) - $break_duration;
-        $worked_seconds = max($worked_seconds, 0); // Prevent negative values
-
-        // Convert to HH:MM:SS format
-        $worked_hours = gmdate("H:i:s", $worked_seconds);
-
-        // Update attendance with auto-timeout (without updating break_out)
-        $update_query = "UPDATE attendance 
-        SET time_out=?, total_hours=?, status='Auto_Timeout', 
-            manual_clockout_flag = 1
-        WHERE employee_id=? AND date=?";
-        $update_stmt = $conn->prepare($update_query);
-        $update_stmt->bind_param("ssis", $default_timeout, $worked_hours, $employee_id, $date);
-        $update_stmt->execute();
-        $update_stmt->close();
-    }
-
-    $stmt->close();
-    $conn->close();
-    echo "✅ Auto clock-out executed successfully. Total hours updated.";
-} else {
-    echo "⏳ Not the designated auto clock-out time.";
+require_once __DIR__ . '/includes/staff_session.php';
+header('Content-Type: text/plain; charset=utf-8');
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    http_response_code(405);
+    echo 'Method not allowed.';
+    exit;
 }
-?>
+if (empty($_SESSION['employee_id'])) {
+    http_response_code(401);
+    echo 'Authentication required.';
+    exit;
+}
+if (!hshr_validate_csrf()) {
+    http_response_code(403);
+    echo 'Refresh the attendance page and try again.';
+    exit;
+}
+
+date_default_timezone_set('Asia/Manila');
+require_once __DIR__ . '/db_config.php';
+$employeeId = (string) $_SESSION['employee_id'];
+if (date('H:i:s') < '23:59:00') {
+    echo 'No automatic clock-out is due.';
+    exit;
+}
+
+$statement = $conn->prepare(
+    "UPDATE attendance
+     SET time_out = '23:59:59',
+         total_hours = SEC_TO_TIME(GREATEST(TIME_TO_SEC(TIMEDIFF('23:59:59', time_in)) - COALESCE(TIME_TO_SEC(break_duration), 0), 0)),
+         status = 'Auto_Timeout', manual_clockout_flag = 1
+     WHERE employee_id = ? AND date = CURDATE() AND time_out IS NULL"
+);
+$statement->bind_param('s', $employeeId);
+$statement->execute();
+$updated = $statement->affected_rows;
+$statement->close();
+echo $updated ? 'Automatic clock-out applied.' : 'No automatic clock-out was needed.';

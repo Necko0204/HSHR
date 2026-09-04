@@ -1,6 +1,5 @@
 <?php
-session_name('admin_session');
-session_start();
+require_once __DIR__ . '/../includes/admin_api.php';
 include '../db_config.php';
 
 header('Content-Type: application/json');
@@ -21,7 +20,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($stmt->execute()) {
         echo json_encode(['success' => 'Role reactivated successfully.']);
     } else {
-        echo json_encode(['error' => $stmt->error]);
+        error_log('Role reactivation failed: ' . $stmt->error);
+        echo json_encode(['error' => 'Role could not be reactivated.']);
     }
 
     $stmt->close();

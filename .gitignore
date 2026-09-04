@@ -1,1 +1,13 @@
 .qodo
+.env
+.env.*
+!.env.example
+*-key.pem
+node_modules/
+vendor/
+uploads/
+applicants_uploads/
+staff_side/uploads/
+*.log
+.phpunit.result.cache
+/database.sql

@@ -1,4 +1,9 @@
 <?php
+require_once __DIR__ . '/admin_session.php';
+if (empty($_SESSION['admin_id'])) {
+    http_response_code(401);
+    exit;
+}
 require 'db_config.php'; // Include your database connection
 
 // Get total active teachers count
@@ -8,7 +13,7 @@ $totalData = $totalResult->fetch_assoc();
 $totalActiveTeachers = $totalData['total_active_teachers'] ?? 0;
 
 // Get attendance data
-$attendanceQuery = "SELECT 
+$attendanceQuery = "SELECT
             SUM(CASE WHEN time_in IS NOT NULL THEN 1 ELSE 0 END) AS present_count,
             SUM(CASE WHEN time_in IS NULL THEN 1 ELSE 0 END) AS absent_count
           FROM attendance";

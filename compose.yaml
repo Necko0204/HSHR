@@ -1,0 +1,60 @@
+services:
+  database:
+    image: mariadb:11.4
+    command:
+      - "--default-time-zone=+08:00"
+      - "--character-set-server=utf8mb4"
+      - "--collation-server=utf8mb4_general_ci"
+    environment:
+      MARIADB_ROOT_PASSWORD: ${LOCAL_DB_PASSWORD:-hshr_local_dev}
+      MARIADB_DATABASE: humanresource
+      TZ: Asia/Manila
+    volumes:
+      - hshr_database_v11:/var/lib/mysql
+      - ./database.sql:/docker-entrypoint-initdb.d/database.sql.utf16:ro
+      - ./docker/init-database.sh:/docker-entrypoint-initdb.d/10-init-database.sh:ro
+      - ./docker/20-local-schema.sql:/docker-entrypoint-initdb.d/20-local-schema.sql:ro
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  app:
+    build: .
+    environment:
+      DB_HOST: database
+      DB_USERNAME: root
+      DB_PASSWORD: ${LOCAL_DB_PASSWORD:-hshr_local_dev}
+      DB_NAME: humanresource
+      APP_ENV: development
+      APP_BASE_URL: http://localhost:8080
+      APP_TIMEZONE: Asia/Manila
+      DB_TIMEZONE: "+08:00"
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      OPENAI_MODEL: ${OPENAI_MODEL:-gpt-5.6}
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_ENCRYPTION: ${SMTP_ENCRYPTION:-tls}
+      SMTP_USERNAME: ${SMTP_USERNAME:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      SMTP_FROM_EMAIL: ${SMTP_FROM_EMAIL:-}
+      SMTP_FROM_NAME: ${SMTP_FROM_NAME:-Holy Spirit Human Resource}
+      TZ: Asia/Manila
+    depends_on:
+      database:
+        condition: service_healthy
+    ports:
+      - "8080:80"
+    volumes:
+      - hshr_admin_uploads:/var/www/html/uploads
+      - hshr_applicant_uploads:/var/www/html/applicants_uploads
+      - hshr_staff_uploads:/var/www/html/staff_side/uploads
+
+volumes:
+  # Keep the legacy MariaDB 10.4 volume untouched. MariaDB 11.4 cannot safely
+  # start from that data directory after an unclean shutdown.
+  hshr_database_v11:
+  hshr_admin_uploads:
+  hshr_applicant_uploads:
+  hshr_staff_uploads:

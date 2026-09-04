@@ -1,60 +1,59 @@
 <?php
-session_name('admin_session');
-session_start();
-include 'db_config.php';
+declare(strict_types=1);
 
-if (!isset($_SESSION['admin_id'])) {
-    echo json_encode(["success" => false, "message" => "Unauthorized access"]);
-    exit();
+require_once __DIR__ . '/../includes/admin_api.php';
+require_once __DIR__ . '/../db_config.php';
+
+function accountStatusResponse(int $status, bool $success, string $message, ?string $newStatus = null): never
+{
+    http_response_code($status);
+    $payload = ['success' => $success, 'message' => $message];
+    if ($newStatus !== null) $payload['newStatus'] = $newStatus;
+    echo json_encode($payload);
+    exit;
 }
 
-if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST["id"], $_POST["action"])) {
-    $staff_id = intval($_POST["id"]); // This is staff_accounts.id
-    $action = strtolower(trim($_POST["action"]));
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    accountStatusResponse(405, false, 'Method not allowed.');
+}
 
-    // Determine the new status
-    $newStatus = ($action === "deactivate") ? "Inactive" : "Active";
+$accountId = filter_input(INPUT_POST, 'id', FILTER_VALIDATE_INT);
+$action = strtolower(trim((string) ($_POST['action'] ?? '')));
+if (!$accountId || !in_array($action, ['deactivate', 'reactivate'], true)) {
+    accountStatusResponse(422, false, 'Invalid account status request.');
+}
 
-    // Start transaction to ensure both updates succeed together
-    $conn->begin_transaction();
+$accountStatus = $action === 'deactivate' ? 'inactive' : 'active';
+$employeeStatus = $action === 'deactivate' ? 'Inactive' : 'Active';
 
-    try {
-        // Get the corresponding employee_id from staff_accounts
-        $stmt1 = $conn->prepare("SELECT employee_id FROM staff_accounts WHERE id = ?");
-        $stmt1->bind_param("i", $staff_id);
-        $stmt1->execute();
-        $stmt1->bind_result($employee_id);
-        $stmt1->fetch();
-        $stmt1->close();
-
-        if (!$employee_id) {
-            throw new Exception("Employee ID not found");
-        }
-
-        // Update staff_accounts table
-        $stmt2 = $conn->prepare("UPDATE staff_accounts SET status = ? WHERE id = ?");
-        $stmt2->bind_param("si", $newStatus, $staff_id);
-        $stmt2->execute();
-        $stmt2->close();
-
-        // Update employees table using the retrieved employee_id
-        $stmt3 = $conn->prepare("UPDATE employees SET status = ? WHERE id = ?");
-        $stmt3->bind_param("ss", $newStatus, $employee_id);
-        $stmt3->execute();
-        $stmt3->close();
-
-        // Commit transaction
-        $conn->commit();
-
-        echo json_encode(["success" => true, "newStatus" => $newStatus]);
-    } catch (Exception $e) {
-        // Rollback transaction on failure
-        $conn->rollback();
-        echo json_encode(["success" => false, "message" => "Failed to update status: " . $e->getMessage()]);
+$conn->begin_transaction();
+try {
+    $lookup = $conn->prepare('SELECT employee_id FROM staff_accounts WHERE id = ? LIMIT 1 FOR UPDATE');
+    $lookup->bind_param('i', $accountId);
+    $lookup->execute();
+    $employeeId = $lookup->get_result()->fetch_assoc()['employee_id'] ?? null;
+    $lookup->close();
+    if ($employeeId === null) {
+        throw new OutOfBoundsException('Account not found.');
     }
 
-    $conn->close();
-} else {
-    echo json_encode(["success" => false, "message" => "Invalid request"]);
+    $account = $conn->prepare('UPDATE staff_accounts SET status = ? WHERE id = ?');
+    $account->bind_param('si', $accountStatus, $accountId);
+    $account->execute();
+    $account->close();
+
+    $employee = $conn->prepare('UPDATE employees SET status = ? WHERE id = ?');
+    $employee->bind_param('ss', $employeeStatus, $employeeId);
+    $employee->execute();
+    $employee->close();
+    $conn->commit();
+} catch (OutOfBoundsException $error) {
+    $conn->rollback();
+    accountStatusResponse(404, false, $error->getMessage());
+} catch (Throwable $error) {
+    $conn->rollback();
+    error_log('Staff account status update failed: ' . $error->getMessage());
+    accountStatusResponse(500, false, 'Account status could not be updated.');
 }
-?>
+
+accountStatusResponse(200, true, 'Account status updated successfully.', $accountStatus);

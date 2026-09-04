@@ -1,15 +1,20 @@
 <?php
+require_once __DIR__ . '/admin_session.php';
+if (empty($_SESSION['admin_id'])) {
+    http_response_code(401);
+    exit('Authentication required.');
+}
 include 'db_config.php';
 
 if (isset($_GET['id'])) {
     $id = intval($_GET['id']);
 
     // Check if ID exists in attendance
-    $query = "SELECT a.id, e.firstname, a.time_in, 'attendance' AS type 
-              FROM attendance a 
-              JOIN employees e ON a.employee_id = e.id 
+    $query = "SELECT a.id, e.firstname, a.time_in, 'attendance' AS type
+              FROM attendance a
+              JOIN employees e ON a.employee_id = e.id
               WHERE a.id = ?";
-    
+
     $stmt = mysqli_prepare($conn, $query);
     mysqli_stmt_bind_param($stmt, "i", $id);
     mysqli_stmt_execute($stmt);
@@ -28,11 +33,11 @@ if (isset($_GET['id'])) {
     mysqli_stmt_close($stmt); // Close first statement
 
     // Check if ID exists in leave_requests
-    $query = "SELECT l.leave_id AS id, e.firstname, l.request_date AS time_in, 'leave' AS type 
-              FROM leave_requests l 
-              JOIN employees e ON l.employee_id = e.id 
+    $query = "SELECT l.leave_id AS id, e.firstname, l.request_date AS time_in, 'leave' AS type
+              FROM leave_requests l
+              JOIN employees e ON l.employee_id = e.id
               WHERE l.leave_id = ?";
-    
+
     $stmt = mysqli_prepare($conn, $query);
     mysqli_stmt_bind_param($stmt, "i", $id);
     mysqli_stmt_execute($stmt);

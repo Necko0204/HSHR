@@ -1,6 +1,5 @@
 <?php
-session_name('staff_session');
-session_start();
+require_once __DIR__ . '/includes/staff_session.php';
 include 'db_config.php';
 
 if (!isset($_SESSION['employee_id'])) {
@@ -10,7 +9,7 @@ if (!isset($_SESSION['employee_id'])) {
 $employee_id = $conn->real_escape_string($_SESSION['employee_id']);
 
 $query = "
-  SELECT 
+  SELECT
         a.date,
         a.time_in,
         a.time_out,
@@ -21,7 +20,7 @@ $query = "
         IFNULL(ou.status, 'on time') AS status,
         IFNULL(ou.hours, 0) AS hours
     FROM attendance a
-    LEFT JOIN overtime_undertime_logs ou 
+    LEFT JOIN overtime_undertime_logs ou
         ON a.employee_id = ou.employee_id AND a.date = ou.date
     WHERE a.employee_id = ?
     ORDER BY a.date DESC

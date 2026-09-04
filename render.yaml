@@ -1,8 +1,46 @@
 services:
   - type: web
     name: hshr-app
-    env: php
+    runtime: docker
     plan: free
-    buildCommand: ""  # No build step needed
-    startCommand: "php -S 0.0.0.0:10000 -t public"
-    rootDir: "."
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /health.php
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: APP_TIMEZONE
+        value: Asia/Manila
+      - key: DB_TIMEZONE
+        value: "+08:00"
+      - key: TRUST_PROXY_HEADERS
+        value: "1"
+      - key: APP_BASE_URL
+        sync: false
+      - key: DB_HOST
+        sync: false
+      - key: DB_USERNAME
+        sync: false
+      - key: DB_PASSWORD
+        sync: false
+      - key: DB_NAME
+        sync: false
+      - key: AUTH_IDLE_TIMEOUT_SECONDS
+        value: "3600"
+      - key: SMTP_HOST
+        sync: false
+      - key: SMTP_PORT
+        value: "587"
+      - key: SMTP_ENCRYPTION
+        value: tls
+      - key: SMTP_USERNAME
+        sync: false
+      - key: SMTP_PASSWORD
+        sync: false
+      - key: SMTP_FROM_EMAIL
+        sync: false
+      - key: SMTP_FROM_NAME
+        value: Holy Spirit Human Resource
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: OPENAI_MODEL
+        value: gpt-5.6

@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/../includes/admin_api.php';
 include '../db_config.php';
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {

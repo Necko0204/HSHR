@@ -1,6 +1,5 @@
 <?php
-session_name('admin_session');
-session_start();
+require_once __DIR__ . '/includes/admin_page.php';
 include 'includes/breadcrumb.php';
 include 'db_config.php';
 include 'helper.php';
@@ -290,7 +289,7 @@ if (!isset($_SESSION['admin_id'])) {
         "hideEasing": "linear",
         "showMethod": "fadeIn",
         "hideMethod": "fadeOut"
-    };     
+    };
     $(document).ready(function() {
     $('#addRoleForm').on('submit', function(e) {
         e.preventDefault();
@@ -304,7 +303,7 @@ if (!isset($_SESSION['admin_id'])) {
                 toastr.success('Role added successfully!');
                 $('#addRoleModal').modal('hide');
                 $('#addRoleForm')[0].reset();
-                
+
                 // Reload the page after 0.8 seconds
                 setTimeout(function() {
                     location.reload();
@@ -356,7 +355,7 @@ if (!isset($_SESSION['admin_id'])) {
             }
         },
         error: function(xhr, status, error) {
-            toastr.clear(); 
+            toastr.clear();
             toastr.error('Failed to update role. Please try again.');
             console.error('AJAX Error:', status, error);
         }
@@ -391,7 +390,7 @@ if (!isset($_SESSION['admin_id'])) {
     // Check if Archives Modal is visible before closing it
     if ($('#ArchivesModal').hasClass('show')) {
         $('#ArchivesModal').modal('hide');
-        
+
         // Delay to ensure Archives Modal fully hides before opening the Reactivate Modal
         setTimeout(function () {
             $('#reactivateRoleModal').modal('show');

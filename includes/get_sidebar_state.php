@@ -1,13 +1,13 @@
 <?php
-session_name('admin_session'); // Custom session name
-session_start();
-include 'db_config.php'; // Include MySQLi database connection
+require_once __DIR__ . '/admin_session.php';
+require_once __DIR__ . '/db_config.php';
 
 header('Content-Type: application/json'); // Ensure JSON response
 
 // Check if admin_id is set in session
 if (!isset($_SESSION['admin_id'])) {
-    echo json_encode(["success" => false, "error" => "No admin session", "session" => $_SESSION]);
+    http_response_code(401);
+    echo json_encode(["success" => false, "error" => "Authentication required"]);
     exit;
 }
 

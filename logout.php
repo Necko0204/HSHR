@@ -1,13 +1,7 @@
 <?php
-session_name('admin_session'); // Ensure correct session name
-session_start();
-session_unset(); // Unset all session variables
-session_destroy(); // Destroy the session
+declare(strict_types=1);
 
-// Remove sessionStorage (in JavaScript)
-echo "<script>sessionStorage.clear();</script>";
-
-// Redirect to login page
-header("Location: index.php");
-exit();
-?>
+require_once __DIR__ . '/includes/admin_session.php';
+hshr_clear_session('/');
+header('Location: index.php');
+exit;

@@ -1,27 +1,21 @@
 <?php
-session_name('staff_session');
-session_start();
+require_once __DIR__ . '/includes/staff_session.php';
 
 error_reporting(E_ALL);
-ini_set('display_errors', 1);
+ini_set('display_errors', '0');
 
 include 'staff_helper.php';
 include 'db_config.php';
 
-if (!isset($_SESSION['employee_id']) || !in_array($_SESSION['role'], ['Staff', 'Intern'])) {
+if (!isset($_SESSION['employee_id']) || !in_array(strtolower($_SESSION['role'] ?? ''), ['staff', 'intern'], true)) {
     header("Location: index.php");
     exit();
 }
 
-// Assign the correct session values
-$sender_id = isset($_SESSION['employee_id']) ? $_SESSION['employee_id'] : "";
-$sender_role = isset($_SESSION['role']) ? $_SESSION['role'] : "";
-$sender_email = isset($_SESSION['email']) ? $_SESSION['email'] : "";
-
-// Debugging: Check if values are now correctly assigned
-error_log("Sender ID: " . $sender_id);
-error_log("Sender Role: " . $sender_role);
-error_log("Sender Email: " . $sender_email);
+$staffData['profile_picture'] = hshr_profile_picture_url($staffData['profile_picture'] ?? null, '../');
+foreach ($staffData as $key => $value) {
+    if (is_string($value)) $staffData[$key] = htmlspecialchars($value, ENT_QUOTES, 'UTF-8');
+}
 
 ?>
 <!DOCTYPE html>
@@ -90,7 +84,7 @@ error_log("Sender Email: " . $sender_email);
                 <!-- Profile image with subtle shadow and border -->
                 <div class="profile-header text-center position-relative z-1">
                     <div class="profile-image-container d-inline-block mb-3 position-relative">
-                        <img src="<?php echo isset($staffData['profile_picture']) ? $staffData['profile_picture'] : '/HSHR/images/default-profile.jpg'; ?>"
+                        <img src="<?= $staffData['profile_picture'] ?>"
                              alt="Profile Picture"
                              class="profile-picture2 rounded-circle shadow border border-4 border-primary"
                              style="width: 150px; height: 150px; object-fit: cover; background: #f8f9fa;">
@@ -174,14 +168,13 @@ error_log("Sender Email: " . $sender_email);
     <div class="floating-circle position-absolute" style="top: -35px; left: -35px; width: 70px; height: 70px; background: rgba(13,110,253,0.09); border-radius: 50%; z-index: 0;"></div>
     <div class="floating-circle position-absolute" style="bottom: -25px; right: -25px; width: 50px; height: 50px; background: rgba(13,110,253,0.12); border-radius: 50%; z-index: 0;"></div>
     <form id="updateForm" method="POST" class="mt-3 position-relative z-1" enctype="multipart/form-data" autocomplete="off">
-        <input type="hidden" name="employee_id" value="<?php echo $_SESSION['employee_id']; ?>">
-        <input type="hidden" name="username" value="<?php echo $_SESSION['username']; ?>">
+        <?= hshr_csrf_field() ?>
 
         <div class="text-center mb-4">
             <div class="position-relative d-inline-block">
-                <img id="profilePicture" 
-                    src="<?php echo isset($staffData['profile_picture']) ? $staffData['profile_picture'] : '/HSHR/images/default-profile.jpg'; ?>" 
-                    alt="Profile Picture" 
+                <img id="profilePicture"
+                    src="<?= $staffData['profile_picture'] ?>"
+                    alt="Profile Picture"
                     class="rounded-circle border profile-picture2 shadow"
                     style="width: 130px; height: 130px; object-fit: cover; border: 4px solid #0d6efd; background: #f8f9fa;">
                 <label class="position-absolute bottom-0 end-0 bg-white border border-2 border-primary rounded-circle p-2 shadow-sm" style="cursor: pointer; font-size: 1.2rem;">
@@ -219,10 +212,12 @@ error_log("Sender Email: " . $sender_email);
                 <select name="maritalstatus" class="form-select rounded-4 text-dark bg-light border-0 shadow-sm" required>
                     <option value="Single" <?php echo (isset($staffData['maritalstatus']) && $staffData['maritalstatus'] == 'Single') ? 'selected' : ''; ?>>Single</option>
                     <option value="Married" <?php echo (isset($staffData['maritalstatus']) && $staffData['maritalstatus'] == 'Married') ? 'selected' : ''; ?>>Married</option>
+                    <option value="Divorced" <?php echo (isset($staffData['maritalstatus']) && $staffData['maritalstatus'] == 'Divorced') ? 'selected' : ''; ?>>Divorced</option>
+                    <option value="Widowed" <?php echo (isset($staffData['maritalstatus']) && $staffData['maritalstatus'] == 'Widowed') ? 'selected' : ''; ?>>Widowed</option>
                 </select>
             </div>
         </div>
-        
+
         <div class="d-flex justify-content-between align-items-center mt-5 gap-3">
             <button type="submit" class="btn btn-primary w-50 py-2 fw-bold rounded-pill shadow-sm"><i class="fa fa-save me-2"></i>Save</button>
             <button type="button" class="btn btn-outline-secondary w-50 py-2 fw-bold rounded-pill shadow-sm" id="cancelEditProfile"><i class="fa fa-times me-2"></i>Cancel</button>
@@ -255,7 +250,7 @@ function previewImage(event) {
         document.getElementById('mainWrapper').style.display = 'block';
     });
 </script>
-<script> 
+<script>
 $("#updateForm").submit(function (event) {
     event.preventDefault();
 
@@ -274,8 +269,6 @@ $("#updateForm").submit(function (event) {
                 console.error("Invalid JSON response", error);
                 return Swal.fire("Error!", "Unexpected server response.", "error");
             }
-
-            console.log(response); // Debugging
 
             if (response.status === "success") {
                 if (response.profile_picture) {
@@ -308,10 +301,5 @@ $("#updateForm").submit(function (event) {
 });
 
 </script>
-<script>
-        console.log("Employee ID: <?php echo $sender_id; ?>");
-        console.log("Role: <?php echo $sender_role; ?>");
-        console.log("Email: <?php echo $sender_email; ?>");
-    </script>
 </body>
 </html>

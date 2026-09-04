@@ -1,15 +1,14 @@
 <?php
-session_name('staff_session');
-session_start();
+require_once __DIR__ . '/includes/staff_session.php';
 
-ini_set('display_errors', '1');
-ini_set('display_startup_errors', '1');
+ini_set('display_errors', '0');
+ini_set('display_startup_errors', '0');
 error_reporting(E_ALL);
 
 include 'db_config.php';
 include 'staff_helper.php';
 
-if (!isset($_SESSION['employee_id']) || !in_array($_SESSION['role'], ['Staff', 'Intern'])) {
+if (!isset($_SESSION['employee_id']) || !in_array(strtolower($_SESSION['role'] ?? ''), ['staff', 'intern'], true)) {
     header("Location: index.php");
     exit();
 }
@@ -26,10 +25,10 @@ $employee_name = $staffData['firstname'] . ' ' . $staffData['lastname'];
 $employee_id = $sender_id;
 
 // Fetch leave requests
-$leaveRequestQuery = "SELECT lr.*, lt.leave_name 
-                      FROM leave_requests lr 
-                      LEFT JOIN leave_types lt ON lr.leave_type_id = lt.leave_type_id 
-                      WHERE lr.employee_id = ? 
+$leaveRequestQuery = "SELECT lr.*, lt.leave_name
+                      FROM leave_requests lr
+                      LEFT JOIN leave_types lt ON lr.leave_type_id = lt.leave_type_id
+                      WHERE lr.employee_id = ?
                       ORDER BY lr.request_date DESC";
 $stmt = $conn->prepare($leaveRequestQuery);
 $stmt->bind_param("s", $employee_id);
@@ -44,10 +43,10 @@ $leaveBalances = [];
 
 $fetchBalancesQuery = "
     SELECT lt.leave_type_id AS leave_type_id, lt.leave_name, lt.max_days,
-           COALESCE(lb.remaining_days, lt.max_days) + 
-           COALESCE(SUM(CASE WHEN lr.status = 'Rejected' THEN lr.total_days ELSE 0 END), 0) 
+           COALESCE(lb.remaining_days, lt.max_days) +
+           COALESCE(SUM(CASE WHEN lr.status = 'Rejected' THEN lr.total_days ELSE 0 END), 0)
            AS remaining_days,
-           COALESCE(SUM(CASE WHEN lr.status != 'Rejected' THEN lr.total_days ELSE 0 END), 0) 
+           COALESCE(SUM(CASE WHEN lr.status != 'Rejected' THEN lr.total_days ELSE 0 END), 0)
            AS total_used_days
     FROM leave_types lt
     LEFT JOIN leave_balances lb ON lt.leave_type_id = lb.leave_type_id AND lb.employee_id = ?
@@ -67,56 +66,6 @@ while ($row = $result->fetch_assoc()) {
         'leave_name'      => $row['leave_name'],
         'remaining_days'  => $remaining_days
     ];
-}
-
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['reject_leave'])) {
-    $leave_request_id = intval($_POST['leave_request_id']);
-
-    // Fetch leave request details
-    $query = "SELECT leave_type_id, total_days, employee_id FROM leave_requests WHERE leave_request_id = ?";
-    $stmt = $conn->prepare($query);
-    $stmt->bind_param("i", $leave_request_id);
-    $stmt->execute();
-    $result = $stmt->get_result();
-    $leave = $result->fetch_assoc();
-
-    if ($leave) {
-        $leave_type_id = $leave['leave_type_id'];
-        $total_days = $leave['total_days'];
-        $employee_id = $leave['employee_id'];
-
-        // Update leave request status to rejected
-        $updateQuery = "UPDATE leave_requests SET status = 'Rejected' WHERE leave_request_id = ?";
-        $stmt = $conn->prepare($updateQuery);
-        $stmt->bind_param("i", $leave_request_id);
-        $stmt->execute();
-
-        // Restore leave balance
-        $checkBalanceQuery = "SELECT remaining_days FROM leave_balances WHERE employee_id = ? AND leave_type_id = ?";
-        $stmt = $conn->prepare($checkBalanceQuery);
-        $stmt->bind_param("si", $employee_id, $leave_type_id);
-        $stmt->execute();
-        $result = $stmt->get_result();
-
-        if ($result->num_rows > 0) {
-            // Update leave balance
-            $updateBalanceQuery = "UPDATE leave_balances SET remaining_days = remaining_days + ? WHERE employee_id = ? AND leave_type_id = ?";
-            $stmt = $conn->prepare($updateBalanceQuery);
-            $stmt->bind_param("isi", $total_days, $employee_id, $leave_type_id);
-            $stmt->execute();
-        } else {
-            // If no balance record exists, insert a new one
-            $insertBalanceQuery = "INSERT INTO leave_balances (employee_id, leave_type_id, remaining_days) VALUES (?, ?, ?)";
-            $stmt = $conn->prepare($insertBalanceQuery);
-            $stmt->bind_param("sii", $employee_id, $leave_type_id, $total_days);
-            $stmt->execute();
-        }
-
-        echo "<script>
-                Swal.fire('Success', 'Leave request rejected, balance updated.', 'success')
-                    .then(() => window.location.reload());
-              </script>";
-    }
 }
 
 ?>
@@ -292,7 +241,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['reject_leave'])) {
                                             <td><?= htmlspecialchars($row2['leave_name']); ?></td>
                                             <td><?= date('d M Y', strtotime($row2['leave_start_date'])); ?></td>
                                             <td><?= date('d M Y', strtotime($row2['leave_end_date'])); ?></td>
-                                            <td class="text-center"><?= $row2['total_days']; ?></td>
+                                            <td class="text-center"><?= (int) $row2['total_days']; ?></td>
                                             <td>
                                                 <?php
                                                     $status = $row2['status'];
@@ -302,7 +251,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['reject_leave'])) {
                                                         'Rejected' => 'danger'
                                                     ][$status] ?? 'secondary';
                                                 ?>
-                                                <span class="badge bg-<?= $badge; ?> px-3 py-2 fs-6"><?= $status; ?></span>
+                                                <span class="badge bg-<?= $badge; ?> px-3 py-2 fs-6"><?= htmlspecialchars((string) $status, ENT_QUOTES, 'UTF-8'); ?></span>
                                             </td>
                                             <td><?= date('d M Y', strtotime($row2['request_date'])); ?></td>
                                         </tr>
@@ -333,8 +282,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['reject_leave'])) {
                                 <select class="form-select rounded-pill px-3 py-2" name="leave_type_id" id="leaveType" required>
                                     <option value="" selected disabled>Select Type of Leave</option>
                                     <?php while ($row2 = $leaveTypeResult->fetch_assoc()) { ?>
-                                        <option value="<?= $row2['leave_type_id']; ?>" data-max="<?= $row2['max_days']; ?>">
-                                            <?= htmlspecialchars($row2['leave_name']); ?> 
+                                        <option value="<?= (int) $row2['leave_type_id']; ?>" data-max="<?= (int) $row2['max_days']; ?>">
+                                            <?= htmlspecialchars($row2['leave_name']); ?>
                                         </option>
                                     <?php } ?>
                                 </select>

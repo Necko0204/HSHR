@@ -1,57 +1,56 @@
 <?php
-header('Content-Type: application/json'); // Set header to return JSON
+declare(strict_types=1);
+
 use PHPMailer\PHPMailer\PHPMailer;
-use PHPMailer\PHPMailer\Exception;
 
-session_start(); // Keep session active if needed elsewhere
-include 'db_config.php';
-require '../vendor/autoload.php';
+require_once __DIR__ . '/../includes/admin_api.php';
+require_once __DIR__ . '/../vendor/autoload.php';
+require_once __DIR__ . '/../includes/mailer.php';
+require_once __DIR__ . '/db_config.php';
 
-if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    $applicant_id = $_POST['applicant_id'] ?? '';
-    $email = $_POST['email'] ?? '';
-
-    if (empty($applicant_id) || empty($email)) {
-        echo json_encode(['status' => 'error', 'message' => 'Applicant ID and email are required.']);
-        exit();
-    }
-
-    $mail = new PHPMailer(true);
-    try {
-        // SMTP Configuration
-        $mail->isSMTP();
-        $mail->Host = 'smtp.gmail.com';
-        $mail->SMTPAuth = true;
-        $mail->Username = getenv('EMAIL_USERNAME') ?: 'mendoza.marcangelo28@gmail.com';
-        $mail->Password = getenv('EMAIL_PASSWORD') ?: 'jjmv pgae dlhh kmqp';
-        $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
-        $mail->Port = 587;
-
-        // Email Headers
-        $mail->setFrom('mendoza.marcangelo28@gmail.com', 'Marc Angelo Mendoza');
-        $mail->addAddress($email);
-
-        // Email Content
-        $mail->isHTML(true);
-        $mail->Subject = 'Application Update - Holy Spirit Human Resource';
-        $mail->Body = "<p>Dear Applicant,</p>
-                       <p>We appreciate your interest in joining our team. However, after careful consideration, 
-                       we regret to inform you that we will not be moving forward with your application.</p>
-                       <p>Thank you for your time and interest.</p>
-                       <p>Best Regards,<br>Holy Spirit Human Resource Team</p>";
-
-        $mail->send();
-
-        // Update applicant status to "rejected" in the database
-        $stmt = $conn->prepare("UPDATE applicants SET status = 'rejected' WHERE applicant_id = ?");
-        $stmt->bind_param("s", $applicant_id);
-        $stmt->execute();
-
-        echo json_encode(['status' => 'success', 'message' => 'Applicant has been rejected and notified.']);
-    } catch (Exception $e) {
-        echo json_encode(['status' => 'error', 'message' => 'Error sending rejection email: ' . $mail->ErrorInfo]);
-    }
-
-    exit();
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    http_response_code(405);
+    echo json_encode(['status' => 'error', 'message' => 'Method not allowed.']);
+    exit;
 }
-?>
+$applicantId = trim((string) ($_POST['applicant_id'] ?? ''));
+if ($applicantId === '') {
+    http_response_code(422);
+    echo json_encode(['status' => 'error', 'message' => 'Applicant ID is required.']);
+    exit;
+}
+
+$statement = $conn->prepare("SELECT firstname, lastname, email FROM applicants WHERE applicant_id = ? AND status <> 'Accepted' LIMIT 1");
+$statement->bind_param('s', $applicantId);
+$statement->execute();
+$applicant = $statement->get_result()->fetch_assoc();
+$statement->close();
+if (!$applicant || !filter_var($applicant['email'], FILTER_VALIDATE_EMAIL)) {
+    http_response_code(404);
+    echo json_encode(['status' => 'error', 'message' => 'Applicant record not found.']);
+    exit;
+}
+
+$mailer = new PHPMailer(true);
+try {
+    hshr_configure_mailer($mailer);
+    $mailer->addAddress((string) $applicant['email'], trim((string) ($applicant['firstname'] . ' ' . $applicant['lastname'])));
+    $mailer->isHTML(true);
+    $mailer->Subject = 'Application update - Holy Spirit Human Resource';
+    $mailer->Body = '<p>Dear ' . htmlspecialchars((string) $applicant['firstname'], ENT_QUOTES, 'UTF-8') . ',</p>'
+        . '<p>Thank you for your interest. After careful consideration, we will not be moving forward with your application.</p>'
+        . '<p>Best regards,<br>Holy Spirit Human Resource Team</p>';
+    $mailer->AltBody = 'Thank you for your interest. After careful consideration, we will not be moving forward with your application.';
+    $mailer->send();
+
+    $update = $conn->prepare("UPDATE applicants SET status = 'Rejected' WHERE applicant_id = ? AND status <> 'Accepted'");
+    $update->bind_param('s', $applicantId);
+    $update->execute();
+    $update->close();
+
+    echo json_encode(['status' => 'success', 'message' => 'Applicant has been rejected and notified.']);
+} catch (Throwable $error) {
+    error_log('Applicant rejection email failed: ' . $error->getMessage());
+    http_response_code($error instanceof RuntimeException ? 503 : 502);
+    echo json_encode(['status' => 'error', 'message' => 'The notification email could not be sent. Check the email configuration and try again.']);
+}

@@ -1,9 +1,8 @@
 <?php
 error_reporting(E_ALL);
-ini_set('display_errors', 1);
+ini_set('display_errors', '0');
 
-session_name('admin_session');
-session_start();
+require_once __DIR__ . '/includes/admin_page.php';
 include 'includes/breadcrumb.php';
 include 'db_config.php';
 include 'helper.php';
@@ -68,7 +67,7 @@ $staffAccounts = getStaffAccounts($conn);
         </button>
     </div>
 
-    
+
     <div class="card-body p-0">
         <div class="table-responsive" style="overflow-x: auto; white-space: nowrap;">
         <div style="max-height: 530px; overflow-y: auto;">
@@ -104,19 +103,19 @@ $staffAccounts = getStaffAccounts($conn);
                             </td>
                             <td style="min-width: 150px; width: 150px;">
                                 <button class="btn btn-warning btn-sm edit-btn"
-                                    data-id="<?= $staff['id']; ?>"
-                                    data-employee_id="<?= $staff['employee_id']; ?>"
-                                    data-username="<?= $staff['username']; ?>"
-                                    data-role="<?= $staff['role']; ?>"
-                                    data-status="<?= $staff['status']; ?>">
+                                    data-id="<?= htmlspecialchars((string) $staff['id'], ENT_QUOTES, 'UTF-8'); ?>"
+                                    data-employee_id="<?= htmlspecialchars((string) $staff['employee_id'], ENT_QUOTES, 'UTF-8'); ?>"
+                                    data-username="<?= htmlspecialchars((string) $staff['username'], ENT_QUOTES, 'UTF-8'); ?>"
+                                    data-role="<?= htmlspecialchars((string) $staff['role'], ENT_QUOTES, 'UTF-8'); ?>"
+                                    data-status="<?= htmlspecialchars((string) $staff['status'], ENT_QUOTES, 'UTF-8'); ?>">
                                     <i class="fas fa-edit"></i> Edit
                                 </button>
 
-                                <button class="btn toggle-status-btn btn-sm <?= $staff['status'] === 'Active' ? 'btn-danger' : 'btn-success' ?>"
-                                        data-id="<?= $staff['id']; ?>"
-                                        data-status="<?= $staff['status'] === 'Active' ? 'Deactivate' : 'Reactivate' ?>">
-                                    <i class="fas <?= $staff['status'] === 'Active' ? 'fa-times' : 'fa-check' ?>"></i>
-                                    <?= $staff['status'] === 'Active' ? 'Deactivate' : 'Reactivate' ?>
+                                <button class="btn toggle-status-btn btn-sm <?= strtolower((string) $staff['status']) === 'active' ? 'btn-danger' : 'btn-success' ?>"
+                                        data-id="<?= htmlspecialchars((string) $staff['id'], ENT_QUOTES, 'UTF-8'); ?>"
+                                        data-status="<?= strtolower((string) $staff['status']) === 'active' ? 'Deactivate' : 'Reactivate' ?>">
+                                    <i class="fas <?= strtolower((string) $staff['status']) === 'active' ? 'fa-times' : 'fa-check' ?>"></i>
+                                    <?= strtolower((string) $staff['status']) === 'active' ? 'Deactivate' : 'Reactivate' ?>
                                 </button>
 
 
@@ -149,7 +148,7 @@ $staffAccounts = getStaffAccounts($conn);
                                 <option value="" disabled selected>Choose an Employee</option>
                                 <?php foreach ($employees as $employee): ?>
                                     <?php if (!in_array($employee['id'], array_column($staffAccounts, 'employee_id'))): ?>
-                                        <option value="<?= $employee['id']; ?>">
+                                        <option value="<?= htmlspecialchars((string) $employee['id'], ENT_QUOTES, 'UTF-8'); ?>">
                                             <?= htmlspecialchars($employee['lastname'] . ', ' . $employee['firstname']); ?>
                                         </option>
                                     <?php endif; ?>
@@ -177,19 +176,8 @@ $staffAccounts = getStaffAccounts($conn);
                         <label for="role" class="form-label">Role</label>
                         <select class="form-select" id="role" name="role" required>
                             <option value="" disabled selected>Choose a Role</option>
-                            <?php
-                            include 'db_config.php';
-                            $sql = "SELECT role_id, role_name FROM roles WHERE status = 'Active'";
-                            $result = $conn->query($sql);
-                            if ($result->num_rows > 0):
-                                while ($row = $result->fetch_assoc()): ?>
-                                    <option value="<?= htmlspecialchars($row['role_id']); ?>">
-                                        <?= htmlspecialchars(str_replace('_', ' ', $row['role_name'])); ?>
-                                    </option>
-                                <?php endwhile;
-                            else: ?>
-                                <option value="" disabled>No roles available</option>
-                            <?php endif; ?>
+                            <option value="staff">Staff</option>
+                            <option value="intern">Intern</option>
                         </select>
                     </div>
                     </div>
@@ -238,7 +226,7 @@ $staffAccounts = getStaffAccounts($conn);
                     $sql = "SELECT id, employee_id, username, role, profile_picture, status FROM staff_accounts WHERE status = 'Inactive'";
                     $result = $conn->query($sql);
                     ?>
-                    
+
                     <div style="max-height: 680px; overflow-y: auto;">
                         <?php if ($result->num_rows > 0): ?>
                             <table class="table table-borderless table-hover align-middle">
@@ -274,7 +262,7 @@ $staffAccounts = getStaffAccounts($conn);
                                             </td>
                                             <td>
                                                 <button class="btn toggle-status-btn btn-sm btn-success"
-                                                    data-id="<?= $staff['id']; ?>"
+                                                    data-id="<?= htmlspecialchars((string) $staff['id'], ENT_QUOTES, 'UTF-8'); ?>"
                                                     data-status="Reactivate">
                                                     <i class="fas fa-check"></i> Reactivate
                                                 </button>
@@ -313,28 +301,17 @@ $staffAccounts = getStaffAccounts($conn);
             <div class="modal-body">
                 <form id="editForm">
                     <input type="hidden" id="edit_id" name="id">
-                    
+
                     <div class="mb-3">
                         <label for="edit_username" class="form-label">Username</label>
                         <input type="text" class="form-control" id="edit_username" name="username">
                     </div>
-                    
+
                     <div class="mb-3">
                         <label for="edit_role" class="form-label">Role</label>
                         <select class="form-control" id="edit_role" name="role">
-                            <?php
-                            include 'db_config.php';
-                            $sql = "SELECT role_id, role_name FROM roles WHERE status = 'Active'";
-                            $result = $conn->query($sql);
-                            if ($result->num_rows > 0):
-                                while ($row = $result->fetch_assoc()): ?>
-                                    <option value="<?= htmlspecialchars($row['role_id']); ?>">
-                                        <?= htmlspecialchars(str_replace('_', ' ', $row['role_name'])); ?>
-                                    </option>
-                                <?php endwhile;
-                            else: ?>
-                                <option value="" disabled>No roles available</option>
-                            <?php endif; ?>
+                            <option value="staff">Staff</option>
+                            <option value="intern">Intern</option>
                         </select>
                     </div>
                     <button type="submit" class="btn btn-success">

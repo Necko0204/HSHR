@@ -1,62 +1,122 @@
 <?php
-require 'db_config.php'; // Database connection
+declare(strict_types=1);
 
-if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    $employee_id = $_POST['employee_id'] ?? '';
-    $username = $_POST['username'] ?? '';
-    $password = $_POST['password'] ?? '';
-    $role = $_POST['role'] ?? '';
-    $profile_picture = $_FILES['profile_picture'] ?? null;
+require_once __DIR__ . '/includes/admin_api.php';
+require_once __DIR__ . '/db_config.php';
 
-    // Validate required fields
-    if (empty($employee_id) || empty($username) || empty($password) || empty($role)) {
-        echo json_encode(["status" => "error", "message" => "All fields are required."]);
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    http_response_code(405);
+    echo json_encode(['status' => 'error', 'message' => 'Method not allowed.']);
+    exit;
+}
+
+$employeeId = trim((string) ($_POST['employee_id'] ?? ''));
+$username = trim((string) ($_POST['username'] ?? ''));
+$password = (string) ($_POST['password'] ?? '');
+$role = strtolower(trim((string) ($_POST['role'] ?? 'staff')));
+
+if ($employeeId === '' || $username === '' || $password === '') {
+    http_response_code(422);
+    echo json_encode(['status' => 'error', 'message' => 'Employee, username, and password are required.']);
+    exit;
+}
+if (!preg_match('/^[A-Za-z0-9._-]{3,50}$/', $username) || strlen($password) < 8 || strlen($password) > 200 || !in_array($role, ['staff', 'intern'], true)) {
+    http_response_code(422);
+    echo json_encode(['status' => 'error', 'message' => 'Use a valid username and a password of at least 8 characters.']);
+    exit;
+}
+
+$profilePath = null;
+$conn->begin_transaction();
+try {
+    $employee = $conn->prepare('SELECT id FROM employees WHERE id = ? LIMIT 1 FOR UPDATE');
+    $employee->bind_param('s', $employeeId);
+    $employee->execute();
+    $employeeFound = (bool) $employee->get_result()->fetch_row();
+    $employee->close();
+    if (!$employeeFound) {
+        $conn->rollback();
+        http_response_code(404);
+        echo json_encode(['status' => 'error', 'message' => 'Employee record not found.']);
         exit;
     }
 
-// Check if username already exists
-$stmt = $conn->prepare("SELECT id FROM staff_accounts WHERE username = ?");
-$stmt->bind_param("s", $username); // Corrected "s" for string
-$stmt->execute();
-$stmt->store_result();
+    $accountCheck = $conn->prepare('SELECT 1 FROM staff_accounts WHERE employee_id = ? LIMIT 1');
+    $accountCheck->bind_param('s', $employeeId);
+    $accountCheck->execute();
+    $accountExists = (bool) $accountCheck->get_result()->fetch_row();
+    $accountCheck->close();
+    if ($accountExists) {
+        $conn->rollback();
+        http_response_code(409);
+        echo json_encode(['status' => 'error', 'message' => 'This employee already has an account.']);
+        exit;
+    }
 
-if ($stmt->num_rows > 0) {
-    echo json_encode(["status" => "error", "message" => "Username already taken."]);
+    $usernameCheck = $conn->prepare('SELECT 1 FROM staff_accounts WHERE username = ? LIMIT 1');
+    $usernameCheck->bind_param('s', $username);
+    $usernameCheck->execute();
+    $usernameExists = (bool) $usernameCheck->get_result()->fetch_row();
+    $usernameCheck->close();
+    if ($usernameExists) {
+        $conn->rollback();
+        http_response_code(409);
+        echo json_encode(['status' => 'error', 'message' => 'Username is already taken.']);
+        exit;
+    }
+
+$picture = $_FILES['profile_picture'] ?? null;
+if (is_array($picture) && ($picture['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_NO_FILE) {
+    if ($picture['error'] !== UPLOAD_ERR_OK || (int) $picture['size'] > 5 * 1024 * 1024 || !is_uploaded_file((string) $picture['tmp_name'])) {
+        http_response_code(422);
+        echo json_encode(['status' => 'error', 'message' => 'Profile image must be smaller than 5 MB.']);
+        $conn->rollback();
+        exit;
+    }
+
+    $mime = (new finfo(FILEINFO_MIME_TYPE))->file($picture['tmp_name']);
+    $extensions = ['image/jpeg' => 'jpg', 'image/png' => 'png', 'image/gif' => 'gif', 'image/webp' => 'webp'];
+    if (!isset($extensions[$mime])) {
+        http_response_code(422);
+        echo json_encode(['status' => 'error', 'message' => 'Profile image must be JPEG, PNG, GIF, or WebP.']);
+        $conn->rollback();
+        exit;
+    }
+
+    $directory = __DIR__ . '/uploads/profile_pictures';
+    if (!is_dir($directory) && !mkdir($directory, 0755, true) && !is_dir($directory)) {
+        http_response_code(500);
+        echo json_encode(['status' => 'error', 'message' => 'Profile image storage is unavailable.']);
+        $conn->rollback();
+        exit;
+    }
+    $filename = 'profile_' . bin2hex(random_bytes(12)) . '.' . $extensions[$mime];
+    if (!move_uploaded_file($picture['tmp_name'], $directory . '/' . $filename)) {
+        http_response_code(500);
+        echo json_encode(['status' => 'error', 'message' => 'Profile image could not be saved.']);
+        $conn->rollback();
+        exit;
+    }
+    $profilePath = 'uploads/profile_pictures/' . $filename;
+}
+
+    $passwordHash = password_hash($password, PASSWORD_DEFAULT);
+    $statement = $conn->prepare(
+        'INSERT INTO staff_accounts (employee_id, username, password, role, profile_picture)
+         VALUES (?, ?, ?, ?, ?)'
+    );
+    $statement->bind_param('sssss', $employeeId, $username, $passwordHash, $role, $profilePath);
+    $statement->execute();
+    $statement->close();
+    $conn->commit();
+} catch (Throwable $error) {
+    $conn->rollback();
+    if ($profilePath !== null && is_file(__DIR__ . '/' . $profilePath)) @unlink(__DIR__ . '/' . $profilePath);
+    error_log('Staff account creation failed: ' . $error->getMessage());
+    http_response_code($error instanceof mysqli_sql_exception && (int) $error->getCode() === 1062 ? 409 : 500);
+    echo json_encode(['status' => 'error', 'message' => 'Account could not be created. Verify that the employee and username are not already in use.']);
     exit;
 }
-$stmt->close();
 
-    // Hash the password
-    $hashed_password = password_hash($password, PASSWORD_BCRYPT);
-
-    // Handle profile picture upload
-    $upload_dir1 = 'uploads/profile_pictures/';
-    $upload_dir2 = 'staff_side/uploads/profile_pictures/';
-    $profile_picture_path = '';
-    if ($profile_picture && $profile_picture['error'] == 0) {
-        $file_ext = pathinfo($profile_picture['name'], PATHINFO_EXTENSION);
-        $allowed_exts = ['jpg', 'jpeg', 'png', 'gif'];
-        if (in_array(strtolower($file_ext), $allowed_exts)) {
-            $new_filename = uniqid('profile_', true) . '.' . $file_ext;
-            $profile_picture_path = $upload_dir1 . $new_filename;
-            move_uploaded_file($profile_picture['tmp_name'], $profile_picture_path);
-            copy($profile_picture_path, $upload_dir2 . $new_filename);
-        } else {
-            echo json_encode(["status" => "error", "message" => "Invalid image format."]);
-            exit;
-        }
-    }
-
-    // Insert into staff_accounts table
-    $stmt = $conn->prepare("INSERT INTO staff_accounts (employee_id, username, password, role, profile_picture) VALUES (?, ?, ?, ?, ?)");
-    $stmt->bind_param("sssss", $employee_id, $username, $hashed_password, $role, $profile_picture_path);
-    
-    if ($stmt->execute()) {
-        echo json_encode(["status" => "success", "message" => "Employee account created successfully."]);
-    } else {
-        echo json_encode(["status" => "error", "message" => "Error creating account."]);
-    }
-    $stmt->close();
-    $conn->close();
-}
-?>
+http_response_code(201);
+echo json_encode(['status' => 'success', 'message' => 'Employee account created successfully.']);

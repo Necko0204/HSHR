@@ -1,268 +1,125 @@
 <?php
-session_name('staff_session');
-session_start();
-include 'db_config.php';
+declare(strict_types=1);
+
+require_once __DIR__ . '/includes/staff_session.php';
+
+if (!empty($_SESSION['employee_id'])) {
+    header('Location: dashboard.php');
+    exit;
+}
+
+$loginCssVersion = (string) filemtime(__DIR__ . '/../assets/css/staff-login.css');
+$loginJsVersion = (string) filemtime(__DIR__ . '/../assets/js/staff-login.js');
 ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="icon" type="image/png" href="../images/asdasdasd123123123123123.jpg">
-    <title>Holy Spirit Human Resource</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
-    <style>
-        body {
-            min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            background: rgb(113, 13, 13);
-            font-family: 'Poppins', sans-serif;
-            color: white;
-            margin: 0;
-            overflow: hidden;
-        }
-        .animated-background {
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            overflow: hidden;
-            pointer-events: none;
-        }
-        .animated-background div {
-            position: absolute;
-            width: 20px;
-            height: 20px;
-            background: rgba(255, 255, 255, 0.2);
-            animation: float 6s infinite ease-in-out;
-            opacity: 0.6;
-            border-radius: 50%;
-        }
-        .container {
-            z-index: 10;
-            border-radius: 20px;
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(20px);
-            box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            max-width: 900px;
-            width: 90%;
-            padding: 2rem;
-            position: relative;
-            text-align: center;
-            flex-direction: row-reverse;
-        }
-        .logo-container {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            width: 50%;
-        }
-        .logo {
-            width: 200px;
-            height: 200px;
-            background: url('../images/asdasdasd123123123123123.jpg') no-repeat center;
-            background-size: cover;
-            border-radius: 50%;
-        }
-        .login-container {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            width: 50%;
-        }
-        .btn-primary {
-            background-color: #ff6f61;
-            border: none;
-            padding: 0.75rem 2rem;
-            font-size: 1.2rem;
-            border-radius: 20px;
-            transition: background-color 0.3s, transform 0.3s;
-            box-shadow: 0 4px 15px rgba(255, 111, 97, 0.2);
-        }
-        .btn-primary:hover {
-            background-color: #e35344;
-            transform: translateY(-3px);
-        }
-        .form-control {
-            background: rgba(255, 255, 255, 0.3);
-            border: none;
-            color: white;
-        }
-        .form-control::placeholder {
-            color: rgba(255, 255, 255, 0.7);
-        }
-        .text-center a {
-            color: #ffeb3b;
-            text-decoration: none;
-            transition: color 0.3s;
-        }
-        .text-center a:hover {
-            color: #ffc107;
-        }
-        @keyframes float {
-            0% { transform: translateY(0) translateX(0); }
-            50% { transform: translateY(-30px) translateX(30px); opacity: 0.3; }
-            100% { transform: translateY(0) translateX(0); }
-        }
-        @media (max-width: 768px) {
-    .container {
-        flex-direction: column;
-        padding: 1.5rem;
-        width: 95%;
-        align-items: center;
-        text-align: center;
-    }
-    .logo-container, .login-container {
-        width: 100%;
-        margin-bottom: 1.5rem;
-    }
-    .logo-container {
-        order: -1; /* moves logo to top on mobile */
-    }
-    .logo {
-        width: 150px;
-        height: 150px;
-        margin: 0 auto;
-    }
-    .btn-primary {
-        font-size: 1rem;
-        padding: 0.5rem 1.5rem;
-    }
-}
-
-/* Small Mobile */
-@media (max-width: 480px) {
-    .btn-primary {
-        font-size: 0.95rem;
-        padding: 0.5rem 1.2rem;
-    }
-    .form-control {
-        font-size: 0.95rem;
-    }
-    .container {
-        padding: 1rem;
-    }
-}
-    </style>
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="theme-color" content="#5b1027">
+    <meta name="description" content="Secure employee access for Holy Spirit School of Imus Human Resources.">
+    <link rel="icon" type="image/jpeg" href="../images/asdasdasd123123123123123.jpg">
+    <title>Staff Portal · Holy Spirit Human Resources</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+    <link rel="stylesheet" href="../assets/css/staff-login.css?v=<?= rawurlencode($loginCssVersion) ?>">
 </head>
-<body>
-    <div class="animated-background">
-        <?php for ($i = 0; $i < 30; $i++): ?>
-            <div style="top:<?= rand(0, 100) ?>vh; left:<?= rand(0, 100) ?>vw; animation-duration:<?= rand(6, 12) ?>s;"></div>
-        <?php endfor; ?>
-    </div>
+<body class="staff-login-page">
+    <main class="staff-login-shell">
+        <section class="staff-login-story" aria-labelledby="portalStoryTitle">
+            <div class="story-pattern" aria-hidden="true"></div>
 
-    <div class="container">
-        <div class="login-container">
-            <h3 class="text-center mb-4 fw-bold">
-                <i class="fa-solid fa-user-lock me-2"></i> Login
-            </h3>
-            <form id="loginForm" method="POST" action="login_logic.php" class="w-100">
-                <div class="mb-3 text-start">
-                    <label for="username" class="form-label">
-                        <i class="fa-solid fa-user me-2"></i> Username
-                    </label>
-                    <div class="input-group">
-                        <span class="input-group-text">
-                            <i class="fa-solid fa-user"></i>
-                        </span>
-                        <input type="text" class="form-control" id="username" name="username" placeholder="Your username" required>
-                    </div>
+            <header class="staff-login-brand">
+                <img src="../images/asdasdasd123123123123123.jpg" alt="Holy Spirit School of Imus seal">
+                <div>
+                    <strong>Holy Spirit School of Imus</strong>
+                    <span>Human Resources</span>
                 </div>
-                <div class="mb-3 text-start">
-                    <label for="password" class="form-label">
-                        <i class="fa-solid fa-lock me-2"></i> Password
-                    </label>
-                    <div class="input-group">
-                        <span class="input-group-text">
-                            <i class="fa-solid fa-lock"></i>
-                        </span>
-                        <input type="password" class="form-control" id="password" name="password" placeholder="Your password" required>
-                        <span class="input-group-text">
-                            <i class="fa-solid fa-eye" id="togglePassword" style="cursor: pointer;"></i>
-                        </span>
-                    </div>
-                </div>
-                <script>
-                    document.getElementById('togglePassword').addEventListener('click', function () {
-                        const passwordField = document.getElementById('password');
-                        const type = passwordField.getAttribute('type') === 'password' ? 'text' : 'password';
-                        passwordField.setAttribute('type', type);
-                        this.classList.toggle('fa-eye-slash');
-                    });
-                </script>
-                <button type="submit" class="btn btn-primary w-100">
-                    <i class="fa-solid fa-right-to-bracket me-2"></i> Login
-                </button>
-            </form>
-            <div class="text-center mt-3">
-                <a href="forgot_password.php">
-                    <i class="fa-solid fa-key me-2"></i> Forgot password?
-                </a>
-            </div>
-        </div>
-        <div class="logo-container">
-            <div class="logo">
-                <!-- Placeholder for logo content, if any -->
-            </div>
-        </div>
-    </div>
+            </header>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <script>
-        $(document).ready(function () {
-            $('#loginForm').submit(function (event) {
-            event.preventDefault();
-            let formData = $(this).serialize();
-            $.ajax({
-                type: "POST",
-                url: "login_logic.php",
-                data: formData,
-                dataType: "json",
-                success: function (response) {
-                if (response.status === "success") {
-                    Swal.fire({
-                    icon: "success",
-                    title: "<h3 style='color: #28a745; font-weight: bold;'>Success!</h3>",
-                    html: `<p style='color: #6c757d;'>${response.message}</p>`,
-                    background: "#f8f9fa",
-                    confirmButtonColor: "#28a745",
-                    showConfirmButton: false,
-                    timer: 1500
-                    }).then(() => {
-                    window.location.href = response.redirect;
-                    });
-                } else {
-                    Swal.fire({
-                    icon: "error",
-                    title: "<h3 style='color: #dc3545; font-weight: bold;'>Login Failed</h3>",
-                    html: `<p style='color: #6c757d;'>${response.message}</p>`,
-                    background: "#f8f9fa",
-                    confirmButtonColor: "#dc3545"
-                    });
-                }
-                },
-                error: function () {
-                Swal.fire({
-                    icon: "error",
-                    title: "<h3 style='color: #dc3545; font-weight: bold;'>Oops...</h3>",
-                    html: "<p style='color: #6c757d;'>Something went wrong! Please try again.</p>",
-                    background: "#f8f9fa",
-                    confirmButtonColor: "#dc3545"
-                });
-                }
-            });
-            });
-        });
-    </script>
+            <div class="story-content">
+                <span class="story-eyebrow"><i class="fa-solid fa-sparkles" aria-hidden="true"></i> Employee workspace</span>
+                <h1 id="portalStoryTitle">Your workday,<br><em>in one place.</em></h1>
+                <p>Access attendance, schedules, leave requests, payroll, and staff services through one secure portal.</p>
+
+                <div class="portal-services" aria-label="Available staff services">
+                    <span><i class="fa-solid fa-calendar-check" aria-hidden="true"></i> Attendance</span>
+                    <span><i class="fa-solid fa-wallet" aria-hidden="true"></i> Payroll</span>
+                    <span><i class="fa-solid fa-person-walking-arrow-right" aria-hidden="true"></i> Leave</span>
+                </div>
+            </div>
+
+            <footer class="story-footer">
+                <div><span class="status-dot" aria-hidden="true"></span><strong>System operational</strong></div>
+                <span>Philippine Standard Time · GMT+8</span>
+            </footer>
+        </section>
+
+        <section class="staff-login-access" aria-labelledby="loginTitle">
+            <div class="mobile-brand">
+                <img src="../images/asdasdasd123123123123123.jpg" alt="">
+                <div><strong>Holy Spirit</strong><span>Staff Portal</span></div>
+            </div>
+
+            <div class="access-card">
+                <header class="access-heading">
+                    <span class="access-icon" aria-hidden="true"><i class="fa-solid fa-user-shield"></i></span>
+                    <span class="access-kicker">Secure staff access</span>
+                    <h2 id="loginTitle">Welcome back</h2>
+                    <p>Sign in with your staff account to continue.</p>
+                </header>
+
+                <div class="login-alert" data-login-alert role="alert" aria-live="polite" hidden></div>
+
+                <form id="loginForm" class="staff-login-form" method="POST" action="login_logic.php" novalidate>
+                    <?= hshr_csrf_field() ?>
+                    <div hidden aria-hidden="true"><label for="website">Website</label><input type="text" id="website" name="website" tabindex="-1" autocomplete="off"></div>
+                    <label class="field-group" for="username">
+                        <span>Username</span>
+                        <span class="field-control">
+                            <i class="fa-regular fa-user" aria-hidden="true"></i>
+                            <input type="text" id="username" name="username" placeholder="Enter your username" autocomplete="username" autocapitalize="none" spellcheck="false" required>
+                        </span>
+                        <small data-field-error="username"></small>
+                    </label>
+
+                    <label class="field-group" for="password">
+                        <span>Password</span>
+                        <span class="field-control">
+                            <i class="fa-solid fa-lock" aria-hidden="true"></i>
+                            <input type="password" id="password" name="password" placeholder="Enter your password" autocomplete="current-password" required>
+                            <button type="button" class="password-toggle" data-password-toggle aria-label="Show password" aria-pressed="false">
+                                <i class="fa-regular fa-eye" aria-hidden="true"></i>
+                            </button>
+                        </span>
+                        <small data-field-error="password"></small>
+                        <small class="caps-lock-note" data-caps-lock hidden><i class="fa-solid fa-arrow-up" aria-hidden="true"></i> Caps Lock is on</small>
+                    </label>
+
+                    <div class="form-options">
+                        <label class="remember-option"><input type="checkbox" name="remember_username" value="1" data-remember-username><span aria-hidden="true"></span> Remember username</label>
+                        <a href="forgot_password.php">Forgot password?</a>
+                    </div>
+
+                    <button type="submit" class="staff-login-button" data-login-button>
+                        <span data-button-label>Sign in to staff portal</span>
+                        <i class="fa-solid fa-arrow-right" aria-hidden="true"></i>
+                        <i class="fa-solid fa-circle-notch fa-spin button-spinner" aria-hidden="true"></i>
+                    </button>
+                </form>
+
+                <div class="security-note"><i class="fa-solid fa-shield-halved" aria-hidden="true"></i><span><strong>Protected access</strong>Your session is isolated from administrator accounts.</span></div>
+            </div>
+
+            <footer class="access-footer">
+                <span>© <?= date('Y') ?> Holy Spirit School of Imus, Inc.</span>
+                <span>Authorized staff only</span>
+            </footer>
+        </section>
+    </main>
+
+    <script src="../assets/js/staff-login.js?v=<?= rawurlencode($loginJsVersion) ?>" defer></script>
 </body>
 </html>

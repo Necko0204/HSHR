@@ -1,8 +1,6 @@
 <?php
-session_name('admin_session');  
-session_start();  
-
-include 'db_config.php';  
+require_once __DIR__ . '/admin_session.php';
+include 'db_config.php';
 
 // Validate session variables
 if (!isset($_SESSION['admin_id']) || !isset($_SESSION['position'])) {
@@ -16,7 +14,7 @@ if ($result->num_rows > 0): ?>
 
 
         <div class="table-responsive" style="overflow-x: auto; white-space: nowrap;">
-    
+
             <div style="max-height: 530px; overflow-y: auto;">
                 <table class="table table-borderless table-hover align-middle">
                     <thead class="table-light">
@@ -49,8 +47,8 @@ if ($result->num_rows > 0): ?>
                         <?php endwhile; ?>
                     </tbody>
                 </table>
-            
-      
+
+
             <?php else: ?>
                 <p>No active levels found.</p>
             <?php endif;

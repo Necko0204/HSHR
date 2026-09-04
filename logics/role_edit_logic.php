@@ -1,6 +1,5 @@
 <?php
-session_name('admin_session');
-session_start();
+require_once __DIR__ . '/../includes/admin_api.php';
 include 'db_config.php';
 
 header('Content-Type: application/json');
@@ -26,7 +25,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             echo json_encode(['status' => 'info', 'message' => 'No changes made or role not found.']);
         }
     } else {
-        echo json_encode(['status' => 'error', 'message' => 'Error: ' . $stmt->error]);
+        error_log('Role update failed: ' . $stmt->error);
+        echo json_encode(['status' => 'error', 'message' => 'Role could not be updated.']);
     }
 
     $stmt->close();

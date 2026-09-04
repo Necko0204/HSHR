@@ -1,14 +1,13 @@
 <?php
-session_name('staff_session');
-session_start();
+require_once __DIR__ . '/includes/staff_session.php';
 
 error_reporting(E_ALL);
-ini_set('display_errors', 1);
+ini_set('display_errors', '0');
 
 include 'staff_helper.php';
 include 'db_config.php';
 
-if (!isset($_SESSION['employee_id']) || !in_array($_SESSION['role'], ['Staff', 'Intern'])) {
+if (!isset($_SESSION['employee_id']) || !in_array(strtolower($_SESSION['role'] ?? ''), ['staff', 'intern'], true)) {
     header("Location: index.php");
     exit();
 }
@@ -35,14 +34,14 @@ $sender_role = isset($_SESSION['role']) ? $_SESSION['role'] : "";
     <link rel="stylesheet" href="styles.css">
 </head>
 <body style="overflow: hidden;">
-    
+
 <!-- Back to Dashboard Button -->
 <div style="position: absolute; top: 7px; left: 20px; z-index: 1000;">
     <a href="dashboard.php" class="btn btn-secondary">
         <i class="fa fa-arrow-left"></i> Back to Dashboard
     </a>
 </div>
-  
+
 
     <div class="main-container">
         <?php include 'staff_navbar.php'; ?>
@@ -78,18 +77,18 @@ $sender_role = isset($_SESSION['role']) ? $_SESSION['role'] : "";
         <img src="../images/asdasdasd123123123123123.jpg" alt="Profile Picture">
     </div>
 
-    
+
 
     <main class="dashboard-container">
         <div class="card-container">
             <div class="card1" onclick="location.href='staff_viewprofile.php'">
                 <i class="fa-solid fa-money-check-alt fa-4x"></i>
                 <h5 class="mt-3">View Profile</h5>
-            </div> 
+            </div>
         </div>
     </main>
 
-    
+
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.9/main.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>

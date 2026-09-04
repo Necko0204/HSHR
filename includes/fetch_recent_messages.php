@@ -1,67 +1,62 @@
 <?php
-session_name('admin_session');
-session_start();
-include 'db_config.php';
+declare(strict_types=1);
 
-// Check if user is logged in
-if (!isset($_SESSION['admin_id']) || !isset($_SESSION['position'])) {
-    echo "<li><a class='dropdown-item' href='#'>Error: Not logged in</a></li>";
+require_once __DIR__ . '/admin_session.php';
+header('Content-Type: text/html; charset=utf-8');
+if (empty($_SESSION['admin_id'])) {
+    http_response_code(401);
+    echo '<li class="dropdown-item text-muted">Authentication required.</li>';
     exit;
 }
 
-$admin_id = $_SESSION['admin_id'];
-$admin_role = $_SESSION['position'];
-
-// Fetch the latest message per conversation
-$query = "SELECT m.*, 
-                 CASE 
-                    WHEN m.sender_id = '$admin_id' THEN m.receiver_id
-                    ELSE m.sender_id
-                 END AS user_id,
-                 CASE 
-                    WHEN m.sender_id = '$admin_id' THEN m.receiver_type
-                    ELSE m.sender_type
-                 END AS user_role,
-                 COALESCE(a.username, s.username) AS username,
-                 COALESCE(a.profile_picture, s.profile_picture, 'uploads/profile_pictures/default.jpg') AS profile_picture
-          FROM messages m
-          LEFT JOIN admin a ON a.id = (CASE WHEN m.sender_id = '$admin_id' THEN m.receiver_id ELSE m.sender_id END)
-          LEFT JOIN staff_accounts s ON s.employee_id = (CASE WHEN m.sender_id = '$admin_id' THEN m.receiver_id ELSE m.sender_id END)
-          WHERE m.id IN (
-              SELECT MAX(id) 
-              FROM messages 
-              WHERE sender_id = '$admin_id' OR receiver_id = '$admin_id' 
-              GROUP BY LEAST(sender_id, receiver_id), GREATEST(sender_id, receiver_id)
-          )
-          ORDER BY m.sent_at DESC";
-
-$result = mysqli_query($conn, $query);
-
-// Check if any messages exist
-if (mysqli_num_rows($result) > 0) {
-    while ($row = mysqli_fetch_assoc($result)) {
-        $user_id = $row['user_id'];
-        $user_role = $row['user_role'];
-        $username = htmlspecialchars($row['username']);
-        $profile_picture = htmlspecialchars($row['profile_picture']);
-        $last_message = htmlspecialchars($row['message']);
-        $short_message = (strlen($last_message) > 25) ? substr($last_message, 0, 25) . '...' : $last_message;
-
-        echo "<li class='dropdown-item d-flex align-items-center message-item' data-id='$user_id' data-role='$user_role'>
-                <img src='$profile_picture' class='rounded-circle me-2' width='40' height='40'>
-                <div>
-                    <strong>$username</strong>
-                    <p class='text-muted mb-0' style='font-size: 12px;'>$short_message</p>
-                </div>
-              </li>";
-    }
-} else {
-    // If no messages, show the plus button
-    echo "<p style='text-align: center;'>No Messages</p>
-    <li class='d-flex justify-content-center mt-2'>
-            <button class='btn btn-primary btn-sm rounded-circle' id='openMessageModal'>
-                <i class='fas fa-plus'></i>
-            </button>
-          </li>";
+require_once __DIR__ . '/db_config.php';
+$adminId = (string) $_SESSION['admin_id'];
+$statement = $conn->prepare(
+    "SELECT m.id, m.message, m.sent_at,
+            CASE WHEN m.sender_id = ? AND m.sender_type = 'Administrator' THEN m.receiver_id ELSE m.sender_id END AS user_id,
+            CASE WHEN m.sender_id = ? AND m.sender_type = 'Administrator' THEN m.receiver_type ELSE m.sender_type END AS user_role
+     FROM messages m
+     WHERE (m.sender_id = ? AND m.sender_type = 'Administrator')
+        OR (m.receiver_id = ? AND m.receiver_type = 'Administrator')
+     ORDER BY m.sent_at DESC, m.id DESC LIMIT 200"
+);
+$statement->bind_param('ssss', $adminId, $adminId, $adminId, $adminId);
+$statement->execute();
+$messages = $statement->get_result();
+$conversations = [];
+while ($row = $messages->fetch_assoc()) {
+    $role = (string) $row['user_role'];
+    $id = (string) $row['user_id'];
+    if (!in_array($role, ['Administrator', 'staff'], true) || $id === '') continue;
+    $key = $role . '|' . $id;
+    if (!isset($conversations[$key])) $conversations[$key] = $row;
+    if (count($conversations) >= 20) break;
 }
-?>
+$statement->close();
+if ($conversations === []) {
+    echo '<li class="dropdown-item text-center text-muted">No messages</li>';
+    exit;
+}
+
+$adminLookup = $conn->prepare('SELECT username, profile_picture FROM admin WHERE id = ? LIMIT 1');
+$staffLookup = $conn->prepare('SELECT username, profile_picture FROM staff_accounts WHERE employee_id = ? LIMIT 1');
+foreach ($conversations as $row) {
+    $id = (string) $row['user_id'];
+    $role = (string) $row['user_role'];
+    $lookup = $role === 'Administrator' ? $adminLookup : $staffLookup;
+    $lookup->bind_param('s', $id);
+    $lookup->execute();
+    $person = $lookup->get_result()->fetch_assoc() ?: [];
+    $username = htmlspecialchars((string) ($person['username'] ?? 'Unknown user'), ENT_QUOTES, 'UTF-8');
+    $picture = htmlspecialchars(hshr_profile_picture_url($person['profile_picture'] ?? null), ENT_QUOTES, 'UTF-8');
+    $message = trim((string) $row['message']);
+    $short = mb_strlen($message) > 45 ? mb_substr($message, 0, 45) . '…' : $message;
+    $short = htmlspecialchars($short, ENT_QUOTES, 'UTF-8');
+    $safeId = htmlspecialchars($id, ENT_QUOTES, 'UTF-8');
+    $safeRole = htmlspecialchars($role, ENT_QUOTES, 'UTF-8');
+    echo '<li class="dropdown-item d-flex align-items-center message-item" data-id="' . $safeId . '" data-role="' . $safeRole . '">'
+        . '<img src="' . $picture . '" class="rounded-circle me-2" width="40" height="40" alt="">'
+        . '<div><strong>' . $username . '</strong><p class="text-muted mb-0" style="font-size:12px">' . $short . '</p></div></li>';
+}
+$adminLookup->close();
+$staffLookup->close();

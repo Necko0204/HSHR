@@ -1,6 +1,5 @@
 <?php
-session_name('admin_session');
-session_start();
+require_once __DIR__ . '/includes/admin_page.php';
 include 'includes/breadcrumb.php';
 include 'db_config.php';
 include 'helper.php';
@@ -64,8 +63,8 @@ if (!isset($_SESSION['admin_id'])) {
                 <?php
                 require 'db_config.php';
 
-                $sql = "SELECT l.leave_id, l.employee_id, e.firstname, e.lastname, lt.leave_name, 
-                                l.leave_start_date, l.leave_end_date, l.total_days, l.status, l.request_date 
+                $sql = "SELECT l.leave_id, l.employee_id, e.firstname, e.lastname, lt.leave_name,
+                                l.leave_start_date, l.leave_end_date, l.total_days, l.status, l.request_date
                             FROM leave_requests l
                             JOIN employees e ON l.employee_id = e.id
                             JOIN leave_types lt ON l.leave_type_id = lt.leave_type_id
@@ -121,7 +120,7 @@ if (!isset($_SESSION['admin_id'])) {
                 <?php $conn->close(); ?>
             </div>
         </div>
-    </div>             
+    </div>
 </main>
 <!-- Modal -->
 <div class="modal fade" id="confirmationModal" tabindex="-1">
@@ -177,8 +176,8 @@ if (!isset($_SESSION['admin_id'])) {
                             <?php
                             require 'db_config.php'; // Ensure your database connection is included
 
-                            $sql2 = "SELECT l.leave_id, l.employee_id, e.firstname, e.lastname, lt.leave_name, 
-                                    l.leave_start_date, l.leave_end_date, l.total_days, l.status, l.request_date 
+                            $sql2 = "SELECT l.leave_id, l.employee_id, e.firstname, e.lastname, lt.leave_name,
+                                    l.leave_start_date, l.leave_end_date, l.total_days, l.status, l.request_date
                                     FROM leave_requests l
                                     JOIN employees e ON l.employee_id = e.id
                                     JOIN leave_types lt ON l.leave_type_id = lt.leave_type_id
@@ -222,8 +221,8 @@ if (!isset($_SESSION['admin_id'])) {
                     <div class="tab-pane fade" id="rejected-content" role="tabpanel">
                         <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
                             <?php
-                            $sql3 = "SELECT l.leave_id, l.employee_id, e.firstname, e.lastname, lt.leave_name, 
-                                    l.leave_start_date, l.leave_end_date, l.total_days, l.status, l.request_date 
+                            $sql3 = "SELECT l.leave_id, l.employee_id, e.firstname, e.lastname, lt.leave_name,
+                                    l.leave_start_date, l.leave_end_date, l.total_days, l.status, l.request_date
                                     FROM leave_requests l
                                     JOIN employees e ON l.employee_id = e.id
                                     JOIN leave_types lt ON l.leave_type_id = lt.leave_type_id

@@ -1,48 +1,50 @@
 <?php
-session_name('admin_session');
-session_start();
-include 'db_config.php';
+declare(strict_types=1);
 
-header('Content-Type: application/json');
+require_once __DIR__ . '/../includes/admin_api.php';
+require_once __DIR__ . '/../db_config.php';
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $roleName = $_POST['roleName'] ?? '';
-    $roleDescription = $_POST['roleDescription'] ?? '';
+function roleCreateResponse(int $status, bool $success, string $message, array $extra = []): never
+{
+    http_response_code($status);
+    echo json_encode(['success' => $success, 'message' => $message] + $extra);
+    exit;
+}
 
-    if (empty($roleName) || empty($roleDescription)) {
-        echo json_encode(['error' => 'Role name and description are required.']);
-        exit;
-    }
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') roleCreateResponse(405, false, 'Method not allowed.');
+$roleName = trim((string) ($_POST['roleName'] ?? ''));
+$description = trim((string) ($_POST['roleDescription'] ?? ''));
+if ($roleName === '' || mb_strlen($roleName) > 100 || mb_strlen($description) > 500) {
+    roleCreateResponse(422, false, 'Enter a role name and a description within the allowed length.');
+}
 
-    // Fetch the last inserted role ID
-    $sql = "SELECT role_id FROM roles ORDER BY created_at DESC LIMIT 1";
-    $result = $conn->query($sql);
-    $lastId = "HSHI-ROLE20250000"; // Default ID if no roles exist
+$locked = false;
+$conn->begin_transaction();
+try {
+    $lockResult = $conn->query("SELECT GET_LOCK('hshr_role_sequence', 5) AS acquired");
+    $locked = (int) ($lockResult->fetch_assoc()['acquired'] ?? 0) === 1;
+    if (!$locked) throw new RuntimeException('Role sequence is busy.');
 
-    if ($result->num_rows > 0) {
-        $row = $result->fetch_assoc();
-        $lastId = $row['role_id'];
-    }
+    $prefix = 'HSHI-ROLE';
+    $last = $conn->prepare('SELECT role_id FROM roles WHERE role_id LIKE CONCAT(?, \'%\') ORDER BY role_id DESC LIMIT 1 FOR UPDATE');
+    $last->bind_param('s', $prefix);
+    $last->execute();
+    $lastId = $last->get_result()->fetch_assoc()['role_id'] ?? null;
+    $last->close();
+    $number = $lastId ? ((int) substr((string) $lastId, -8) + 1) : 1;
+    $roleId = $prefix . str_pad((string) $number, 8, '0', STR_PAD_LEFT);
 
-    // Extract the numeric part and increment it
-    $numericPart = (int)substr($lastId, 10);
-    $newNumericPart = str_pad($numericPart + 1, 8, '0', STR_PAD_LEFT);
-
-    // Generate the new role ID
-    $newRoleId = "HSHI-ROLE" . $newNumericPart;
-
-    // Insert the new role into the database
-    $stmt = $conn->prepare("INSERT INTO roles (role_id, role_name, description) VALUES (?, ?, ?)");
-    $stmt->bind_param("sss", $newRoleId, $roleName, $roleDescription);
-
-    if ($stmt->execute()) {
-        echo json_encode(['success' => true, 'message' => 'New role added successfully', 'role_id' => $newRoleId]);
-    } else {
-        echo json_encode(['success' => false, 'error' => $stmt->error]);
-    }
-
-    $stmt->close();
-    $conn->close();
-} else {
-    echo json_encode(['error' => 'Invalid request method.']);
+    $insert = $conn->prepare('INSERT INTO roles (role_id, role_name, description) VALUES (?, ?, ?)');
+    $insert->bind_param('sss', $roleId, $roleName, $description);
+    $insert->execute();
+    $insert->close();
+    $conn->commit();
+    try { $conn->query("SELECT RELEASE_LOCK('hshr_role_sequence')"); } catch (Throwable $ignored) {}
+    roleCreateResponse(201, true, 'New role added successfully.', ['role_id' => $roleId]);
+} catch (Throwable $error) {
+    $conn->rollback();
+    if ($locked) try { $conn->query("SELECT RELEASE_LOCK('hshr_role_sequence')"); } catch (Throwable $ignored) {}
+    error_log('Role creation failed: ' . $error->getMessage());
+    $status = $error instanceof mysqli_sql_exception && (int) $error->getCode() === 1062 ? 409 : 500;
+    roleCreateResponse($status, false, $status === 409 ? 'A role with that name already exists.' : 'Role could not be created.');
 }

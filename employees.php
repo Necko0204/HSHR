@@ -1,6 +1,5 @@
 <?php
-session_name('admin_session');
-session_start();
+require_once __DIR__ . '/includes/admin_page.php';
 include 'includes/breadcrumb.php';
 include 'db_config.php';
 include 'helper.php';
@@ -67,7 +66,7 @@ if (!isset($_SESSION['admin_id'])) {
     <div class="card-body p-0">
     <div class="table-responsive" style="overflow-x: auto; white-space: nowrap;">
             <?php
-            $sql = "SELECT e.id, e.lastname, e.firstname, e.gender, e.email1, e.salary, e.employment_type, e.status, sa.profile_picture 
+            $sql = "SELECT e.id, e.lastname, e.firstname, e.gender, e.email1, e.salary, e.employment_type, e.status, sa.profile_picture
             FROM employees e
             LEFT JOIN staff_accounts sa ON e.id = sa.employee_id
             WHERE e.status = 'Active'
@@ -106,16 +105,22 @@ if (!isset($_SESSION['admin_id'])) {
                         if ($row["status"] == 'Inactive') {
                             $account_status = 'Inactive';
                         }
+                        $profilePicture = (string) ($row['profile_picture'] ?? '');
+                        if (!str_starts_with($profilePicture, 'uploads/profile_pictures/')
+                            || str_contains($profilePicture, '..')
+                            || preg_match('/^[A-Za-z0-9._\/-]+$/', $profilePicture) !== 1) {
+                            $profilePicture = 'images/image-not-found.jpg';
+                        }
                         ?>
                         <tr>
                             <td class="d-none"><?= htmlspecialchars($row["id"]) ?></td>
                             <td>
-                                <?php if (!empty($row["profile_picture"])): ?>
-                                    <img src="<?= htmlspecialchars(!empty($row["profile_picture"]) ? $row["profile_picture"] : 'images/image-not-found.jpg') ?>" 
-                                        alt="Profile Picture" class="img-thumbnail" style="width: 125px; height: 125px;" 
-                                        onclick="openProfileModal('<?= htmlspecialchars(!empty($row["profile_picture"]) ? $row["profile_picture"] : 'images/image-not-found.jpg') ?>')">
+                                <?php if ($profilePicture !== 'images/image-not-found.jpg'): ?>
+                                    <img src="<?= htmlspecialchars($profilePicture, ENT_QUOTES, 'UTF-8') ?>"
+                                        alt="Profile Picture" class="img-thumbnail" style="width: 125px; height: 125px;"
+                                        onclick="openProfileModal(<?= htmlspecialchars(json_encode($profilePicture, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT), ENT_QUOTES, 'UTF-8') ?>)">
                                 <?php else: ?>
-                                    <img src="images/image-not-found.jpg" alt="Default Profile Picture" class="img-thumbnail" style="width: 125px; height: 125px;" data-bs-toggle="modal" data-bs-target="#profileModal<?= $row['id'] ?>">
+                                    <img src="images/image-not-found.jpg" alt="Default Profile Picture" class="img-thumbnail" style="width: 125px; height: 125px;">
                                 <?php endif; ?>
                             </td>
                             <td ><?= htmlspecialchars($row["lastname"] . ', ' . $row["firstname"]) ?></td>
@@ -138,12 +143,13 @@ if (!isset($_SESSION['admin_id'])) {
                                 </span>
                             </td>
                             <td>
-                                <button class="btn btn-outline-info btn-sm rounded-pill shadow-sm " onclick="window.location.href='employee_details.php?id=<?= $row['id'] ?>'">
+                                <button class="btn btn-outline-info btn-sm rounded-pill shadow-sm " onclick="window.location.href='employee_details.php?id=<?= rawurlencode((string) $row['id']) ?>'">
                                     <i class="bi bi-eye"></i> View Details
                                 </button>
                             </td>
                         </tr>
                     <?php endwhile; ?>
+                    <?php unset($row); ?>
                 </tbody>
             </table>
             </div>
@@ -169,7 +175,7 @@ if (!isset($_SESSION['admin_id'])) {
 </div>
 
 
-<!-- Add Employee Modal -->                                                                                           
+<!-- Add Employee Modal -->
     <div class="modal fade" id="addEmployeeModal" tabindex="-1" aria-labelledby="addEmployeeModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-lg">
                 <div class="modal-content">
@@ -206,7 +212,7 @@ if (!isset($_SESSION['admin_id'])) {
                                             <option value="Male">Male</option>
                                             <option value="Female">Female</option>
                                         </select>
-                                    </div>    
+                                    </div>
                                     <div class="mb-3">
                                         <label for="othernamesused" class="form-label">Other Names Used</label>
                                         <input type="text" class="form-control" id="othernamesused" name="othernamesused" value="<?= $row['othernamesused'] ?? '' ?>">
@@ -235,22 +241,22 @@ if (!isset($_SESSION['admin_id'])) {
                                         <label for="height" class="form-label">Height</label>
                                         <input type="text" class="form-control" id="height" name="height" value="<?= $row['height'] ?? '' ?>">
                                     </div>
-                                    
+
                                     <div class="mb-3">
                                         <label for="weight" class="form-label">Weight</label>
                                         <input type="text" class="form-control" id="weight" name="weight" value="<?= $row['weight'] ?? '' ?>">
                                     </div>
-                                    
+
                                     <div class="mb-3">
                                         <label for="eyecolor" class="form-label">Eye Color</label>
                                         <input type="text" class="form-control" id="eyecolor" name="eyecolor" value="<?= $row['eyecolor'] ?? '' ?>">
                                     </div>
-                                    
+
                                     <div class="mb-3">
                                         <label for="haircolor" class="form-label">Hair Color</label>
                                         <input type="text" class="form-control" id="haircolor" name="haircolor" value="<?= $row['haircolor'] ?? '' ?>">
                                     </div>
-                                    
+
                                     <div class="mb-3">
                                         <label for="distinguishingfeatures" class="form-label">Distinguishing Features</label>
                                         <input type="text" class="form-control" id="distinguishingfeatures" name="distinguishingfeatures" value="<?= $row['distinguishingfeatures'] ?? '' ?>">
@@ -268,26 +274,26 @@ if (!isset($_SESSION['admin_id'])) {
                                         <label for="placeofbirth" class="form-label">Place of Birth</label>
                                         <input type="text" class="form-control" id="placeofbirth" name="placeofbirth" value="<?= $row['placeofbirth'] ?? '' ?>">
                                     </div>
-                                    
+
                                     <div class="mb-3">
                                         <label for="citizenship" class="form-label">Citizenship</label>
                                         <input type="text" class="form-control" id="citizenship" name="citizenship" value="<?= $row['citizenship'] ?? '' ?>">
                                     </div>
-                                    
+
                                     <div class="mb-3">
                                         <label for="provinceoforigin" class="form-label">Province of Origin</label>
                                         <input type="text" class="form-control" id="provinceoforigin" name="provinceoforigin" value="<?= $row['provinceoforigin'] ?? '' ?>">
                                     </div>
-                                    
+
                                     <div class="mb-3">
                                         <label for="religion" class="form-label">Religion</label>
                                         <input type="text" class="form-control" id="religion" name="religion" value="<?= $row['religion'] ?? '' ?>">
                                     </div>
-                                    
+
                                     <div class="mb-3">
                                         <label for="bloodtype" class="form-label">Blood Type</label>
                                         <input type="text" class="form-control" id="bloodtype" name="bloodtype" value="<?= $row['bloodtype'] ?? '' ?>">
-                                    </div> 
+                                    </div>
                                     <div class="mb-3">
                                         <label for="workoccupation" class="form-label">Work Occupation</label>
                                         <input type="text" class="form-control" id="workoccupation" name="workoccupation" value="<?= $row['workoccupation'] ?? '' ?>">
@@ -319,7 +325,7 @@ if (!isset($_SESSION['admin_id'])) {
                                             <div class="mb-3">
                                                 <label for="faxno" class="form-label">Fax No</label>
                                                 <input type="text" class="form-control" id="faxno" name="faxno" value="<?= $row['faxno'] ?? '' ?>">
-                                            </div>  
+                                            </div>
                                             <div class="mb-3">
                                                 <label for="mobilephone" class="form-label">Mobile Phone</label>
                                                 <input type="text" class="form-control" id="mobilephone" name="mobilephone" value="<?= $row['mobilephone'] ?? '' ?>">
@@ -333,7 +339,7 @@ if (!isset($_SESSION['admin_id'])) {
                                                 <input type="text" class="form-control" id="instagram" name="instagram" value="<?= $row['instagram'] ?? '' ?>">
                                             </div>
                                         </div>
-                                
+
                                     <!-- Government and Legal Documents -->
                                     <div class="card-header">Government and Legal Documents</div>
                                     <div class="card-body">
@@ -341,34 +347,34 @@ if (!isset($_SESSION['admin_id'])) {
                                             <label for="sss_gsis" class="form-label">SSS/GSIS No</label>
                                             <input type="text" class="form-control" id="sss_gsis" name="sss_gsis" value="<?= $row['sss_gsis'] ?? '' ?>">
                                         </div>
-                                        
+
                                         <div class="mb-3">
                                             <label for="passportno" class="form-label">Passport No</label>
                                             <input type="text" class="form-control" id="passportno" name="passportno" value="<?= $row['passportno'] ?? '' ?>">
                                         </div>
-                                        
+
                                         <div class="mb-3">
                                             <label for="expirydate" class="form-label">Expiry Date</label>
                                             <input type="date" class="form-control" id="expirydate" name="expirydate" value="<?= $row['expirydate'] ?? '' ?>">
                                         </div>
-                                        
+
                                         <div class="mb-3">
                                             <label for="typeofvisa" class="form-label">Type of Visa</label>
                                             <input type="text" class="form-control" id="typeofvisa" name="typeofvisa" value="<?= $row['typeofvisa'] ?? '' ?>">
                                         </div>
-                                        
+
                                         <div class="mb-3">
                                             <label for="tinno" class="form-label">TIN No</label>
                                             <input type="text" class="form-control" id="tinno" name="tinno" value="<?= $row['tinno'] ?? '' ?>">
                                         </div>
-                                        
+
                                         <div class="mb-3">
                                             <label for="datejoiningindsclc" class="form-label">Date joining in DSCLC</label>
                                             <input type="date" class="form-control" id="datejoiningindsclc" name="datejoiningindsclc" value="<?= $row['datejoiningindsclc'] ?? '' ?>">
                                         </div>
                                      </div>
                                     <div class="card-header">Section II: Educational Background</div>
-                                        <div class="card-body"> 
+                                        <div class="card-body">
                                         <div class="mb=3">
                                     <table class="table1 table-bordered" id="education-table">
                                     <thead>
@@ -388,15 +394,15 @@ if (!isset($_SESSION['admin_id'])) {
                                         </tr>
                                     </tbody>
                                     </table>
-                                    
+
                                     <!-- Add More Button -->
                                     <div class="mb-3"></div>
                                     <div style="text-align: center;">
                                         <button type="button" class="btn btn-primary" onclick="addRow()">  <i class="fa fa-plus"></i> Add More</button>
-                                    </div>    
+                                    </div>
                                 </div>
                                 </div>
-                               
+
                                     <div class="mb=3">
                                     <div class="card-header">Section III: Employment/Occupational Background</div>
                                     <div class="card-body">
@@ -414,7 +420,7 @@ if (!isset($_SESSION['admin_id'])) {
                                                 <td><input type="text" class="form-control" name="company[]" value="<?= $row['company'] ?? '' ?>"></td>
                                                 <td><input type="text" class="form-control" name="natureofbusiness[]" value="<?= $row['natureofbusiness'] ?? '' ?>"></td>
                                                 <td><input type="text" class="form-control" name="designation[]" value="<?= $row['designation'] ?? '' ?>"></td>
-                                                <td><input type="text" class="form-control" name="inclusivedates[]" value="<?= $row['inclusivedates'] ?? '' ?>"></td>
+                                                <td><input type="text" class="form-control" name="work_inclusive_dates[]" value="<?= $row['inclusive_dates'] ?? '' ?>"></td>
                                             </tr>
                                     </tbody>
                                 </table>
@@ -468,7 +474,7 @@ if (!isset($_SESSION['admin_id'])) {
 
                                         <div class="mb-3">
                                             <label for="suffix" class="form-label">Suffix:</label>
-                                            <input type="text" class="form-control" name="suffix" id="suffix" value="<?= $row['suffix'] ?? '' ?>">
+                                            <input type="text" class="form-control" name="emergency_suffix" id="emergency_suffix" value="<?= $row['emergency_contact_suffix'] ?? '' ?>">
                                         </div>
 
                                         <div class="mb-3">
@@ -573,7 +579,7 @@ if (!isset($_SESSION['admin_id'])) {
                     $sql = "SELECT id, lastname, firstname, gender, email1, employment_type, status FROM employees WHERE status = 'Inactive'";
                     $result = $conn->query($sql);
 
-                    if ($result->num_rows > 0): 
+                    if ($result->num_rows > 0):
                     ?>
                         <div style="max-height: 680px; overflow-y: auto;">
                         <table class="table table-borderless table-hover align-middle">
@@ -632,9 +638,9 @@ if (!isset($_SESSION['admin_id'])) {
                         </button>
                     </div>
             </div>
-            
+
         </div>
-    </div>  
+    </div>
 <script src="background.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
@@ -723,7 +729,7 @@ if (!isset($_SESSION['admin_id'])) {
                                                     document.getElementById('age').value = age;
                                                 }
                                             }
-                                        </script>       
+                                        </script>
     <script>
                                         document.getElementById('add-row').addEventListener('click', function () {
                                             let tableBody = document.querySelector("#organizations-table tbody");
@@ -743,7 +749,7 @@ if (!isset($_SESSION['admin_id'])) {
                                                 e.target.closest("tr").remove();
                                             }
                                         });
-                                       
+
 </script>
 <script>
     document.getElementById("searchInput").addEventListener("keyup", function () {

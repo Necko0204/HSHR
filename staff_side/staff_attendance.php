@@ -1,13 +1,12 @@
 <?php
-session_name('staff_session');
-session_start();
+require_once __DIR__ . '/includes/staff_session.php';
 
 error_reporting(E_ALL);
-ini_set('display_errors', 1);
+ini_set('display_errors', '0');
 include 'db_config.php';
 include 'staff_helper.php';
 
-if (!isset($_SESSION['employee_id']) || !in_array($_SESSION['role'], ['Staff', 'Intern'])) {
+if (!isset($_SESSION['employee_id']) || !in_array(strtolower($_SESSION['role'] ?? ''), ['staff', 'intern'], true)) {
     header("Location: index.php");
     exit();
 }
@@ -24,7 +23,7 @@ if (!$staffData) {
 
 // Prepare the query to retrieve attendance data
 $query = "
-    SELECT 
+    SELECT
         a.date,
         a.time_in,
         a.time_out,
@@ -35,7 +34,7 @@ $query = "
         IFNULL(ou.status, 'on time') AS status,
         IFNULL(ou.hours, 0) AS hours
     FROM attendance a
-    LEFT JOIN overtime_undertime_logs ou 
+    LEFT JOIN overtime_undertime_logs ou
         ON a.employee_id = ou.employee_id AND a.date = ou.date
     WHERE a.employee_id = ?
     ORDER BY a.date DESC
@@ -43,13 +42,13 @@ $query = "
 
 // Check if the user has an auto timeout on their last attendance record
 $check_query = "
-    SELECT status FROM attendance 
-    WHERE employee_id = ? 
-    ORDER BY date DESC, time_in DESC 
+    SELECT status FROM attendance
+    WHERE employee_id = ?
+    ORDER BY date DESC, time_in DESC
     LIMIT 1
 ";
 $check_stmt = $conn->prepare($check_query);
-$check_stmt->bind_param("i", $employee_id);
+$check_stmt->bind_param("s", $employee_id);
 $check_stmt->execute();
 $check_result = $check_stmt->get_result();
 $last_attendance = $check_result->fetch_assoc();
@@ -65,11 +64,13 @@ if ($auto_timeout_applied && !isset($_SESSION['auto_timeout_alert_shown'])) {
 
 $stmt = $conn->prepare($query);
 if (!$stmt) {
-    die("Query preparation failed: " . $conn->error);
+    error_log("Attendance query preparation failed: " . $conn->error);
+    http_response_code(500);
+    die("Attendance data is temporarily unavailable.");
 }
 
 // Bind the employee_id to the prepared statement
-$stmt->bind_param("i", $employee_id);
+$stmt->bind_param("s", $employee_id);
 $stmt->execute();
 $result = $stmt->get_result();
 ?>
@@ -97,7 +98,7 @@ $result = $stmt->get_result();
     </style>
 </head>
 <body style="overflow: hidden;">
-  
+
 
     <div style="position: absolute; top: 7px; left: 20px; z-index: 1000;">
         <a href="dashboard.php" class="btn btn-secondary">
@@ -136,8 +137,6 @@ $result = $stmt->get_result();
         <h2 class="mb-4 text-center fw-bold" style="color: black; letter-spacing: 1px;">
             Welcome, <?php echo htmlspecialchars($staffData['username']); ?>
         </h2>
-
-        <div class="d-flex flex-wrap justify-content-center gap-3 mb-4">
 
         <div class="d-flex flex-wrap justify-content-center gap-3 mb-4">
             <button class="btn btn-success btn-lg shadow-sm" onclick="openClockInModal()">
@@ -213,14 +212,14 @@ $result = $stmt->get_result();
                                 }
 
                                 $scheduleQuery = "
-                                SELECT day_of_week, required_hours 
-                                FROM work_schedules 
-                                WHERE employee_id = ? 
+                                SELECT day_of_week, required_hours
+                                FROM work_schedules
+                                WHERE employee_id = ?
                                 ORDER BY FIELD(day_of_week, 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday')
                                 ";
 
                                 $stmt = $conn->prepare($scheduleQuery);
-                                
+
                                 if ($stmt) {
                                     $stmt->bind_param("s", $_SESSION['employee_id']);
                                     $stmt->execute();
@@ -235,7 +234,8 @@ $result = $stmt->get_result();
 
                                     $stmt->close();
                                 } else {
-                                    echo "<tr><td colspan='2'>Error fetching schedule: " . $conn->error . "</td></tr>";
+                                    error_log('Schedule query failed: ' . $conn->error);
+                                    echo "<tr><td colspan='2'>Schedule data is temporarily unavailable.</td></tr>";
                                 }
                                 ?>
                             </tbody>
@@ -278,7 +278,7 @@ $result = $stmt->get_result();
                                                   WHERE a.employee_id = ?";
 
                                         $stmt = $conn->prepare($query);
-                                        $stmt->bind_param("i", $employee_id);
+                                        $stmt->bind_param("s", $employee_id);
                                         $stmt->execute();
                                         $result = $stmt->get_result();
 
@@ -355,7 +355,7 @@ document.addEventListener('DOMContentLoaded', function() {
     let capturedImage = null;
 
 
-    
+
     // Check if already clocked in before opening modal
     async function checkClockInStatus() {
         try {
@@ -412,10 +412,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
            // Capture current frame
            context.drawImage(video, 0, 0, canvas.width, canvas.height);
-        
+
         // Draw video frame on canvas
         context.drawImage(video, 0, 0, canvas.width, canvas.height);
-        
+
         // Convert image to Base64
         capturedImage = canvas.toDataURL('image/png');
 
@@ -526,7 +526,8 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         <?php endif; ?>
         updateAttendanceTable();
-        setInterval(autoClockOut, 1000); // Check every second if it's time to auto clock out
+        autoClockOut();
+        autoBreakOut();
     });
 
     function updateAttendanceTable() {
@@ -553,86 +554,73 @@ document.addEventListener('DOMContentLoaded', function() {
             .catch(error => console.error('Error fetching attendance:', error));
     }
 
-    function clockAction(action) {
+    async function clockAction(action) {
+        const labels = {
+            clock_out: 'Clock out',
+            break_in: 'Break in',
+            break_out: 'Break out'
+        };
+        const title = labels[action] || 'Attendance';
         const now = new Date();
-        const options = { 
-            timeZone: 'Asia/Manila', 
-            year: 'numeric', month: '2-digit', day: '2-digit', 
-            hour: '2-digit', minute: '2-digit', second: '2-digit', 
-            hour12: false 
+        const options = {
+            timeZone: 'Asia/Manila',
+            year: 'numeric', month: '2-digit', day: '2-digit',
+            hour: '2-digit', minute: '2-digit', second: '2-digit',
+            hour12: false
         };
 
         let formatter = new Intl.DateTimeFormat('en-CA', options);
         let parts = formatter.formatToParts(now);
         let formattedTime = `${parts[0].value}-${parts[2].value}-${parts[4].value} ${parts[6].value}:${parts[8].value}:${parts[10].value}`;
 
-        fetch(`${action}.php`, {
-            method: "POST",
-            headers: { "Content-Type": "application/x-www-form-urlencoded" },
-            body: "client_time=" + encodeURIComponent(formattedTime)
-        })
-        .then(response => response.text())
-        .then(data => {
-            Swal.fire({
-                title: `${action.replace('_', ' ')} status`,
-                text: data,
-                icon: data.includes("✅") ? "success" : "error"
-            }).then(() => {
-                if (data.includes("✅")) {
-                    updateAttendanceTable();
-                }
+        try {
+            const response = await fetch(`${action}.php`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'Accept': 'application/json'
+                },
+                body: 'client_time=' + encodeURIComponent(formattedTime)
             });
-        });
-    }
+            const contentType = response.headers.get('content-type') || '';
+            if (!contentType.includes('application/json')) {
+                throw new Error('The attendance service returned an unexpected response.');
+            }
 
-function clockIn() { clockAction('Clock_in'); }
-function clockOut() { clockAction('Clock_out'); }
-function breakIn() { clockAction('Break_in'); }
-function breakOut() { clockAction('Break_out'); }
+            const result = await response.json();
+            await Swal.fire({
+                title: `${title} status`,
+                text: result.message || 'The attendance action could not be completed.',
+                icon: response.ok && result.success ? 'success' : 'error',
+                confirmButtonText: 'OK'
+            });
 
-function autoClockOut() {
-    let defaultTimeout = "23:59:59"; // Ensure this matches the designated timeout in PHP
-
-    let now = new Date();
-    let currentTime = now.toTimeString().split(" ")[0]; // Get HH:MM:SS format
-
-    if (currentTime === defaultTimeout) {
-        fetch('auto_clock_out.php')
-            .then(response => response.text())
-            .then(data => showNotification(data));
-    }
-}
-
-function autoBreakOut() {
-    let breakOutTime = "09:32:00"; // Default break-out time
-
-    function checkTime() {
-        let now = new Date();
-        let currentTime = now.toTimeString().split(" ")[0]; // Get HH:MM:SS format
-
-        console.log("🔄 Checking auto break-out time: " + currentTime); // Debugging
-
-        if (currentTime === breakOutTime) {
-            console.log("⏳ Triggering auto break-out...");
-            
-            fetch('auto_break_out.php')
-                .then(response => response.text())
-                .then(data => {
-                    console.log("✅ Response received:", data);
-                    showNotification(data); // Ensure showNotification exists
-                })
-                .catch(error => console.error("❌ Error fetching logics/auto_break_out.php:", error));
-        } else {
-            // Keep checking every second
-            setTimeout(checkTime, 1000);
+            if (response.ok && result.success) {
+                updateAttendanceTable();
+            }
+        } catch (error) {
+            console.error(`${title} failed:`, error);
+            await Swal.fire({
+                title: `${title} status`,
+                text: 'The attendance service is unavailable. Please refresh the page and try again.',
+                icon: 'error',
+                confirmButtonText: 'OK'
+            });
         }
     }
 
-    checkTime(); // Start checking time
+function clockIn() { clockAction('clock_in'); }
+function clockOut() { clockAction('clock_out'); }
+function breakIn() { clockAction('break_in'); }
+function breakOut() { clockAction('break_out'); }
+
+function autoClockOut() {
+    fetch('auto_clock_out.php', { method: 'POST' }).catch(() => undefined);
 }
 
-// Run the function when the page loads
-window.onload = autoBreakOut;
+function autoBreakOut() {
+    fetch('auto_break_out.php', { method: 'POST' }).catch(() => undefined);
+}
 
 
 // ✅ Define showNotification function

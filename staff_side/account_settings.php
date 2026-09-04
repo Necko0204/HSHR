@@ -1,6 +1,5 @@
 <?php
-session_name('staff_session');
-session_start();
+require_once __DIR__ . '/includes/staff_session.php';
 include 'staff_helper.php';
 include 'db_config.php';
 
@@ -25,7 +24,7 @@ $employee_id = $_SESSION['employee_id'];
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
     <link rel="stylesheet" href="styles.css">
-    
+
 </head>
 <body>
 
@@ -37,7 +36,7 @@ $employee_id = $_SESSION['employee_id'];
 <div style="position: absolute; top: 7px; left: 20px; z-index: 1000;">
     <a href="dashboard.php" class="btn btn-secondary">
         <i class="fa fa-arrow-left"></i> Back to Dashboard
-    </a>    
+    </a>
 </div>
 <main class="wrapper d-flex justify-content-center align-items-center text-center" style="min-height: 100vh; overflow: hidden;">
     <!-- Background Editor -->
@@ -76,7 +75,7 @@ document.addEventListener("DOMContentLoaded", function() {
     shapesContainer.classList.add('floating-container');
     document.body.appendChild(shapesContainer);
     const navbar = document.querySelector(".navbar");
-    
+
     // Load saved preferences
     const savedBgColorStart = localStorage.getItem("bgColorStart");
     const savedBgColorEnd = localStorage.getItem("bgColorEnd");
@@ -96,7 +95,7 @@ document.addEventListener("DOMContentLoaded", function() {
         toggleShapes.checked = savedShapesEnabled === "true";
         shapesContainer.style.display = toggleShapes.checked ? "block" : "none";
     }
-    
+
     function updateBackground() {
         shapesContainer.style.background = `linear-gradient(120deg, ${bgColorStartPicker.value}, ${bgColorEndPicker.value})`;
         localStorage.setItem("bgColorStart", bgColorStartPicker.value);
@@ -104,12 +103,12 @@ document.addEventListener("DOMContentLoaded", function() {
     }
     bgColorStartPicker.addEventListener("input", updateBackground);
     bgColorEndPicker.addEventListener("input", updateBackground);
-    
+
     toggleShapes.addEventListener("change", function() {
         shapesContainer.style.display = toggleShapes.checked ? "block" : "none";
         localStorage.setItem("shapesEnabled", toggleShapes.checked);
     });
-    
+
     navbarColorPicker.addEventListener("input", function() {
         navbar.style.backgroundColor = navbarColorPicker.value;
         localStorage.setItem("navbarColor", navbarColorPicker.value);

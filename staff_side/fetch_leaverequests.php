@@ -1,22 +1,25 @@
 <?php
-session_name('staff_session');
-session_start();
+require_once __DIR__ . '/includes/staff_session.php';
+header('Content-Type: application/json; charset=utf-8');
+header('Cache-Control: no-store, max-age=0');
 
-ini_set('display_errors', '1');
-ini_set('display_startup_errors', '1');
+ini_set('display_errors', '0');
+ini_set('display_startup_errors', '0');
 error_reporting(E_ALL);
 
 include 'db_config.php';
 
-if (!isset($_SESSION['employee_id']) || $_SESSION['role'] !== 'staff') {
-    die("Unauthorized access.");
+if (!isset($_SESSION['employee_id']) || !in_array(strtolower((string) ($_SESSION['role'] ?? '')), ['staff', 'intern'], true)) {
+    http_response_code(401);
+    echo json_encode(['error' => 'Authentication required.']);
+    exit;
 }
 
 $employee_id = $_SESSION['employee_id'];
 
 // Fetch leave requests for the logged-in employee
 $query = "
-    SELECT lr.*, lt.leave_name 
+    SELECT lr.*, lt.leave_name
     FROM leave_requests lr
     LEFT JOIN leave_types lt ON lr.leave_type_id = lt.leave_type_id
     WHERE lr.employee_id = ?

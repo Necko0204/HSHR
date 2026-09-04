@@ -1,0 +1,10 @@
+.git
+.env
+.vscode
+node_modules
+vendor
+uploads
+applicants_uploads
+staff_side/uploads
+*-key.pem
+database.sql

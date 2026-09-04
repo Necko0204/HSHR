@@ -1,6 +1,5 @@
 <?php
-session_name('admin_session');
-session_start();
+require_once __DIR__ . '/includes/admin_page.php';
 
 include 'includes/breadcrumb.php';
 include 'db_config.php';
@@ -74,11 +73,11 @@ if (!isset($_SESSION['admin_id'])) {
                         <thead class="table-light">
                             <tr>
                                 <th style="min-width: 150px;">Applicant No.</th>
-                                <th style="min-width: 150px;">Last Name</th>    
+                                <th style="min-width: 150px;">Last Name</th>
                                 <th style="min-width: 150px;">First Name</th>
                                 <th style="min-width: 150px;">Middle Name</th>
                                 <th style="min-width: 150px;">Email</th>
-                                <th style="min-width: 150px;">Gender</th>   
+                                <th style="min-width: 150px;">Gender</th>
                                 <th style="min-width: 150px;">Date of Birth</th>
                                 <th style="min-width: 150px;">Contact</th>
                                 <th style="min-width: 150px;">Resume</th>
@@ -95,13 +94,13 @@ if (!isset($_SESSION['admin_id'])) {
                                     <td><?= htmlspecialchars($row["firstname"]) ?></td>
                                     <td><?= htmlspecialchars($row["middlename"]) ?></td>
                                     <td><?= htmlspecialchars($row["email"]) ?></td>
-                                    <td><?= htmlspecialchars($row["gender"]) ?></td> 
+                                    <td><?= htmlspecialchars($row["gender"]) ?></td>
                                     <td><?= htmlspecialchars($row["dateofbirth"]) ?></td>
                                     <td><?= htmlspecialchars($row["contact"]) ?></td>
-                                    <td><a href="<?= htmlspecialchars($row["resume_path"]) ?>" target="_blank">View Resume</a></td>
+                                    <td><a href="includes/admin_download.php?type=resume&amp;id=<?= rawurlencode((string) $row['applicant_id']) ?>" target="_blank" rel="noopener">View Resume</a></td>
                                     <td><?= htmlspecialchars($row["submitted_at"]) ?></td>
                                     <td>
-                                        <?php 
+                                        <?php
                                                 $status = htmlspecialchars($row["status"]);
                                                 $badgeClass = "";
                                                 $displayText = $status; // Default display text
@@ -125,8 +124,8 @@ if (!isset($_SESSION['admin_id'])) {
                                     </td>
                                     <td>
                                         <?php if (strtolower($row["status"]) !== "for_interview"): ?>
-                                            <button type="button" class="btn btn-primary btn-sm scheduleBtn" 
-                                                data-bs-toggle="modal" 
+                                            <button type="button" class="btn btn-primary btn-sm scheduleBtn"
+                                                data-bs-toggle="modal"
                                                 data-bs-target="#scheduleModal"
                                                 data-applicant-id="<?= htmlspecialchars($row["applicant_id"]) ?>"
                                                 data-email="<?= htmlspecialchars($row["email"]) ?>">
@@ -135,7 +134,7 @@ if (!isset($_SESSION['admin_id'])) {
                                         <?php endif; ?>
                                         <?php if (strtolower($row["status"]) === "for_interview"): ?>
                                             <button type="button" class="btn btn-success btn-sm acceptBtn text-white"
-                                                data-bs-toggle="modal" 
+                                                data-bs-toggle="modal"
                                                 data-bs-target="#acceptModal"
                                                 data-applicant-id="<?= htmlspecialchars($row["applicant_id"]) ?>"
                                                 data-email="<?= htmlspecialchars($row["email"]) ?>">
@@ -143,7 +142,7 @@ if (!isset($_SESSION['admin_id'])) {
                                             </button>
                                         <?php endif; ?>
                                         <button type="button" class="btn btn-danger btn-sm rejectBtn text-white"
-                                            data-bs-toggle="modal" 
+                                            data-bs-toggle="modal"
                                             data-bs-target="#rejectModal"
                                             data-applicant-id="<?= htmlspecialchars($row["applicant_id"]) ?>"
                                             data-email="<?= htmlspecialchars($row["email"]) ?>">
@@ -203,7 +202,7 @@ if (!isset($_SESSION['admin_id'])) {
                 <form id="scheduleForm" action="send_schedule.php" method="post">
                     <input type="hidden" id="schdle_applicant_id" name="applicant_id">
                     <input type="hidden" id="schdle_email" name="email">
-                    
+
                     <div class="mb-3">
                         <label for="schedule" class="form-label">Choose a schedule:</label>
                         <input type="text" id="schedule" name="schedule" class="form-control" placeholder="Set Schedule">
@@ -308,7 +307,7 @@ if (!isset($_SESSION['admin_id'])) {
                                                 <td><?= htmlspecialchars($row["gender"]) ?></td>
                                                 <td><?= htmlspecialchars($row["dateofbirth"]) ?></td>
                                                 <td><?= htmlspecialchars($row["contact"]) ?></td>
-                                                <td><a href="<?= htmlspecialchars($row["resume_path"]) ?>" target="_blank">View Resume</a></td>
+                                                <td><a href="includes/admin_download.php?type=resume&amp;id=<?= rawurlencode((string) $row['applicant_id']) ?>" target="_blank" rel="noopener">View Resume</a></td>
                                                 <td><?= htmlspecialchars($row["submitted_at"]) ?></td>
                                                 <td><span class="badge bg-success text-white">Accepted</span></td>
                                             </tr>
@@ -356,7 +355,7 @@ if (!isset($_SESSION['admin_id'])) {
                                                 <td><?= htmlspecialchars($row["gender"]) ?></td>
                                                 <td><?= htmlspecialchars($row["dateofbirth"]) ?></td>
                                                 <td><?= htmlspecialchars($row["contact"]) ?></td>
-                                                <td><a href="<?= htmlspecialchars($row["resume_path"]) ?>" target="_blank">View Resume</a></td>
+                                                <td><a href="includes/admin_download.php?type=resume&amp;id=<?= rawurlencode((string) $row['applicant_id']) ?>" target="_blank" rel="noopener">View Resume</a></td>
                                                 <td><?= htmlspecialchars($row["submitted_at"]) ?></td>
                                                 <td><span class="badge bg-danger text-white">Rejected</span></td>
                                             </tr>
@@ -466,8 +465,6 @@ if (scheduleInput) {
             let applicantId = this.getAttribute('data-applicant-id');
             let email = this.getAttribute('data-email');
 
-            console.log('Applicant ID:', applicantId); // Debugging to confirm data
-            console.log('Email:', email);
 
             // Set the form values
             document.getElementById('applicant_id').value = applicantId;
@@ -562,7 +559,6 @@ document.getElementById("scheduleForm").addEventListener("submit", function (eve
 
         let formData = new FormData(this);
         let applicantId = formData.get('applicant_id');
-        console.log('Applicant ID:', applicantId); // Log the applicant ID to confirm it's being captured
 
         let acceptBtn = document.getElementById('acceptBtn');
         let btnText = acceptBtn.querySelector('.btn-text');
@@ -577,7 +573,6 @@ document.getElementById("scheduleForm").addEventListener("submit", function (eve
         })
         .then(response => response.json()) // Expecting JSON response
         .then(data => {
-            console.log('Response:', data); // Log the response from the server
             if (data.success) {
                 toastr.success(data.message || 'Applicant accepted successfully!', 'Success');
                 setTimeout(() => {

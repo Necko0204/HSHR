@@ -1,1111 +1,140 @@
 <?php
-session_name('admin_session');
-session_start();
-?>
+declare(strict_types=1);
 
+require_once __DIR__ . '/includes/admin_session.php';
+
+if (!empty($_SESSION['admin_id'])) {
+    header('Location: dashboard.php');
+    exit;
+}
+
+$adminLoginCssVersion = (string) filemtime(__DIR__ . '/assets/css/admin-login.css');
+$adminLoginJsVersion = (string) filemtime(__DIR__ . '/assets/js/admin-login.js');
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="icon" type="image/png" href="images/asdasdasd123123123123123.jpg">
-    <title>Holy Spirit Human Resource</title>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.css">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
-    <style>
-        /* Default Fullscreen Layout */
-        body {
-            font-family: 'Poppins', 'Arial', sans-serif;
-            margin: 0;
-            height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: linear-gradient(135deg, rgb(0, 0, 0), rgb(0, 0, 0));
-            background-attachment: fixed;
-            background-size: cover;
-            background-position: center;
-            overflow: hidden;
-            color: white;
-            position: relative;
-        }
-
-        /* Subtle Overlay for Better Contrast */
-        body::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(37, 37, 37, 0.3);
-            z-index: -1;
-        }
-
-        /* Animated Background Effect */
-        @keyframes backgroundAnimation {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
-        }
-
-
-
-        #particles-js {
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            z-index: -1;
-        }
-
-        canvas {
-            position: fixed;
-            width: 100%;
-            height: 100%;
-        }
-
-        a {
-            position: absolute;
-            bottom: 2vmin;
-            right: 2vmin;
-            color: rgba(255,255,255,0.2);
-            text-decoration: none;
-        }
-
-        a:hover {
-        color: #fff;
-        }
-
-        body::after {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: radial-gradient(circle, #0a0a0a, #000000); 
-            /* background: linear-gradient(135deg, #000000da, #DC143C); */
-            z-index: -2;
-            animation: backgroundAnimation 15s infinite alternate ease-in-out;
-        }
-        .login-card h2{
-            font-weight: bold;
-        }
-
-        /* BLACK TEXT */
-        .login-card h2,
-        .login-card hr,
-        .login-card label,
-        .login-card a,
-        .form-label,
-        .form-check-label {
-            color: black;
-        }
-
-        /* Login card positioned to the right and fits the whole screen height */
-        .login-card {
-            background: white;
-            backdrop-filter: blur(20px);
-            border-radius: 2px 0 0 2px; /* Rounded corners on the left side */
-            padding: 40px;
-            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.3);
-            width: 30%; /* Takes up 30% of the screen width */
-            height: 100vh; /* Takes up the full height of the screen */
-            z-index: 2;
-            text-align: center;
-            margin-left: auto; /* Pushes it to the right */
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-        }
-        .login-card h1 {
-            font-size: 2.8em;
-            color: #000;
-            margin-bottom: 30px;
-            font-weight: 600;
-            letter-spacing: 1px;
-        }
-
-        /* School Logo and Title */
-        .logo {
-            display: flex;
-            justify-content: center;
-            margin-bottom: 20px;
-        }
-
-        .logo img {
-            width: 175px;
-            height: 175px;
-            border-radius: 50%;
-        }
-
-        /* Input Fields */
-        .form-control {
-            background: rgba(255, 255, 255, 0.1);
-            color: black; /* Input text */
-            border-radius: 8px;
-            padding: 15px;
-            font-size: 1em;
-            transition: all 0.3s ease;
-        }
-
-        /* Hover & Focus - Unified Styles */
-        .form-control:hover,
-        .form-control:focus {
-            border-color: rgb(100, 100, 100); /* Subtle dark gray border */
-            background: rgba(255, 255, 255, 0.15); /* Slightly lighter background */
-            box-shadow: 0 0 5px rgba(100, 100, 100, 0.3); /* Soft glow */
-            outline: none;
-        }
-
-
-        /* Submit Button - Now Matches Google Sign-in Button */
-        .btn-primary {
-            background-color: rgb(255, 255, 255); /* White background */
-            border: 1px solid #ddd; /* Same border as Google button */
-            color: #000; /* Black text for contrast */
-            padding: 15px;
-            font-size: 1.1em;
-            text-transform: uppercase;
-            border-radius: 8px;
-            transition: all 0.3s ease-in-out;
-            width: 100%;
-            font-weight: bold;
-        }
-
-        .btn-primary:hover {
-            color: black;
-            background-color: #f1f1f1;
-            transform: scale(1.05);
-        }
-        /* Custom Scrollbar */
-        ::-webkit-scrollbar {
-            width: 10px;
-        }
-
-        ::-webkit-scrollbar-thumb {
-            background-color: rgba(255, 75, 75, 0.8);
-            border-radius: 10px;
-        }
-
-        ::-webkit-scrollbar-track {
-            background-color: rgba(0, 0, 0, 0.2);
-        }
-
-        /* Animated Boxes */
-        .box-container {
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            overflow: hidden;
-            z-index: -1;
-        }
-
-        .box {
-            position: absolute;
-            width: 60px;
-            height: 60px;
-            background: linear-gradient(135deg, #D3D3D3, #A9A9A9); /* Gray color */
-            border-radius: 12px;
-            animation: moveBox 12s infinite linear alternate, pulseBox 3s infinite ease-in-out;
-            box-shadow: 0 0 15px rgba(169, 169, 169, 0.5);
-        }
-
-        @keyframes moveBox {
-            0% { transform: translateY(0); }
-            100% { transform: translateY(120px); }
-        }
-
-        @keyframes pulseBox {
-            0%, 100% { transform: scale(1); opacity: 0.8; }
-            50% { transform: scale(1.4); opacity: 0.3; }
-        }
-
-        .forgot-password {
-            display: block;
-            margin-top: 10px;
-            font-size: 14px;
-            color: #007bff;
-            text-decoration: none;
-        }
-
-        .forgot-password:hover {
-            text-decoration: underline;
-        }
-         /* Google Sign-in Button */
-        .google-signin-btn {
-            background-color: white;
-            border: 1px solid #ddd;
-            padding: 12px;
-            font-size: 1em;
-            width: 100%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-            border-radius: 8px;
-            transition: all 0.3s ease-in-out;
-            font-weight: bold;
-        }
-
-        .google-signin-btn:hover {
-            background-color: #f1f1f1;
-            transform: scale(1.05);
-        }
-
-        .google-logo {
-            width: 20px;
-            height: 20px;
-        }
-        /* Center the spinner and checkmark in the button */
-        .spinner-border, .check-icon {
-            margin-right: 8px;
-        }
-
-        /* Checkmark styling */
-        .check-icon {
-            font-size: 1.2em;
-            color: white;
-        }
-
-.forgot-password {
-    display: block;
-    margin-top: 10px;
-    font-size: 14px;
-    color: #007bff;
-    text-decoration: none;
-}
-
-.forgot-password:hover {
-    text-decoration: underline;
-}
-
-/* Google Sign-in Button */
-.google-signin-btn {
-    background-color: white;
-    border: 1px solid #ddd;
-    padding: 12px;
-    font-size: 1em;
-    width: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
-    border-radius: 8px;
-    transition: all 0.3s ease-in-out;
-    font-weight: bold;
-}
-
-.google-signin-btn:hover {
-    background-color: #f1f1f1;
-    transform: scale(1.05);
-}
-
-.google-logo {
-    width: 20px;
-    height: 20px;
-}
-
-/* Center the spinner and checkmark in the button */
-.spinner-border, .check-icon {
-    margin-right: 8px;
-}
-
-/* Checkmark styling */
-.check-icon {
-    font-size: 1.2em;
-    color: white;
-}
-
-
-/* Responsive Design for 1366px and Smaller Screens */
-@media (max-width: 1366px) {
-    body {
-        font-family: 'Poppins', 'Arial', sans-serif;
-        margin: 0;
-        height: 100vh;
-        display: flex;
-        align-items: center;
-        justify-content: flex-end; /* Aligns everything to the right */
-        background: linear-gradient(135deg, #2c0202, #000);
-        background-attachment: fixed;
-        background-size: cover;
-        background-position: center;
-        overflow: hidden;
-        position: relative;
-        padding-right: 5%; /* Adjust spacing from the right */
-        display: flex;
-        align-items: center;
-        justify-content: flex-end;
-        width: 100vw; /* Ensures full viewport width */
-        height: 100vh; /* Ensures full viewport height */
-        padding: 0; /* Remove padding */
-        margin: 0;
-    }
-    .login-card {
-        background: white;
-        border-radius: 8px;
-        padding: 40px;
-        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-        width: 30%;
-        max-width: 400px;
-        text-align: center;
-        overflow-y: auto;
-        position: absolute;
-        overflow: hidden;
-    }
-
-    .login-card h2 {
-        font-size: 18px;
-        margin-bottom: 15px;
-    }
-
-    .logo img {
-        width: 80px;
-        height: 80px;
-    }
-
-    .form-control {
-        border-radius: 6px;
-        padding: 8px;
-        font-size: 0.85em;
-    }
-
-    .btn-primary,
-    .google-signin-btn {
-        padding: 12px;
-        font-size: 1em;
-        border-radius: 6px;
-    }
-
-    .google-logo {
-        width: 20px;
-        height: 20px;
-    }
-
-    .forgot-password {
-        font-size: 12px;
-    }
-}
-
-
-@media (max-width: 1280px) {
-    .login-card {
-        width: 50%;
-        padding: 25px;
-    }
-}
-
-@media (max-width: 1024px) {
-    .login-card {
-        width: 60%;
-    }
-}
-
-@media (max-width: 768px) {
-    body {
-        justify-content: center;
-        align-items: center;
-    }
-
-    .login-card {
-        width: 90%;
-        height: auto;
-        padding: 20px;
-    }
-
-    .form-control {
-        font-size: 0.9em;
-        padding: 12px;
-    }
-
-    .btn-primary {
-        font-size: 1em;
-        padding: 12px;
-    }
-}
-
-@media (max-width: 480px) {
-    .login-card {
-        width: 95%;
-        padding: 15px;
-    }
-
-    .login-card h1 {
-        font-size: 1.8rem;
-    }
-}
-
-      /* Responsive Design for Mobile Devices */
-@media (max-width: 768px) {
-    /* Center the login card on mobile */
-    body {
-        justify-content: center;
-        align-items: center;
-    }
-
-    .login-card {
-        width: 90%;
-        height: auto;
-        padding: 20px;
-        margin-left: 0;
-        border-radius: 10px;
-    }
-
-    .login-card h1 {
-        font-size: 2em;
-    }
-
-    .form-control {
-        font-size: 0.9em;
-        padding: 12px;
-    }
-
-    .btn-primary {
-        font-size: 1em;
-        padding: 12px;
-    }
-}
-
-/* Responsive Design for 1366px Monitor Screens */
-@media (min-width: 1024px) and (max-width: 1366px) {
-    .login-card {
-        width: 40%;
-        padding: 30px;
-        margin-left: auto;
-        margin-right: auto;
-        border-radius: 8px;
-    }
-
-    .login-card h1 {
-        font-size: 2.5em;
-    }
-
-    .form-control {
-        font-size: 1em;
-        padding: 14px;
-    }
-
-    .btn-primary {
-        font-size: 1.1em;
-        padding: 14px;
-    }
-}
-
-/* #vanta-bg {
-            width: 100vw;
-            height: 100vh;
-            position: absolute;
-            top: 0;
-            left: 0;
-            z-index: -1;
-        } */
-
-</style>
-
-<body>
-<!-- <canvas></canvas> -->
-<!-- <div class="box-container"></div> -->
-<!-- <div id="vanta-bg"></div> -->
-<div id="particles-js"></div>
-    <div class="login-card">
-        <div class="logo">
-            <img src="images/asdasdasd123123123123123.jpg" alt="School Logo">
-        </div>
-        <h2>Holy Spirit Human Resource</h2>
-        <hr>
-        <form id="loginForm">
-            <!-- Honeypot Field for Spam Protection -->
-            <div style="display: none;">
-                <label for="honeypot">Leave this field empty</label>
-                <input type="text" id="honeypot" name="honeypot">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="theme-color" content="#09090b">
+    <meta name="description" content="Secure administrator access for Holy Spirit School of Imus Human Resources.">
+    <link rel="icon" type="image/jpeg" href="images/asdasdasd123123123123123.jpg">
+    <title>Administrator Access · Holy Spirit Human Resources</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+    <link rel="stylesheet" href="assets/css/admin-login.css?v=<?= rawurlencode($adminLoginCssVersion) ?>">
+</head>
+<body class="admin-login-page">
+    <main class="admin-login-shell">
+        <section class="admin-login-vision" aria-labelledby="adminVisionTitle">
+            <div class="vision-grid" aria-hidden="true"></div>
+            <svg class="vision-network" viewBox="0 0 1000 900" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+                <g class="network-lines">
+                    <path d="M40 155 L190 86 L315 190 L475 105 L610 214 L790 95 L950 180"/>
+                    <path d="M70 390 L220 275 L365 370 L520 265 L690 390 L845 275 L970 420"/>
+                    <path d="M20 650 L180 540 L330 675 L485 535 L650 690 L805 545 L980 660"/>
+                    <path d="M190 86 L220 275 L180 540 M315 190 L365 370 L330 675 M475 105 L520 265 L485 535 M610 214 L690 390 L650 690 M790 95 L845 275 L805 545"/>
+                    <path d="M40 155 L220 275 L315 190 L520 265 L610 214 L845 275 L950 180 M70 390 L180 540 L365 370 L485 535 L690 390 L805 545 L970 420"/>
+                </g>
+                <g class="network-nodes">
+                    <circle cx="40" cy="155" r="5"/><circle cx="190" cy="86" r="7"/><circle cx="315" cy="190" r="5"/><circle cx="475" cy="105" r="6"/><circle cx="610" cy="214" r="5"/><circle cx="790" cy="95" r="7"/><circle cx="950" cy="180" r="5"/>
+                    <circle cx="70" cy="390" r="6"/><circle cx="220" cy="275" r="5"/><circle cx="365" cy="370" r="7"/><circle cx="520" cy="265" r="5"/><circle cx="690" cy="390" r="6"/><circle cx="845" cy="275" r="5"/><circle cx="970" cy="420" r="7"/>
+                    <circle cx="20" cy="650" r="5"/><circle cx="180" cy="540" r="7"/><circle cx="330" cy="675" r="5"/><circle cx="485" cy="535" r="6"/><circle cx="650" cy="690" r="7"/><circle cx="805" cy="545" r="5"/><circle cx="980" cy="660" r="6"/>
+                </g>
+            </svg>
+
+            <header class="admin-vision-brand">
+                <img src="images/asdasdasd123123123123123.jpg" alt="Holy Spirit School of Imus seal">
+                <div><strong>Holy Spirit School of Imus</strong><span>Human Resources</span></div>
+            </header>
+
+            <div class="vision-content">
+                <span class="vision-eyebrow"><i class="fa-solid fa-shield-halved" aria-hidden="true"></i> Administrative command center</span>
+                <h1 id="adminVisionTitle">People operations,<br><em>connected.</em></h1>
+                <p>One secure workspace for workforce planning, employee records, attendance, payroll, and institutional decisions.</p>
+                <div class="vision-metrics" aria-label="Platform capabilities">
+                    <span><strong>01</strong>Unified records</span>
+                    <span><strong>02</strong>Live operations</span>
+                    <span><strong>03</strong>Secure access</span>
+                </div>
             </div>
-            
-            <div class="mb-3">
-                <label for="username" class="form-label">Username</label>
-                <input type="text" class="form-control" id="username" name="username" placeholder="Enter your username" required>
+
+            <footer class="vision-footer">
+                <div><span class="system-dot" aria-hidden="true"></span>Local HR system operational</div>
+                <span>HSSII HR · <?= date('Y') ?></span>
+            </footer>
+        </section>
+
+        <section class="admin-login-access" aria-labelledby="adminLoginTitle">
+            <div class="admin-mobile-brand">
+                <img src="images/asdasdasd123123123123123.jpg" alt="">
+                <div><strong>Holy Spirit</strong><span>Administrator Portal</span></div>
             </div>
-            <div class="mb-3">
-                <label for="password" class="form-label">Password</label>
-                <div class="input-group">
-                    <input type="password" class="form-control" id="password" name="password" placeholder="Enter your password" required>
-                    <button type="button" class="btn btn-outline-secondary" id="togglePassword">
-                        <i class="fa fa-eye" id="toggleIcon"></i>
+
+            <div class="admin-access-card">
+                <header class="admin-access-heading">
+                    <span class="admin-access-icon" aria-hidden="true"><i class="fa-solid fa-key"></i></span>
+                    <span class="admin-access-kicker">Administrator access</span>
+                    <h2 id="adminLoginTitle">Sign in securely</h2>
+                    <p>Use your authorized administrator account to continue.</p>
+                </header>
+
+                <div class="admin-login-alert" data-admin-login-alert role="alert" aria-live="polite" hidden></div>
+
+                <form id="adminLoginForm" class="admin-login-form" method="POST" action="login_logic.php" novalidate>
+                    <?= hshr_csrf_field() ?>
+                    <div class="honeypot-field" aria-hidden="true" hidden>
+                        <label for="website">Website</label><input type="text" id="website" name="website" tabindex="-1" autocomplete="off">
+                    </div>
+
+                    <label class="admin-field" for="username">
+                        <span>Username</span>
+                        <span class="admin-field-control">
+                            <i class="fa-regular fa-user" aria-hidden="true"></i>
+                            <input type="text" id="username" name="username" placeholder="Enter your username" autocomplete="username" autocapitalize="none" spellcheck="false" required>
+                        </span>
+                        <small data-admin-field-error="username"></small>
+                    </label>
+
+                    <label class="admin-field" for="password">
+                        <span>Password</span>
+                        <span class="admin-field-control">
+                            <i class="fa-solid fa-lock" aria-hidden="true"></i>
+                            <input type="password" id="password" name="password" placeholder="Enter your password" autocomplete="current-password" required>
+                            <button type="button" class="admin-password-toggle" data-admin-password-toggle aria-label="Show password" aria-pressed="false"><i class="fa-regular fa-eye" aria-hidden="true"></i></button>
+                        </span>
+                        <small data-admin-field-error="password"></small>
+                        <small class="admin-caps-note" data-admin-caps-lock hidden><i class="fa-solid fa-arrow-up" aria-hidden="true"></i> Caps Lock is on</small>
+                    </label>
+
+                    <div class="admin-form-options">
+                        <label class="admin-remember"><input type="checkbox" name="remember_username" value="1" data-admin-remember><span aria-hidden="true"></span> Remember username</label>
+                        <button type="button" data-admin-recovery>Forgot password?</button>
+                    </div>
+
+                    <button type="submit" class="admin-login-button" data-admin-login-button>
+                        <span data-admin-button-label>Continue to dashboard</span>
+                        <i class="fa-solid fa-arrow-right" aria-hidden="true"></i>
+                        <i class="fa-solid fa-circle-notch fa-spin admin-button-spinner" aria-hidden="true"></i>
                     </button>
-                </div>
+
+                    <div class="admin-divider"><span>or continue with</span></div>
+
+                    <button type="button" class="admin-google-button" data-admin-google>
+                        <img src="images/google-logo-9825.png" alt="">
+                        Google Workspace
+                    </button>
+                </form>
+
+                <div class="admin-security-note"><i class="fa-solid fa-lock" aria-hidden="true"></i><span><strong>Restricted system</strong>Administrator activity is session-protected and separated from staff access.</span></div>
             </div>
-            <div class="d-flex justify-content-between align-items-center mb-3">
-                <div class="form-check">
-                    <input type="checkbox" class="form-check-input" id="rememberMe" name="rememberMe">
-                    <label class="form-check-label" for="rememberMe">Remember Me</label>
-                </div>
-                <a href="forgot-password.php" class="forgot-password">Forgot Password?</a>
-            </div>
-            <button type="submit" class="btn btn-primary" id="loginButton">
-                <div class="spinner-border spinner-border-sm d-none" id="loginSpinner" role="status"></div>
-                <span id="loginCheck" class="d-none">&#10004;</span>
-                <span id="loginError" class="cross-icon d-none">&#10006;</span> <!-- Cross icon for error -->
-                <span id="loginText">Login</span>
-            </button>
 
-            <hr>
-            <button class="btn google-signin-btn">
-                <img src="images/google-logo-9825.png" alt="Google logo" class="google-logo">
-                Sign in with Google
-            </button>
-        </form>
-    </div>
-    <!-- Toastr and jQuery -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/particles.js/2.0.0/particles.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
-    
-    <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/vanta/0.5.24/vanta.birds.min.js"></script>
-    <script>
-        VANTA.BIRDS({
-            el: "#vanta-bg",
-            mouseControls: true,
-            touchControls: true,
-            gyroControls: false,
-            minHeight: 200.00,
-            minWidth: 200.00,
-            scale: 1.00,
-            scaleMobile: 1.00,
-            backgroundColor: 0x600d1e, // Darker Crimson Background
-            backgroundAlpha: 1.0, // Transparent
-            color1: 0xdc143c, // Crimson Red Birds
-            color2: 0x143cf6,  // Blue Birds
-            colorMode: "varianceGradient",
-            quantity: 5,
-            birdSize: 1,
-            wingSpan: 30,
-            speedLimit: 5,
-            separation: 20,
-            alignment: 20,
-            cohesion: 20
-        });
-    </script> -->
+            <footer class="admin-access-footer"><span>© <?= date('Y') ?> Holy Spirit School of Imus, Inc.</span><span>Authorized administrators only</span></footer>
+        </section>
+    </main>
 
-    <script>
-        // Toggle password visibility
-        document.getElementById('togglePassword').addEventListener('click', function() {
-            var passwordInput = document.getElementById('password');
-            var toggleIcon = document.getElementById('toggleIcon');
-            
-            // Toggle the input type between password and text
-            if (passwordInput.type === 'password') {
-                passwordInput.type = 'text';
-                toggleIcon.classList.remove('fa-eye');
-                toggleIcon.classList.add('fa-eye-slash');
-            } else {
-                passwordInput.type = 'password';
-                toggleIcon.classList.remove('fa-eye-slash');
-                toggleIcon.classList.add('fa-eye');
-            }
-        });
-    </script>
-    <!-- <script>
-    document.getElementById("loginForm").addEventListener("submit", function(event) {
-        event.preventDefault(); // Prevent actual form submission
-
-        let loginButton = document.getElementById("loginButton");
-        let loginSpinner = document.getElementById("loginSpinner");
-        let loginCheck = document.getElementById("loginCheck");
-        let loginText = document.getElementById("loginText");
-
-        // Show spinner and disable button
-        loginSpinner.classList.remove("d-none");
-        loginText.textContent = "Logging in...";
-        loginButton.disabled = true;
-
-        // Simulate login process (replace with actual backend validation)
-        setTimeout(() => {
-            // Hide spinner
-            loginSpinner.classList.add("d-none");
-
-            // Show checkmark
-            loginCheck.classList.remove("d-none");
-            loginText.textContent = "Success";
-
-            // Change button to green
-            loginButton.style.backgroundColor = "green";
-            loginButton.style.border = "none";
-
-            // Add padding to ensure checkmark has space to show up
-            loginButton.style.paddingRight = "30px"; // Adjust space for checkmark
-
-            // Ensure the checkmark is visible by triggering a reflow
-            loginCheck.offsetHeight; // Trigger reflow
-
-            // Redirect after success
-            setTimeout(() => {
-                window.location.href = "dashboard.php"; // Change this to your actual page
-            }, 1500);
-        }, 2000);
-    });
-</script> -->
-    <script>
-        document.addEventListener("DOMContentLoaded", () => {
-            const boxContainer = document.querySelector(".box-container");
-            for (let i = 0; i < 20; i++) {
-                let box = document.createElement("div");
-                box.classList.add("box");
-                box.style.left = `${Math.random() * 100}vw`;
-                box.style.top = `${Math.random() * 100}vh`;
-                box.style.animationDelay = `${Math.random() * 5}s`;
-                boxContainer.appendChild(box);
-            }
-        });
-    </script>
-    <script>
-            toastr.options = {
-                closeButton: true,
-                progressBar: true,
-                timeOut: 1000, // 1 second
-                extendedTimeOut: 800, // Faster fade out after hover
-                showEasing: "swing",
-                hideEasing: "linear",
-                showMethod: "fadeIn",
-                hideMethod: "fadeOut"
-            };
-            document.getElementById("loginForm").addEventListener("submit", function(event) {
-    event.preventDefault(); // Prevent actual form submission
-
-    let loginButton = document.getElementById("loginButton");
-    let loginSpinner = document.getElementById("loginSpinner");
-    let loginCheck = document.getElementById("loginCheck");
-    let loginError = document.getElementById("loginError");
-    let loginText = document.getElementById("loginText");
-
-    // Show spinner and disable button
-    loginSpinner.classList.remove("d-none");
-    loginText.textContent = "Logging in...";
-    loginButton.disabled = true;
-
-    let username = document.getElementById("username").value;
-    let password = document.getElementById("password").value;
-
-    if (username === "" || password === "") {
-        toastr.error("Please fill in all fields!", "Error");
-        loginSpinner.classList.add("d-none");
-        loginButton.disabled = false;
-        return;
-    }
-
-    let formData = new FormData();
-    formData.append("username", username);
-    formData.append("password", password);
-
-    fetch("login_logic.php", {
-        method: "POST",
-        body: formData,
-        credentials: "include" // Ensures session cookies persist
-    })
-    .then(response => response.json())
-    .then(data => {
-        console.log("Response:", data); // Debugging line
-
-        // Hide spinner
-        loginSpinner.classList.add("d-none");
-
-        if (data.success) {
-            toastr.success("Login successful! Redirecting...", "Success");
-
-            // Show checkmark
-            loginCheck.classList.remove("d-none");
-            loginText.textContent = "Success";
-
-            // Change button to green
-            loginButton.style.backgroundColor = "green";
-            loginButton.style.border = "none";
-
-            // Add padding to ensure checkmark has space to show up
-            loginButton.style.paddingRight = "30px"; // Adjust space for checkmark
-
-            // Ensure the checkmark is visible by triggering a reflow
-            loginCheck.offsetHeight; // Trigger reflow
-
-            // Redirect after success
-            setTimeout(() => {
-                window.location.href = "dashboard.php";
-            }, 1000);
-        } else {
-            toastr.error(data.message, "Error");
-
-            // Show error icon
-            loginError.classList.remove("d-none");
-            loginText.textContent = "Failed";
-
-            // Change button to red
-            loginButton.style.backgroundColor = "red";
-            loginButton.style.border = "none";
-
-            // Add padding to ensure error icon has space to show up
-            loginButton.style.paddingRight = "30px"; // Adjust space for error icon
-
-            // Ensure the error icon is visible by triggering a reflow
-            loginError.offsetHeight; // Trigger reflow
-
-            // Re-enable button after showing error
-            setTimeout(() => {
-                loginButton.disabled = false;
-                loginError.classList.add("d-none");
-                loginText.textContent = "Login";
-                loginButton.style.backgroundColor = ""; // Reset button color
-                loginButton.style.paddingRight = ""; // Reset padding
-            }, 1500);
-        }
-    })
-    .catch(error => {
-        console.error("Error:", error);
-        toastr.error("Something went wrong!", "Error");
-        loginSpinner.classList.add("d-none");
-        loginButton.disabled = false;
-    });
-});
-        </script>
-        
-        <script>
-  particlesJS("particles-js", {
-    "particles": {
-        "number": {
-            "value": 300, // Balanced density to avoid overcrowding
-            "density": {
-                "enable": true,
-                "value_area": 1000
-            }
-        },
-        "color": {
-            "value": ["#00ffff", "#8a2be2", "#ffbf00", "#ffffff", "#ff007f", "#1e90ff"] // Cool tones + gold and white for contrast
-        },
-        "shape": {
-            "type": "circle",
-            "stroke": {
-                "width": 1,
-                "color": "#ffffff" // Subtle glow effect
-            }
-        },
-        "opacity": {
-            "value": 0.7,
-            "random": true,
-            "anim": {
-                "enable": true,
-                "speed": 1,
-                "opacity_min": 0.3,
-                "sync": false
-            }
-        },
-        "size": {
-            "value": 4,
-            "random": true,
-            "anim": {
-                "enable": true,
-                "speed": 2,
-                "size_min": 0.8,
-                "sync": false
-            }
-        },
-        "line_linked": {
-            "enable": true,
-            "distance": 150,
-            "color": "#ffbf00", // Gold for contrast against red
-            "opacity": 0.6,
-            "width": 1
-        },
-        "move": {
-            "enable": true,
-            "speed": 1.2, // Slow and smooth for elegance
-            "direction": "none",
-            "random": true,
-            "straight": false,
-            "out_mode": "out",
-            "bounce": false,
-            "attract": {
-                "enable": false,
-                "rotateX": 600,
-                "rotateY": 1200
-            }
-        }
-    },
-    "interactivity": {
-        "detect_on": "canvas",
-        "events": {
-            "onhover": {
-                "enable": true,
-                "mode": "bubble"
-            },
-            "onclick": {
-                "enable": true,
-                "mode": "explode"
-            },
-            "resize": true
-        },
-        "modes": {
-            "grab": {
-                "distance": 200,
-                "line_linked": {
-                    "opacity": 1
-                }
-            },
-            "bubble": {
-                "distance": 180,
-                "size": 8,
-                "duration": 1.5,
-                "opacity": 0.8,
-                "speed": 2
-            },
-            "repulse": {
-                "distance": 160,
-                "duration": 0.4
-            },
-            "push": {
-                "particles_nb": 8
-            },
-            "explode": {
-                "particles_nb": 18, // Slightly more particles for a noticeable pop
-                "distance": 250,
-                "duration": 0.6
-            },
-            "remove": {
-                "particles_nb": 3
-            }
-        }
-    },
-    "retina_detect": true
-});
-
-
-</script>
-
-
-    <!-- <script>const STAR_COLOR = '#fff';
-const STAR_SIZE = 3;
-const STAR_MIN_SCALE = 0.2;
-const OVERFLOW_THRESHOLD = 50;
-const STAR_COUNT = ( window.innerWidth + window.innerHeight ) / 8;
-
-const canvas = document.querySelector( 'canvas' ),
-      context = canvas.getContext( '2d' );
-
-let scale = 1, // device pixel ratio
-    width,
-    height;
-
-let stars = [];
-
-let pointerX,
-    pointerY;
-
-let velocity = { x: 0, y: 0, tx: 0, ty: 0, z: 0.0005 };
-
-let touchInput = false;
-
-generate();
-resize();
-step();
-
-window.onresize = resize;
-canvas.onmousemove = onMouseMove;
-canvas.ontouchmove = onTouchMove;
-canvas.ontouchend = onMouseLeave;
-document.onmouseleave = onMouseLeave;
-
-function generate() {
-
-   for( let i = 0; i < STAR_COUNT; i++ ) {
-    stars.push({
-      x: 0,
-      y: 0,
-      z: STAR_MIN_SCALE + Math.random() * ( 1 - STAR_MIN_SCALE )
-    });
-   }
-
-}
-
-function placeStar( star ) {
-
-  star.x = Math.random() * width;
-  star.y = Math.random() * height;
-
-}
-
-function recycleStar( star ) {
-
-  let direction = 'z';
-
-  let vx = Math.abs( velocity.x ),
-	    vy = Math.abs( velocity.y );
-
-  if( vx > 1 || vy > 1 ) {
-    let axis;
-
-    if( vx > vy ) {
-      axis = Math.random() < vx / ( vx + vy ) ? 'h' : 'v';
-    }
-    else {
-      axis = Math.random() < vy / ( vx + vy ) ? 'v' : 'h';
-    }
-
-    if( axis === 'h' ) {
-      direction = velocity.x > 0 ? 'l' : 'r';
-    }
-    else {
-      direction = velocity.y > 0 ? 't' : 'b';
-    }
-  }
-  
-  star.z = STAR_MIN_SCALE + Math.random() * ( 1 - STAR_MIN_SCALE );
-
-  if( direction === 'z' ) {
-    star.z = 0.1;
-    star.x = Math.random() * width;
-    star.y = Math.random() * height;
-  }
-  else if( direction === 'l' ) {
-    star.x = -OVERFLOW_THRESHOLD;
-    star.y = height * Math.random();
-  }
-  else if( direction === 'r' ) {
-    star.x = width + OVERFLOW_THRESHOLD;
-    star.y = height * Math.random();
-  }
-  else if( direction === 't' ) {
-    star.x = width * Math.random();
-    star.y = -OVERFLOW_THRESHOLD;
-  }
-  else if( direction === 'b' ) {
-    star.x = width * Math.random();
-    star.y = height + OVERFLOW_THRESHOLD;
-  }
-
-}
-
-function resize() {
-
-  scale = window.devicePixelRatio || 1;
-
-  width = window.innerWidth * scale;
-  height = window.innerHeight * scale;
-
-  canvas.width = width;
-  canvas.height = height;
-
-  stars.forEach( placeStar );
-
-}
-
-function step() {
-
-  context.clearRect( 0, 0, width, height );
-
-  update();
-  render();
-
-  requestAnimationFrame( step );
-
-}
-
-function update() {
-
-  velocity.tx *= 0.96;
-  velocity.ty *= 0.96;
-
-  velocity.x += ( velocity.tx - velocity.x ) * 0.8;
-  velocity.y += ( velocity.ty - velocity.y ) * 0.8;
-
-  stars.forEach( ( star ) => {
-
-    star.x += velocity.x * star.z;
-    star.y += velocity.y * star.z;
-
-    star.x += ( star.x - width/2 ) * velocity.z * star.z;
-    star.y += ( star.y - height/2 ) * velocity.z * star.z;
-    star.z += velocity.z;
-  
-    // recycle when out of bounds
-    if( star.x < -OVERFLOW_THRESHOLD || star.x > width + OVERFLOW_THRESHOLD || star.y < -OVERFLOW_THRESHOLD || star.y > height + OVERFLOW_THRESHOLD ) {
-      recycleStar( star );
-    }
-
-  } );
-
-}
-
-function render() {
-
-  stars.forEach( ( star ) => {
-
-    context.beginPath();
-    context.lineCap = 'round';
-    context.lineWidth = STAR_SIZE * star.z * scale;
-    context.globalAlpha = 0.5 + 0.5*Math.random();
-    context.strokeStyle = STAR_COLOR;
-
-    context.beginPath();
-    context.moveTo( star.x, star.y );
-
-    var tailX = velocity.x * 2,
-        tailY = velocity.y * 2;
-
-    // stroke() wont work on an invisible line
-    if( Math.abs( tailX ) < 0.1 ) tailX = 0.5;
-    if( Math.abs( tailY ) < 0.1 ) tailY = 0.5;
-
-    context.lineTo( star.x + tailX, star.y + tailY );
-
-    context.stroke();
-
-  } );
-
-}
-
-function movePointer( x, y ) {
-
-  if( typeof pointerX === 'number' && typeof pointerY === 'number' ) {
-
-    let ox = x - pointerX,
-        oy = y - pointerY;
-
-    velocity.tx = velocity.tx + ( ox / 8*scale ) * ( touchInput ? 1 : -1 );
-    velocity.ty = velocity.ty + ( oy / 8*scale ) * ( touchInput ? 1 : -1 );
-
-  }
-
-  pointerX = x;
-  pointerY = y;
-
-}
-
-function onMouseMove( event ) {
-
-  touchInput = false;
-
-  movePointer( event.clientX, event.clientY );
-
-}
-
-function onTouchMove( event ) {
-
-  touchInput = true;
-
-  movePointer( event.touches[0].clientX, event.touches[0].clientY, true );
-
-  event.preventDefault();
-
-}
-
-function onMouseLeave() {
-
-  pointerX = null;
-  pointerY = null;
-
-}
-</script> -->
-    </body> 
+    <script src="assets/js/admin-login.js?v=<?= rawurlencode($adminLoginJsVersion) ?>" defer></script>
+</body>
 </html>

@@ -1,6 +1,7 @@
 <?php
-session_start();
-include 'db_config.php';
+declare(strict_types=1);
+require_once __DIR__ . '/includes/security.php';
+hshr_start_session('public_session', '/');
 ?>
 
 <!DOCTYPE html>
@@ -100,7 +101,7 @@ include 'db_config.php';
         width: auto;
         position: absolute; /* Add this */
         top: -15px;        /* Add this */
-        
+
     }
 
     .btn-submit {
@@ -127,7 +128,7 @@ include 'db_config.php';
         width: 150px;
         height: 150px;
         object-fit: cover;
-        border-radius: 50%; 
+        border-radius: 50%;
     }
 
     </style>
@@ -142,8 +143,9 @@ include 'db_config.php';
                 </div>
                 <h2 class="mb-4  fw-bold">Employment Application</h2>
             </div>
-       
+
             <form action="submit_applicant_application.php" method="post" enctype="multipart/form-data">
+            <?= hshr_csrf_field() ?>
             <fieldset>
             <legend>Personal Information</legend>
             <div class="row g-3">
@@ -181,7 +183,7 @@ include 'db_config.php';
                 </div>
             </div>
             </fieldset>
-            
+
             <fieldset>
             <legend>Educational Background</legend>
             <div class="row g-3">
@@ -203,7 +205,7 @@ include 'db_config.php';
                 </div>
             </div>
             </fieldset>
-            
+
             <fieldset>
             <legend>Teaching Experience</legend>
             <div class="row g-3">
@@ -221,7 +223,7 @@ include 'db_config.php';
                 </div>
             </div>
             </fieldset>
-            
+
             <fieldset>
             <legend>License and Certification</legend>
             <div class="row g-3">
@@ -245,7 +247,7 @@ include 'db_config.php';
                 </div>
             </div>
             </fieldset>
-            
+
             <div class="text-center">
                 <button type="submit" class="btn btn-submit">Submit Application</button>
                 <p class="mt-3">Please note that it will take at least 2-3 business days for the HR department to respond.</p>

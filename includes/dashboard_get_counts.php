@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/admin_api.php';
 require '../db_config.php'; // Make sure to include your database connection
 
 header('Content-Type: application/json');
@@ -41,7 +42,7 @@ $result = mysqli_query($conn, $query);
 $row = mysqli_fetch_assoc($result);
 
 if ($row['count'] == 0) {
-    $query = "INSERT INTO historical_data (date, total_staff, active_teachers) 
+    $query = "INSERT INTO historical_data (date, total_staff, active_teachers)
               VALUES ('$today', $total_staff, $active_teachers)";
     mysqli_query($conn, $query);
 }

@@ -1,110 +1,116 @@
 <?php
-session_name('staff_session');
-session_start();
-include 'db_config.php';
+declare(strict_types=1);
 
-if (!isset($_SESSION['employee_id'])) {
-    die("Unauthorized access.");
-}
+require_once __DIR__ . '/includes/attendance_api.php';
+require_once __DIR__ . '/db_config.php';
 
-$employee_id = $_SESSION['employee_id'];
-$date = date("Y-m-d");
-$time_out = date("H:i:s");
+$conn->begin_transaction();
 
-// Check if the user has clocked in before clocking out
-$query = "SELECT time_in, time_out, break_in, break_out FROM attendance WHERE employee_id=? AND date=?";
-$stmt = $conn->prepare($query);
-$stmt->bind_param("ss", $employee_id, $date);
-$stmt->execute();
-$result = $stmt->get_result();
+try {
+    $attendance = $conn->prepare(
+        'SELECT time_in, time_out, break_in, break_out, break_duration
+         FROM attendance
+         WHERE employee_id = ? AND date = CURDATE()
+         LIMIT 1 FOR UPDATE'
+    );
+    $attendance->bind_param('s', $attendanceEmployeeId);
+    $attendance->execute();
+    $row = $attendance->get_result()->fetch_assoc();
+    $attendance->close();
 
-if ($result->num_rows > 0) {
-    $row = $result->fetch_assoc();
-    $stmt->close(); // ✅ Close statement after fetching data
-
-    if ($row['time_out'] !== NULL) {
-        die("❌ You have already clocked out today.");
+    if (!$row || empty($row['time_in'])) {
+        $conn->rollback();
+        attendance_respond(false, 'No clock-in record was found for today.', 409);
     }
-
     if ($row['time_out'] === '23:59:59') {
-        die("❌ Auto-timeout was applied");
+        $conn->rollback();
+        attendance_respond(false, 'An automatic timeout has already been applied.', 409);
+    }
+    if (!empty($row['time_out'])) {
+        $conn->rollback();
+        attendance_respond(false, 'You have already clocked out today.', 409);
+    }
+    if (!empty($row['break_in']) && empty($row['break_out'])) {
+        $conn->rollback();
+        attendance_respond(false, 'End your active break before clocking out.', 409);
     }
 
-    if ($row['break_in'] !== NULL && $row['break_out'] === NULL) {
-        die("❌ You must break out before clocking out.");
-    }
+    $clockOutTime = date('H:i:s');
+    $today = date('Y-m-d');
+    $clockInTimestamp = strtotime($today . ' ' . $row['time_in']);
+    $clockOutTimestamp = strtotime($today . ' ' . $clockOutTime);
+    $breakSeconds = !empty($row['break_duration'])
+        ? max(0, (int) strtotime('1970-01-01 ' . $row['break_duration'] . ' UTC'))
+        : 0;
+    $workedSeconds = max(0, $clockOutTimestamp - $clockInTimestamp - $breakSeconds);
+    $totalHours = sprintf(
+        '%02d:%02d:%02d',
+        intdiv($workedSeconds, 3600),
+        intdiv($workedSeconds % 3600, 60),
+        $workedSeconds % 60
+    );
 
-    // Get the current day (e.g., Monday, Tuesday)
-    $day_of_week = date('l');
+    $dayOfWeek = date('l');
+    $schedule = $conn->prepare(
+        'SELECT id, required_hours
+         FROM work_schedules
+         WHERE employee_id = ? AND day_of_week = ?
+         LIMIT 1'
+    );
+    $schedule->bind_param('ss', $attendanceEmployeeId, $dayOfWeek);
+    $schedule->execute();
+    $scheduleRow = $schedule->get_result()->fetch_assoc();
+    $schedule->close();
 
-    // Get required hours and work_schedule_id from work_schedules table
-    $required_hours_query = "SELECT required_hours, id AS work_schedule_id FROM work_schedules WHERE employee_id=? AND day_of_week=?";
-    $req_stmt = $conn->prepare($required_hours_query);
-    $req_stmt->bind_param("ss", $employee_id, $day_of_week);
-    $req_stmt->execute();
-    $req_result = $req_stmt->get_result();
-    $req_row = $req_result->fetch_assoc();
-    $req_stmt->close(); // ✅ Close after fetching
+    $workScheduleId = isset($scheduleRow['id']) ? (int) $scheduleRow['id'] : null;
+    $requiredHours = isset($scheduleRow['required_hours']) ? (float) $scheduleRow['required_hours'] : 8.0;
+    $workedHours = $workedSeconds / 3600;
 
-    $required_hours = $req_row['required_hours'] ?? 8; // Default to 8 hours if not set
-    $work_schedule_id = $req_row['work_schedule_id'] ?? NULL;
-
-    // Calculate worked hours using SQL instead of PHP
-    $worked_hours_query = "SELECT TIMESTAMPDIFF(SECOND, time_in, ?) / 3600 AS worked_hours FROM attendance WHERE employee_id=? AND date=?";
-    $worked_stmt = $conn->prepare($worked_hours_query);
-    $worked_stmt->bind_param("sis", $time_out, $employee_id, $date);
-    $worked_stmt->execute();
-    $worked_result = $worked_stmt->get_result();
-    $worked_hours = $worked_result->fetch_assoc()['worked_hours'] ?? 0;
-    $worked_stmt->close(); // ✅ Close after getting result
-
-    // Determine overtime/undertime
-    if ($worked_hours > $required_hours) {
-        $status = 'overtime';
-        $hours = $worked_hours - $required_hours;
-    } elseif ($worked_hours < $required_hours) {
-        $status = 'undertime';
-        $hours = $required_hours - $worked_hours;
+    if ($workedHours > $requiredHours) {
+        $logStatus = 'overtime';
+        $differenceHours = $workedHours - $requiredHours;
+    } elseif ($workedHours < $requiredHours) {
+        $logStatus = 'undertime';
+        $differenceHours = $requiredHours - $workedHours;
     } else {
-        $status = 'on time';
-        $hours = 0;
+        $logStatus = 'on time';
+        $differenceHours = 0.0;
     }
+    $differenceHours = round($differenceHours, 2);
 
-    // Update attendance record
-        $update_query = "UPDATE attendance 
-        SET time_out = ?, 
-            total_hours = SEC_TO_TIME(
-                GREATEST(
-                    TIMESTAMPDIFF(SECOND, 
-                        STR_TO_DATE(CONCAT(date, ' ', time_in), '%Y-%m-%d %H:%i:%s'), 
-                        STR_TO_DATE(CONCAT(date, ' ', ?), '%Y-%m-%d %H:%i:%s')
-                    ), 
-                0)
-            ), 
-            status = 'Present' 
-            WHERE employee_id = ? AND date = ?";
-        $update_stmt = $conn->prepare($update_query);
-        $update_stmt->bind_param("ssis", $time_out, $time_out, $employee_id, $date);
+    $update = $conn->prepare(
+        "UPDATE attendance
+         SET time_out = ?, total_hours = ?, status = 'Present'
+         WHERE employee_id = ? AND date = CURDATE() AND time_out IS NULL"
+    );
+    $update->bind_param('sss', $clockOutTime, $totalHours, $attendanceEmployeeId);
+    $update->execute();
 
-    if ($update_stmt->execute()) {
-        $update_stmt->close(); // ✅ Close after execution
-
-        // Insert or update overtime_undertime_logs
-        $log_query = "INSERT INTO overtime_undertime_logs (employee_id, work_schedule_id, date, status, hours) 
-                      VALUES (?, ?, ?, ?, ?)
-                      ON DUPLICATE KEY UPDATE status=?, hours=?";
-        $log_stmt = $conn->prepare($log_query);
-        $log_stmt->bind_param("iissdss", $employee_id, $work_schedule_id, $date, $status, $hours, $status, $hours);
-        $log_stmt->execute();
-        $log_stmt->close();
-
-        echo "✅ Clock-out successful! Total Hours Updated.";
-    } else {
-        die("❌ Error: " . $conn->error);
+    if ($update->affected_rows !== 1) {
+        $update->close();
+        throw new RuntimeException('Clock-out row was not updated.');
     }
-} else {
-    die("❌ No clock-in record found. Please clock in first.");
+    $update->close();
+
+    $log = $conn->prepare(
+        'INSERT INTO overtime_undertime_logs (employee_id, work_schedule_id, date, status, hours)
+         VALUES (?, ?, CURDATE(), ?, ?)
+         ON DUPLICATE KEY UPDATE
+             work_schedule_id = VALUES(work_schedule_id),
+             status = VALUES(status),
+             hours = VALUES(hours)'
+    );
+    $log->bind_param('sisd', $attendanceEmployeeId, $workScheduleId, $logStatus, $differenceHours);
+    $log->execute();
+    $log->close();
+
+    $conn->commit();
+    attendance_respond(true, 'Clock-out successful. Your worked hours have been updated.', 200, [
+        'total_hours' => $totalHours,
+        'work_status' => $logStatus,
+    ]);
+} catch (Throwable $error) {
+    $conn->rollback();
+    error_log('Clock-out failed: ' . $error->getMessage());
+    attendance_respond(false, 'Clock-out could not be recorded. Please try again.', 500);
 }
-
-$conn->close();
-?>

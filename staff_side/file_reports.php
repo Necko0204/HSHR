@@ -1,90 +1,41 @@
 <?php
-session_name('staff_session');
-session_start();
+declare(strict_types=1);
 
-error_reporting(E_ALL);
-ini_set('display_errors', 1);
-
-include 'staff_helper.php';
-include 'db_config.php';
-
-if (!isset($_SESSION['employee_id']) || !in_array($_SESSION['role'], ['Staff', 'Intern'])) {
-    header("Location: index.php");
-    exit();
+require_once __DIR__ . '/includes/staff_session.php';
+if (empty($_SESSION['employee_id']) || !in_array(strtolower((string) ($_SESSION['role'] ?? '')), ['staff', 'intern'], true)) {
+    header('Location: index.php');
+    exit;
 }
-
-// Assign the correct session values
-$sender_id = isset($_SESSION['employee_id']) ? $_SESSION['employee_id'] : "";
-$sender_role = isset($_SESSION['role']) ? $_SESSION['role'] : "";
-$sender_email = isset($_SESSION['email']) ? $_SESSION['email'] : "";
-
-// Debugging: Check if values are now correctly assigned
-error_log("Sender ID: " . $sender_id);
-error_log("Sender Role: " . $sender_role);
-error_log("Sender Email: " . $sender_email);
-
+require_once __DIR__ . '/db_config.php';
+require_once __DIR__ . '/staff_helper.php';
 ?>
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="icon" type="image/png" href="../images/asdasdasd123123123123123.jpg">
-    <title>File Reports</title>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
-    <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.9/main.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css">
+    <title>Reports · HSSII Employee Portal</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" rel="stylesheet">
 </head>
 <body>
-
-<div style="position: absolute; top: 7px; left: 20px; z-index: 1000;">
-        <a href="dashboard.php" class="btn btn-secondary">
-            <i class="fa fa-arrow-left"></i> Back to Dashboard
-        </a>
-    </div>
-
-    <!-- Navigation Bar -->
-    <div class="main-container">
-        <?php include 'staff_navbar.php'; ?>
-    </div>
-
-    <!-- Animated Box Shapes -->
-    <div class="animation-container">
-        <div class="box"></div>
-        <div class="box"></div>
-        <div class="box"></div>
-        <div class="box"></div>
-        <div class="box"></div>
-        <div class="box"></div>
-        <div class="box"></div>
-        <div class="box"></div>
-        <div class="box"></div>
-        <div class="box"></div>
-    </div>
-
-    <div class="profile-container">
-        <img src="../images/asdasdasd123123123123123.jpg" alt="Profile Picture">
-    </div>
-
-    <main class="dashboard-container">
-        <div class="card-container">
-            <div class="card1" onclick="location.href='incident_report.php'">
-                <i class="fa-solid fa-file-alt fa-4x"></i>
-                <h5 class="mt-3">Incident Reports</h5>
-            </div>
-        </div>
+    <?php include __DIR__ . '/staff_navbar.php'; ?>
+    <main class="hshr-staff-page">
+        <section class="hshr-staff-page-hero">
+            <div><span class="hshr-staff-eyebrow">Employee support</span><h1>Reports & concerns</h1><p>Document workplace incidents securely so the HR team can review and follow up.</p></div>
+            <div class="hshr-staff-page-icon"><i class="fa-regular fa-file-lines"></i></div>
+        </section>
+        <section class="hshr-staff-service-grid">
+            <a href="incident_report.php" class="hshr-staff-service-card">
+                <span><i class="fa-solid fa-triangle-exclamation"></i></span>
+                <div><small>Workplace documentation</small><h2>File an incident report</h2><p>Record the people, location, impact, and actions connected to an incident.</p></div>
+                <i class="fa-solid fa-arrow-right"></i>
+            </a>
+            <article class="hshr-staff-report-note">
+                <i class="fa-solid fa-shield-halved"></i>
+                <div><strong>Provide clear, factual details</strong><p>Include only information relevant to the incident. HR will review your submission and coordinate any necessary follow-up.</p></div>
+            </article>
+        </section>
     </main>
-
-    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.9/main.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script>
-        console.log("Employee ID: <?php echo $sender_id; ?>");
-        console.log("Role: <?php echo $sender_role; ?>");
-        console.log("Email: <?php echo $sender_email; ?>");
-    </script>
 </body>
 </html>

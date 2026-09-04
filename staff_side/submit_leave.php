@@ -1,105 +1,91 @@
-    <?php
-    session_name('staff_session');
-    session_start();
-    header('Content-Type: application/json');
-    include 'db_config.php';
+<?php
+declare(strict_types=1);
 
-    if (!isset($_SESSION['employee_id'])) {
-        echo json_encode([
-            'status' => 'error',
-            'title' => 'Unauthorized',
-            'message' => 'Unauthorized access.'
-        ]);
-        exit;
+require_once __DIR__ . '/includes/staff_session.php';
+header('Content-Type: application/json; charset=utf-8');
+
+function leaveResponse(int $status, string $type, string $title, string $message): never
+{
+    http_response_code($status);
+    echo json_encode(['status' => $type, 'title' => $title, 'message' => $message]);
+    exit;
+}
+
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') leaveResponse(405, 'error', 'Invalid request', 'Method not allowed.');
+if (empty($_SESSION['employee_id'])) leaveResponse(401, 'error', 'Unauthorized', 'Authentication required.');
+if (!hshr_validate_csrf()) leaveResponse(403, 'error', 'Session expired', 'Refresh the page and try again.');
+
+require_once __DIR__ . '/db_config.php';
+$employeeId = (string) $_SESSION['employee_id'];
+$leaveTypeId = filter_input(INPUT_POST, 'leave_type_id', FILTER_VALIDATE_INT);
+$leaveDates = trim((string) ($_POST['leave_dates'] ?? ''));
+if (!$leaveTypeId || $leaveDates === '') leaveResponse(422, 'error', 'Missing details', 'Select a leave type and valid dates.');
+
+$dateParts = str_contains($leaveDates, ' to ') ? explode(' to ', $leaveDates, 2) : [$leaveDates, $leaveDates];
+$start = DateTimeImmutable::createFromFormat('!Y-m-d', trim($dateParts[0]));
+$end = DateTimeImmutable::createFromFormat('!Y-m-d', trim($dateParts[1]));
+$startErrors = DateTimeImmutable::getLastErrors();
+if (!$start || !$end || ($startErrors !== false && ($startErrors['warning_count'] || $startErrors['error_count'])) || $end < $start) {
+    leaveResponse(422, 'error', 'Invalid dates', 'Enter a valid leave period with the end date on or after the start date.');
+}
+$totalDays = $start->diff($end)->days + 1;
+if ($totalDays > 365) leaveResponse(422, 'error', 'Invalid period', 'A leave request cannot exceed 365 days.');
+
+$startDate = $start->format('Y-m-d');
+$endDate = $end->format('Y-m-d');
+$conn->begin_transaction();
+try {
+    $type = $conn->prepare('SELECT max_days FROM leave_types WHERE leave_type_id = ? LIMIT 1 FOR UPDATE');
+    $type->bind_param('i', $leaveTypeId);
+    $type->execute();
+    $leaveType = $type->get_result()->fetch_assoc();
+    $type->close();
+    if (!$leaveType) {
+        $conn->rollback();
+        leaveResponse(404, 'error', 'Leave type unavailable', 'The selected leave type no longer exists.');
     }
 
-    $employee_id = $_SESSION['employee_id'];
-
-    if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['leave_type_id'], $_POST['leave_dates'])) {
-        $leave_type_id = intval($_POST['leave_type_id']);
-        $leave_dates = $_POST['leave_dates']; // Format: "YYYY-MM-DD to YYYY-MM-DD"
-
-        // Split the leave dates
-   // Support single-day or range leave
-        if (strpos($leave_dates, ' to ') !== false) {
-            list($leave_start_date, $leave_end_date) = explode(" to ", $leave_dates);
-        } else {
-            $leave_start_date = $leave_end_date = $leave_dates;
-        }
-
-        // Calculate the total leave days
-        $start_date = new DateTime($leave_start_date);
-        $end_date = new DateTime($leave_end_date);
-        $total_days = $start_date->diff($end_date)->days + 1; // Include the last day
-
-        // Fetch max_days and total used days (only APPROVED)
-        $fetchLeaveQuery = "
-            SELECT lt.max_days, 
-                COALESCE(SUM(CASE WHEN lr.status = 'Approved' THEN lr.total_days ELSE 0 END), 0) AS total_used_days
-            FROM leave_types lt
-            LEFT JOIN leave_requests lr ON lt.leave_type_id = lr.leave_type_id AND lr.employee_id = ?
-            WHERE lt.leave_type_id = ?
-            GROUP BY lt.leave_type_id, lt.max_days
-        ";
-
-        $stmt = $conn->prepare($fetchLeaveQuery);
-        $stmt->bind_param("si", $employee_id, $leave_type_id);
-        $stmt->execute();
-        $leaveResult = $stmt->get_result();
-        $leaveRow = $leaveResult->fetch_assoc();
-
-        if (!$leaveRow) {
-            echo json_encode([
-                'status' => 'error',
-                'title' => 'Error',
-                'message' => 'Leave type does not exist.'
-            ]);
-            exit;
-        }
-
-        $max_days = $leaveRow['max_days'];
-        $total_used_days = $leaveRow['total_used_days'];
-
-        // Calculate remaining leave days
-        $remaining_days = max($max_days - $total_used_days, 0);
-
-        // Block leave request if no leave days are left or if the request exceeds the remaining balance
-        if ($remaining_days <= 0) {
-            echo json_encode([
-                'status' => 'error',
-                'title' => 'No Leave Left',
-                'message' => '❌ Error: You have no leave days left for this type.'
-            ]);
-            exit;
-        }
-
-        if ($total_days > $remaining_days) {
-            echo json_encode([
-                'status' => 'warning',
-                'title' => 'Insufficient Balance',
-                'message' => "❌ Warning: You only have $remaining_days days available for this leave type."
-            ]);
-            exit;
-        }
-
-        // Insert leave request
-        $insertRequestQuery = "INSERT INTO leave_requests (employee_id, leave_type_id, leave_start_date, leave_end_date, total_days, status, request_date) 
-                            VALUES (?, ?, ?, ?, ?, 'Pending', NOW())";
-        $stmt = $conn->prepare($insertRequestQuery);
-        $stmt->bind_param("sissi", $employee_id, $leave_type_id, $leave_start_date, $leave_end_date, $total_days);
-
-        if ($stmt->execute()) {
-            echo json_encode([
-                'status' => 'success',
-                'title' => 'Success',
-                'message' => '✅ Success: Your leave request has been recorded.'
-            ]);
-        } else {
-            echo json_encode([
-                'status' => 'error',
-                'title' => 'SQL Error',
-                'message' => '❌ SQL Error: ' . $stmt->error
-            ]);
-        }
+    $committed = $conn->prepare(
+        "SELECT COALESCE(SUM(total_days), 0) AS committed_days FROM leave_requests
+         WHERE employee_id = ? AND leave_type_id = ? AND status IN ('Approved', 'Pending')"
+    );
+    $committed->bind_param('si', $employeeId, $leaveTypeId);
+    $committed->execute();
+    $committedDays = (int) ($committed->get_result()->fetch_assoc()['committed_days'] ?? 0);
+    $committed->close();
+    $remaining = max(0, (int) $leaveType['max_days'] - $committedDays);
+    if ($totalDays > $remaining) {
+        $conn->rollback();
+        leaveResponse(422, 'warning', 'Insufficient balance', "You have {$remaining} available day" . ($remaining === 1 ? '' : 's') . ' for this leave type.');
     }
-    ?>
+
+    $overlap = $conn->prepare(
+        "SELECT 1 FROM leave_requests
+         WHERE employee_id = ? AND status IN ('Pending', 'Approved')
+           AND leave_start_date <= ? AND leave_end_date >= ? LIMIT 1 FOR UPDATE"
+    );
+    $overlap->bind_param('sss', $employeeId, $endDate, $startDate);
+    $overlap->execute();
+    $hasOverlap = (bool) $overlap->get_result()->fetch_row();
+    $overlap->close();
+    if ($hasOverlap) {
+        $conn->rollback();
+        leaveResponse(409, 'warning', 'Overlapping request', 'You already have a pending or approved leave request in this date range.');
+    }
+
+    $statement = $conn->prepare(
+        "INSERT INTO leave_requests
+         (employee_id, leave_type_id, leave_start_date, leave_end_date, total_days, status, request_date)
+         VALUES (?, ?, ?, ?, ?, 'Pending', NOW())"
+    );
+    $statement->bind_param('sissi', $employeeId, $leaveTypeId, $startDate, $endDate, $totalDays);
+    $statement->execute();
+    $statement->close();
+    $conn->commit();
+} catch (Throwable $error) {
+    $conn->rollback();
+    error_log('Leave submission failed: ' . $error->getMessage());
+    leaveResponse(500, 'error', 'Request failed', 'Your leave request could not be saved. Please try again.');
+}
+
+leaveResponse(201, 'success', 'Request submitted', 'Your leave request has been recorded for review.');

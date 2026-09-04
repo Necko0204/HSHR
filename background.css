@@ -7,16 +7,19 @@
     height: 100vh;
     overflow: hidden;
     z-index: -1;
+    pointer-events: none;
+    contain: strict;
 }
 
 .aurora {
     position: absolute;
-    width: 150vw;
-    height: 150vh;
+    width: 125vw;
+    height: 125vh;
     background: linear-gradient(135deg, rgba(0, 191, 255, 0.15), hsla(330, 100%, 71%, 0.15), rgba(75, 0, 130, 0.15));
     opacity: 0.5;
-    filter: blur(80px);
-    animation: aurora-flow 10s infinite linear;
+    filter: blur(48px);
+    animation: aurora-flow 22s infinite linear;
+    will-change: transform;
 }
 
 @keyframes aurora-flow {
@@ -51,6 +54,8 @@
     height: 100%;
     overflow: hidden;
     z-index: -1;
+    pointer-events: none;
+    contain: strict;
 }
 
 .circle {
@@ -58,8 +63,27 @@
     border-radius: 50%;
     background: radial-gradient(circle, rgba(106, 17, 203, 0.6) 0%, rgba(37, 117, 252, 0.3) 100%);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-    animation: bounce 4s infinite ease-in-out alternate;
+    animation: bounce 10s infinite ease-in-out alternate;
     opacity: 0.5;
-    filter: blur(2px);
-    transition: transform 0.3s ease;
+    filter: blur(1px);
+    will-change: transform;
+}
+
+@media (max-width: 768px) {
+    .aurora {
+        filter: blur(34px);
+        opacity: 0.2 !important;
+    }
+
+    .circle {
+        opacity: 0.28;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .aurora,
+    .circle,
+    .particle {
+        animation: none !important;
+    }
 }

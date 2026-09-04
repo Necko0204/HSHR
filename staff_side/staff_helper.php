@@ -1,43 +1,41 @@
 <?php
-$staff_id = $_SESSION['employee_id']; // Get employee ID from session
+declare(strict_types=1);
 
-// Function to get staff data from the database
-function getStaffData($staff_id) {
-    // Database connection
-    $conn = new mysqli('localhost', 'root', '', 'humanresource');
+require_once __DIR__ . '/../database_connection.php';
 
-    // Check connection
-    if ($conn->connect_error) {
-        die("Connection failed: " . $conn->connect_error);
+function getStaffData(?string $staffId): ?array
+{
+    static $cache = [];
+
+    $staffId = trim((string) $staffId);
+    if ($staffId === '') return null;
+    if (array_key_exists($staffId, $cache)) return $cache[$staffId];
+
+    global $conn;
+    $ownsConnection = !isset($conn) || !($conn instanceof mysqli);
+    $connection = $ownsConnection ? createDatabaseConnection() : $conn;
+
+    $statement = $connection->prepare(
+        'SELECT sa.id AS account_id, sa.employee_id, sa.username, sa.profile_picture, sa.role, sa.status AS account_status,
+                e.*
+         FROM staff_accounts sa
+         JOIN employees e ON e.id = sa.employee_id
+         WHERE sa.employee_id = ?
+         LIMIT 1'
+    );
+    if (!$statement) {
+        if ($ownsConnection) $connection->close();
+        return $cache[$staffId] = null;
     }
 
-    // Prepare and bind
-    $stmt = $conn->prepare("
-        SELECT sa.*, e.*
-        FROM staff_accounts sa
-        JOIN employees e ON sa.employee_id = e.id
-        WHERE sa.employee_id = ?
-    ");
-    $stmt->bind_param("s", $staff_id); // "s" because employee_id is a string
+    $statement->bind_param('s', $staffId);
+    $statement->execute();
+    $staff = $statement->get_result()->fetch_assoc() ?: null;
+    $statement->close();
+    if ($ownsConnection) $connection->close();
 
-    // Execute and fetch
-    $stmt->execute();
-    $result = $stmt->get_result();
-    
-    // Check if the user is found
-    if ($result->num_rows > 0) {
-        $staffData = $result->fetch_assoc();
-    } else {
-        $staffData = null;
-    }
-
-    // Close connections
-    $stmt->close();
-    $conn->close();
-
-    return $staffData; 
+    return $cache[$staffId] = $staff;
 }
 
-// Fetch staff data
-$staffData = getStaffData($staff_id);
-?>
+$staffId = isset($_SESSION['employee_id']) ? (string) $_SESSION['employee_id'] : null;
+$staffData = getStaffData($staffId);

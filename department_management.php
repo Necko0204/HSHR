@@ -1,6 +1,5 @@
 <?php
-session_name('admin_session');
-session_start();
+require_once __DIR__ . '/includes/admin_page.php';
 include 'includes/breadcrumb.php';
 include 'db_config.php';
 include 'helper.php';
@@ -48,7 +47,7 @@ if (!isset($_SESSION['admin_id'])) {
         </button>
     </div>
 
-    
+
 </main>
 <!-- Unified Modal -->
 <div class="modal fade" id="levelManagementModal" tabindex="-1" aria-labelledby="levelManagementModalLabel" aria-hidden="true">
@@ -59,7 +58,7 @@ if (!isset($_SESSION['admin_id'])) {
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body">
-       
+
         <ul class="nav nav-tabs" id="levelTabs">
           <li class="nav-item">
           <a class="nav-link active" data-bs-toggle="tab" href="#activeLevels">Active Levels</a>
@@ -73,23 +72,23 @@ if (!isset($_SESSION['admin_id'])) {
           </li>
         </ul>
 
-       
+
         <div class="tab-content mt-3">
-          
+
           <div class="tab-pane fade show active" id="activeLevels">
             <div class="table-responsive" id="activeLevelsTable">
               <!-- Active levels will be loaded here -->
             </div>
           </div>
 
-        
+
           <div class="tab-pane fade" id="archives">
             <div class="table-responsive" id="inactiveLevelsTable">
               <!-- Inactive levels will be loaded here -->
             </div>
           </div>
 
-        
+
           <div class="tab-pane fade" id="addLevel">
             <form id="addLevelForm">
               <div class="mb-3">
@@ -206,7 +205,7 @@ if (!isset($_SESSION['admin_id'])) {
                     toastr.clear();
                     toastr.success('Level added successfully!');
                     $('#addLevelForm')[0].reset();
-            
+
                     // Reload active levels after adding a new one
                     $('#activeLevelsTable').load('includes/fetch_active_levels.php');
             }).fail(function() {
@@ -227,7 +226,7 @@ if (!isset($_SESSION['admin_id'])) {
         "hideEasing": "linear",
         "showMethod": "fadeIn",
         "hideMethod": "fadeOut"
-    };     
+    };
 </script>
 
 
@@ -258,11 +257,11 @@ if (!isset($_SESSION['admin_id'])) {
                 toastr.success('Role updated successfully!');
                 $('#editRoleModal').modal('hide');
                 setTimeout(function() {
-                    location.reload(); 
+                    location.reload();
                 }, 800);
             },
             error: function() {
-                toastr.clear(); 
+                toastr.clear();
                 toastr.error('Failed to update role. Please try again.');
             }
         });
@@ -296,7 +295,7 @@ if (!isset($_SESSION['admin_id'])) {
     // Check if Archives Modal is visible before closing it
     if ($('#ArchivesModal').hasClass('show')) {
         $('#ArchivesModal').modal('hide');
-        
+
         // Delay to ensure Archives Modal fully hides before opening the Reactivate Modal
         setTimeout(function () {
             $('#reactivateRoleModal').modal('show');

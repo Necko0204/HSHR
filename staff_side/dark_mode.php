@@ -1,16 +1,8 @@
 <?php
-include 'db_config.php';
+declare(strict_types=1);
 
-// Debug: Check if session is properly set
-if (!isset($_SESSION['employee_id']) || !in_array($_SESSION['role'], ['Staff', 'Intern'])) {
-    header("Location: index.php");
-    exit();
-}
+require_once __DIR__ . '/includes/staff_api.php';
 
-if (isset($_POST['dark_mode'])) {
-    $_SESSION['dark_mode'] = $_POST['dark_mode'] === 'true' ? true : false;
-    echo json_encode(["success" => true]);
-} else {
-    echo json_encode(["success" => false]);
-}
-?>
+$dark = filter_var($_POST['dark_mode'] ?? false, FILTER_VALIDATE_BOOL);
+$_SESSION['dark_mode'] = $dark;
+staff_api_respond(200, true, 'Appearance updated.', ['dark_mode' => $dark]);
